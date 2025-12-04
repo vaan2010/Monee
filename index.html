@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a84ff">
-    
+    <link rel="manifest" href="./manifest.json">
     <title>Monee</title>
     
     <!-- Firebase SDK -->
@@ -4109,14 +4109,7 @@
     }
     function saveData() { 
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts));
-        
-        // 如果有登入 Firebase，同步到雲端
-        if (window.firebaseUserLoggedIn && window.firebaseSyncToCloud) {
-            window.firebaseSyncToCloud(accounts).catch(err => {
-                console.error('同步到雲端失敗:', err);
-            });
-        }
+        localStorage.setItem(userDataKey, JSON.stringify(accounts)); 
     }
     
     function saveSettings() {
@@ -4304,17 +4297,8 @@
     }
     
     // 監聽 Firebase 登入狀態變化
-    window.addEventListener('firebaseAuthStateChanged', async (e) => {
+    window.addEventListener('firebaseAuthStateChanged', (e) => {
         updateFirebaseUI();
-    });
-    
-    // 監聽資料同步事件，重新載入資料
-    window.addEventListener('firebaseDataSynced', (e) => {
-        // 重新載入資料並重新渲染
-        const { accounts: newAccounts, settings } = loadUserData(currentUserId);
-        accounts = newAccounts;
-        renderAssets();
-        console.log('資料已從雲端同步並重新載入');
     });
     
     function updateCloudBackupSetting() {
@@ -11947,9 +11931,9 @@
 
 <script type="module">
     // Firebase 初始化
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
@@ -11982,187 +11966,59 @@
     window.firebaseSignOut = () => signOut(auth);
     window.getCurrentFirebaseUser = () => currentFirebaseUser;
 
-    // 雲端同步功能
-    let syncUnsubscribe = null;
-    let isSyncing = false; // 防止同步循環
-    
-    // 同步資料到 Firestore
-    window.firebaseSyncToCloud = async function(data) {
-        if (!currentFirebaseUser || isSyncing) return;
-        
-        try {
-            isSyncing = true;
-            const recordsRef = collection(db, "users", currentFirebaseUser.uid, "records");
-            
-            // 先刪除所有舊的記錄
-            const snapshot = await getDocs(recordsRef);
-            const batch = writeBatch(db);
-            snapshot.forEach((doc) => {
-                batch.delete(doc.ref);
-            });
-            
-            // 寫入新資料
-            if (data && data.length > 0) {
-                data.forEach((record) => {
-                    const newRef = doc(recordsRef);
-                    batch.set(newRef, {
-                        ...record,
-                        syncedAt: Timestamp.now()
-                    });
-                });
-            }
-            
-            await batch.commit();
-            console.log('資料已同步到雲端');
-        } catch (error) {
-            console.error('同步到雲端失敗:', error);
-        } finally {
-            isSyncing = false;
-        }
-    };
-    
-    // 從 Firestore 同步資料到本地
-    window.firebaseSyncFromCloud = async function() {
-        if (!currentFirebaseUser) return;
-        
-        try {
-            const recordsRef = collection(db, "users", currentFirebaseUser.uid, "records");
-            const snapshot = await getDocs(recordsRef);
-            
-            if (!snapshot.empty) {
-                const cloudData = [];
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    // 移除 Firebase 內部欄位
-                    delete data.syncedAt;
-                    cloudData.push(data);
-                });
-                
-                // 更新到 localStorage（使用當前使用者 ID）
-                const currentUserId = localStorage.getItem('my_assets_current_user') || 'default';
-                const userDataKey = `my_assets_stable_data_${currentUserId}`;
-                localStorage.setItem(userDataKey, JSON.stringify(cloudData));
-                
-                console.log('已從雲端同步資料到本地');
-                // 觸發重新載入事件
-                window.dispatchEvent(new CustomEvent('firebaseDataSynced', { detail: { data: cloudData } }));
-            }
-        } catch (error) {
-            console.error('從雲端同步失敗:', error);
-        }
-    };
-    
-    // 監聽 Firestore 的即時變化
-    function startSyncListener() {
-        if (!currentFirebaseUser || syncUnsubscribe) return;
-        
-        try {
-            const recordsRef = collection(db, "users", currentFirebaseUser.uid, "records");
-            const q = query(recordsRef, orderBy("syncedAt", "desc"));
-            
-            syncUnsubscribe = onSnapshot(q, (snapshot) => {
-                if (isSyncing) return; // 如果是自己觸發的同步，忽略
-                
-                const cloudData = [];
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    delete data.syncedAt;
-                    cloudData.push(data);
-                });
-                
-                // 更新到 localStorage（使用當前使用者 ID）
-                const currentUserId = localStorage.getItem('my_assets_current_user') || 'default';
-                const userDataKey = `my_assets_stable_data_${currentUserId}`;
-                localStorage.setItem(userDataKey, JSON.stringify(cloudData));
-                
-                console.log('即時同步：資料已更新');
-                // 觸發重新載入事件
-                window.dispatchEvent(new CustomEvent('firebaseDataSynced', { detail: { data: cloudData } }));
-            }, (error) => {
-                console.error('同步監聽錯誤:', error);
-            });
-        } catch (error) {
-            console.error('啟動同步監聽失敗:', error);
-        }
-    }
-    
-    // 停止同步監聽
-    function stopSyncListener() {
-        if (syncUnsubscribe) {
-            syncUnsubscribe();
-            syncUnsubscribe = null;
-        }
-    }
-    
-    // 自動還原最新備份（僅在沒有雲端資料時使用）
-    async function autoRestoreLatestBackup() {
-        if (!currentFirebaseUser) return;
-        
-        try {
-            // 先檢查是否有雲端同步資料
-            const recordsRef = collection(db, "users", currentFirebaseUser.uid, "records");
-            const recordsSnapshot = await getDocs(recordsRef);
-            
-            if (!recordsSnapshot.empty) {
-                // 有雲端同步資料，直接同步
-                console.log('發現雲端同步資料，開始同步...');
-                await window.firebaseSyncFromCloud();
-                return;
-            }
-            
-            // 沒有雲端同步資料，檢查是否有備份
-            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
-            const q = query(backupsRef, orderBy("backupTime", "desc"), limit(1));
-            const snapshot = await getDocs(q);
-            
-            if (!snapshot.empty) {
-                const latestBackup = snapshot.docs[0];
-                const backupId = latestBackup.id;
-                
-                // 檢查本地是否有資料，如果沒有才自動還原
-                const hasLocalData = localStorage.getItem('my_assets_users') && 
-                                   JSON.parse(localStorage.getItem('my_assets_users') || '[]').length > 0;
-                
-                if (!hasLocalData) {
-                    // 本地沒有資料，自動還原最新備份（靜默模式，不顯示確認對話框）
-                    console.log('本地無資料，自動還原最新備份...');
-                    await window.firebaseRestoreBackup(backupId, true);
-                } else {
-                    console.log('本地已有資料，跳過自動還原');
-                }
-            }
-        } catch (err) {
-            console.error('自動還原備份時發生錯誤:', err);
-        }
-    }
-
     // 監聽登入狀態
-    onAuthStateChanged(auth, async (user) => {
-        // 先停止舊的同步監聽
-        stopSyncListener();
-        
+    onAuthStateChanged(auth, (user) => {
         currentFirebaseUser = user;
         if (user) {
             window.firebaseUserLoggedIn = true;
             // 觸發自訂事件通知主程式
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
-            
-            // 登入後自動同步資料
-            try {
-                // 先從雲端同步資料
-                await window.firebaseSyncFromCloud();
-                // 啟動即時同步監聽
-                startSyncListener();
-                // 如果沒有雲端資料，才檢查備份
-                await autoRestoreLatestBackup();
-            } catch (err) {
-                console.error('自動同步失敗:', err);
-            }
+            // 登入後自動檢查並還原最新備份
+            checkAndAutoRestore();
         } else {
             window.firebaseUserLoggedIn = false;
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: null } }));
         }
     });
+    
+    // 自動檢查並還原最新備份
+    async function checkAndAutoRestore() {
+        if (!currentFirebaseUser) return;
+        
+        try {
+            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
+            const q = query(backupsRef, orderBy("backupTime", "desc"), limit(1));
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                // 有備份，檢查 localStorage 是否有資料
+                const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
+                let hasData = false;
+                
+                if (users.length > 0) {
+                    // 檢查是否有任何使用者的資料
+                    for (const user of users) {
+                        const userDataKey = `my_assets_stable_data_${user.id}`;
+                        const data = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                        if (data.length > 0) {
+                            hasData = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // 如果 localStorage 沒有資料，自動還原最新備份
+                if (!hasData) {
+                    const latestBackup = snapshot.docs[0];
+                    const backupId = latestBackup.id;
+                    console.log('檢測到 localStorage 無資料，自動還原最新備份...');
+                    await window.firebaseRestoreBackup(backupId);
+                }
+            }
+        } catch (err) {
+            console.error('自動還原檢查失敗:', err);
+        }
+    }
 
     // 備份功能
     window.firebasePerformBackup = async function(jsonStr, isAuto = false) {
@@ -12305,13 +12161,13 @@
     };
 
     // 還原備份
-    window.firebaseRestoreBackup = async function(backupId, silent = false) {
+    window.firebaseRestoreBackup = async function(backupId) {
         if (!currentFirebaseUser) {
             alert('請先登入 Firebase');
             return;
         }
 
-        if (!silent && !confirm('確定要還原此備份嗎？這將覆蓋現有的所有資料。')) return;
+        if (!confirm('確定要還原此備份嗎？這將覆蓋現有的所有資料。')) return;
 
         try {
             const targetBackupRef = doc(db, "users", currentFirebaseUser.uid, "backups", backupId);
@@ -12339,9 +12195,7 @@
                         localStorage.setItem(`my_assets_fixed_transfers_${userId}`, JSON.stringify(userData.fixedTransfers || []));
                     }
                 });
-                if (!silent) {
-                    alert('還原成功！頁面將重新載入。');
-                }
+                alert('還原成功！頁面將重新載入。');
                 setTimeout(() => location.reload(), 500);
             } else {
                 alert('備份文件格式錯誤');
