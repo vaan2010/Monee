@@ -2166,7 +2166,7 @@
         }
     }
 
-    var { accounts, settings } = loadUserData(currentUserId);
+    let { accounts, settings } = loadUserData(currentUserId);
     
     // 分頁顯示設置（預設全部顯示）
     let pageVisibility = JSON.parse(localStorage.getItem('pageVisibility')) || {
@@ -12113,12 +12113,27 @@
                 const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
                 const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                 
-                // 檢查是否有變化（簡單比較長度，實際應該更精確）
+                // 檢查是否有變化
                 if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                    console.log('Firestore accounts 有更新，同步到本地');
+                    isSyncingFromFirestore = true; // 標記正在從 Firestore 同步
                     localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                    if (typeof loadUserData === 'function') {
-                        loadUserData();
+                    
+                    // 更新全域變數並重新渲染
+                    if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                        const userData = loadUserData(currentUserId);
+                        if (userData) {
+                            accounts = userData.accounts;
+                            settings = userData.settings;
+                            renderAssets();
+                            if (typeof updateChartData === 'function') {
+                                updateChartData();
+                            }
+                        }
                     }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
                 }
             }
         });
@@ -12133,7 +12148,20 @@
                 const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
                 
                 if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                    console.log('Firestore journal 有更新，同步到本地');
+                    isSyncingFromFirestore = true;
                     localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                    
+                    // 如果有記帳相關的渲染函數，觸發重新渲染
+                    if (typeof renderCalendar === 'function') {
+                        renderCalendar();
+                    }
+                    if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
+                        showFixedTransferDetailsForDate(selectedDate);
+                    }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
                 }
             }
         });
@@ -12147,9 +12175,31 @@
                 const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
                 const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
                 const mergedSettings = { ...currentSettings, ...firestoreSettings };
-                localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
-                if (typeof loadUserData === 'function') {
-                    loadUserData();
+                
+                // 檢查是否有變化
+                if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
+                    console.log('Firestore settings 有更新，同步到本地');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                    
+                    // 更新全域變數並重新渲染
+                    if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                        const userData = loadUserData(currentUserId);
+                        if (userData) {
+                            settings = userData.settings;
+                            // 如果主題改變，重新應用主題
+                            if (typeof applyTheme === 'function') {
+                                applyTheme();
+                            }
+                            renderAssets();
+                            if (typeof updateChartData === 'function') {
+                                updateChartData();
+                            }
+                        }
+                    }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
                 }
             }
         });
@@ -12177,7 +12227,8 @@
     
     // 同步 accounts 到 Firestore
     window.syncAccountsToFirestore = async function(accountsData) {
-        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        if (!currentFirebaseUser) return;
+        // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
         
         try {
             const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
@@ -12185,6 +12236,7 @@
                 accounts: accountsData,
                 updatedAt: Timestamp.now()
             }, { merge: true });
+            console.log('accounts 已同步到 Firestore');
         } catch (err) {
             console.error('同步 accounts 到 Firestore 失敗:', err);
         }
@@ -12192,7 +12244,7 @@
     
     // 同步 journal 到 Firestore
     window.syncJournalToFirestore = async function(records) {
-        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        if (!currentFirebaseUser) return;
         
         try {
             const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
@@ -12200,6 +12252,7 @@
                 records: records,
                 updatedAt: Timestamp.now()
             }, { merge: true });
+            console.log('journal 已同步到 Firestore');
         } catch (err) {
             console.error('同步 journal 到 Firestore 失敗:', err);
         }
@@ -12207,7 +12260,7 @@
     
     // 同步 settings 到 Firestore
     window.syncSettingsToFirestore = async function(settingsData) {
-        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        if (!currentFirebaseUser) return;
         
         try {
             const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
@@ -12215,6 +12268,7 @@
                 settings: settingsData,
                 updatedAt: Timestamp.now()
             }, { merge: true });
+            console.log('settings 已同步到 Firestore');
         } catch (err) {
             console.error('同步 settings 到 Firestore 失敗:', err);
         }
