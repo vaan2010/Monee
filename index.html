@@ -9,9 +9,7 @@
     <link rel="manifest" href="./manifest.json">
     <title>Monee</title>
     
-    <!-- Google API Client Library -->
-    <script src="https://apis.google.com/js/api.js" async defer></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Firebase SDK -->
     
     <!-- Favicon -->
     <!-- 使用絕對路徑，確保在 GitHub Pages 上能正確載入 -->
@@ -1876,9 +1874,17 @@
     const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
     
-    // 預設 Google Drive Client ID（可選，如果提供則其他用戶可以直接使用，無需自己申請）
-    // 注意：如果使用預設 Client ID，請確保在 Google Cloud Console 中已設置正確的授權重定向 URI
-    const DEFAULT_GOOGLE_DRIVE_CLIENT_ID = ''; // 如果需要，可以在這裡填入您的 Client ID
+    // Firebase 配置
+    const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
+        authDomain: "travel-30c43.firebaseapp.com",
+        databaseURL: "https://travel-30c43-default-rtdb.firebaseio.com",
+        projectId: "travel-30c43",
+        storageBucket: "travel-30c43.firebasestorage.app",
+        messagingSenderId: "402035619902",
+        appId: "1:402035619902:web:f492adf217821c093f396f",
+        measurementId: "G-SPF452S4LR"
+    };
     
     // 預設頭像（使用 emoji 或圖示）
     const DEFAULT_AVATARS = [
@@ -4185,39 +4191,23 @@
                         <span class="form-label">上次備份</span>
                         <span id="cloudBackupLastTime" style="color: var(--text-secondary);">${settings.cloudBackupLastTime ? new Date(settings.cloudBackupLastTime).toLocaleString('zh-TW') : '尚未備份'}</span>
                     </div>
-                    <div class="form-row">
-                        <span class="form-label">Google Client ID</span>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" id="googleDriveClientId" class="form-input" placeholder="${DEFAULT_GOOGLE_DRIVE_CLIENT_ID ? '可使用預設值或輸入自己的' : '輸入您的 Google Client ID'}" value="${settings.googleDriveClientId || DEFAULT_GOOGLE_DRIVE_CLIENT_ID || ''}" style="text-align: left; flex: 1;" onchange="updateGoogleDriveClientId()">
-                            ${DEFAULT_GOOGLE_DRIVE_CLIENT_ID && !settings.googleDriveClientId ? `
-                            <button onclick="useDefaultClientId()" style="padding: 8px 12px; background: var(--color-up); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; white-space: nowrap;" title="使用預設的 Client ID">
-                                使用預設
-                            </button>
-                            ` : ''}
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                            ${DEFAULT_GOOGLE_DRIVE_CLIENT_ID ? 
-                                '可以使用預設的 Client ID（無需自己申請），或輸入您自己的 Client ID。每個用戶的備份會上傳到各自的 Google Drive。' : 
-                                '可以與他人共用同一個 Client ID，每個用戶的備份會上傳到各自的 Google Drive。如需自己申請，請前往 Google Cloud Console。'}
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <span class="form-label">Google API Key</span>
-                        <input type="text" id="googleDriveApiKey" class="form-input" placeholder="輸入您的 Google API Key（選填）" value="${settings.googleDriveApiKey || ''}" style="text-align: left;" onchange="updateGoogleDriveApiKey()">
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">API Key 用於載入 Google Drive API，如果留空會自動嘗試載入</div>
-                    </div>
                     <div class="form-row" style="margin-top: 20px;">
-                        <button onclick="authorizeGoogleDrive()" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; ${settings.googleDriveClientId ? '' : 'opacity: 0.5; cursor: not-allowed;'}" ${settings.googleDriveClientId ? '' : 'disabled'}>
-                            <i class="fab fa-google"></i> ${settings.googleDriveAccessToken ? '重新授權' : '授權 Google Drive'}
+                        <div id="firebase-login-status" style="margin-bottom: 10px; padding: 10px; background: var(--card-bg); border-radius: 8px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Firebase 登入狀態</div>
+                            <div id="firebase-user-info" style="font-size: 16px; color: var(--text-primary);">未登入</div>
+                        </div>
+                        <button id="btn-firebase-login" onclick="handleFirebaseLogin()" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                            <i class="fab fa-google"></i> Google 登入 Firebase
+                        </button>
+                        <button id="btn-firebase-logout" onclick="handleFirebaseLogout()" style="width: 100%; padding: 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none;">
+                            <i class="fas fa-sign-out-alt"></i> 登出
                         </button>
                     </div>
-                    ${settings.googleDriveAccessToken ? `
-                    <div class="form-row" style="margin-top: 10px;">
-                        <button onclick="listGoogleDriveBackups()" style="width: 100%; padding: 12px; background: var(--color-up); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    <div id="firebase-backup-actions" class="form-row" style="margin-top: 10px; display: none;">
+                        <button onclick="handleFirebaseListBackups()" style="width: 100%; padding: 12px; background: var(--color-up); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
                             <i class="fas fa-list"></i> 查看備份列表
                         </button>
                     </div>
-                    ` : ''}
                     <div class="form-row" style="margin-top: 10px;">
                         <button onclick="testCloudBackup()" style="width: 100%; padding: 12px; background: var(--color-up); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
                             <i class="fas fa-cloud-upload-alt"></i> 立即備份
@@ -4235,18 +4225,84 @@
         document.body.appendChild(modal);
         window.cloudBackupModal = modal;
         modal.style.display = 'block';
+        
+        // 初始化 Firebase UI
+        setTimeout(() => {
+            updateFirebaseUI();
+        }, 100);
     }
     
     function closeCloudBackupModal() {
         if(window.cloudBackupModal) {
             window.cloudBackupModal.style.display = 'none';
-                            setTimeout(() => {
+            setTimeout(() => {
                 if(window.cloudBackupModal && window.cloudBackupModal.parentNode) {
                     window.cloudBackupModal.parentNode.removeChild(window.cloudBackupModal);
                 }
             }, 300);
         }
     }
+    
+    // Firebase 登入/登出處理
+    async function handleFirebaseLogin() {
+        try {
+            if (window.firebaseSignIn) {
+                await window.firebaseSignIn();
+            } else {
+                alert('Firebase 功能尚未載入，請重新整理頁面');
+            }
+        } catch (error) {
+            alert('登入失敗：' + error.message);
+        }
+    }
+    
+    async function handleFirebaseLogout() {
+        try {
+            if (window.firebaseSignOut) {
+                await window.firebaseSignOut();
+                settings.cloudBackupToken = null;
+                saveSettings();
+                updateFirebaseUI();
+            }
+        } catch (error) {
+            alert('登出失敗：' + error.message);
+        }
+    }
+    
+    function handleFirebaseListBackups() {
+        if (window.firebaseListBackups) {
+            window.firebaseListBackups();
+        } else {
+            alert('Firebase 功能尚未載入，請重新整理頁面');
+        }
+    }
+    
+    function updateFirebaseUI() {
+        const userInfo = document.getElementById('firebase-user-info');
+        const loginBtn = document.getElementById('btn-firebase-login');
+        const logoutBtn = document.getElementById('btn-firebase-logout');
+        const backupActions = document.getElementById('firebase-backup-actions');
+        
+        if (window.getCurrentFirebaseUser && window.getCurrentFirebaseUser()) {
+            const user = window.getCurrentFirebaseUser();
+            if (userInfo) userInfo.textContent = `已登入：${user.displayName || user.email}`;
+            if (loginBtn) loginBtn.style.display = 'none';
+            if (logoutBtn) logoutBtn.style.display = 'block';
+            if (backupActions) backupActions.style.display = 'block';
+            settings.cloudBackupToken = 'firebase';
+            saveSettings();
+        } else {
+            if (userInfo) userInfo.textContent = '未登入';
+            if (loginBtn) loginBtn.style.display = 'block';
+            if (logoutBtn) logoutBtn.style.display = 'none';
+            if (backupActions) backupActions.style.display = 'none';
+        }
+    }
+    
+    // 監聽 Firebase 登入狀態變化
+    window.addEventListener('firebaseAuthStateChanged', (e) => {
+        updateFirebaseUI();
+    });
     
     function updateCloudBackupSetting() {
         const enabled = document.getElementById('cloudBackupEnabled').checked;
@@ -4272,6 +4328,8 @@
     function startCloudBackupTimer() {
         stopCloudBackupTimer();
         if(!settings.cloudBackupEnabled || !settings.cloudBackupToken) return;
+        // Firebase 使用自己的定時器，不需要額外的定時器
+        if(settings.cloudBackupToken === 'firebase') return;
         
         const intervalMs = (settings.cloudBackupInterval || 24) * 60 * 60 * 1000;
         cloudBackupTimer = setInterval(() => {
@@ -4304,386 +4362,7 @@
         }
     }
     
-    // 等待 Google API 載入（新版 GIS）
-    function waitForGoogleAPI() {
-        return new Promise((resolve, reject) => {
-            // 檢查 gapi 和 google.accounts 是否都已載入
-            if(window.gapi && window.gapi.load && window.google && window.google.accounts) {
-                resolve();
-                return;
-            }
-            
-            // 如果未載入，等待載入
-            let checkCount = 0;
-            const checkInterval = setInterval(() => {
-                checkCount++;
-                if(window.gapi && window.gapi.load && window.google && window.google.accounts) {
-                    clearInterval(checkInterval);
-                    resolve();
-                } else if(checkCount > 100) { // 等待最多 10 秒
-                    clearInterval(checkInterval);
-                    reject(new Error('Google API 載入超時，請確認網路連線正常'));
-                }
-            }, 100);
-        });
-    }
-    
-    // 初始化 Google API Client（新版，不包含 clientId 和 scope）
-    function initializeGoogleDriveGapi() {
-        return new Promise((resolve, reject) => {
-            if(googleDriveGapiInited) {
-                resolve();
-                return;
-            }
-            
-            window.gapi.load('client', {
-                callback: async () => {
-                    try {
-                        // 【重要】：只放 apiKey 和 discoveryDocs，不要放 clientId 或 scope
-                        await window.gapi.client.init({
-                            apiKey: settings.googleDriveApiKey || undefined, // API Key 是可選的
-                            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                        });
-                        googleDriveGapiInited = true;
-                        resolve();
-                    } catch(err) {
-                        reject(err);
-                    }
-                },
-                onerror: reject,
-                timeout: 10000,
-                ontimeout: () => reject(new Error('Google API 載入超時'))
-            });
-        });
-    }
-    
-    // 初始化 Google Identity Services
-    function initializeGoogleDriveGIS() {
-        if(googleDriveGisInited && googleDriveTokenClient) {
-            return;
-        }
-        
-        if(!window.google || !window.google.accounts) {
-            throw new Error('Google Identity Services 未載入');
-        }
-        
-        // 【重要】：clientId 和 scope 只在這裡設定
-        googleDriveTokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: settings.googleDriveClientId,
-            scope: 'https://www.googleapis.com/auth/drive.file',
-            callback: '' // 在點擊授權時動態定義
-        });
-        
-        googleDriveGisInited = true;
-    }
-    
-    function updateGoogleDriveClientId() {
-        const clientIdInput = document.getElementById('googleDriveClientId');
-        if(!clientIdInput) return;
-        
-        let clientId = clientIdInput.value.trim();
-        // 如果為空且有意設值，使用預設值
-        if(!clientId && DEFAULT_GOOGLE_DRIVE_CLIENT_ID) {
-            clientId = DEFAULT_GOOGLE_DRIVE_CLIENT_ID;
-            clientIdInput.value = clientId;
-        }
-        
-        settings.googleDriveClientId = clientId;
-        saveSettings();
-        
-        const authBtn = event?.target?.closest('.form-group')?.querySelector('button[onclick="authorizeGoogleDrive()"]') || 
-                        document.querySelector('button[onclick="authorizeGoogleDrive()"]');
-        if(authBtn) {
-            if(clientId) {
-                authBtn.style.opacity = '1';
-                authBtn.style.cursor = 'pointer';
-                authBtn.disabled = false;
-            } else {
-                authBtn.style.opacity = '0.5';
-                authBtn.style.cursor = 'not-allowed';
-                authBtn.disabled = true;
-            }
-        }
-    }
-    
-    function useDefaultClientId() {
-        if(!DEFAULT_GOOGLE_DRIVE_CLIENT_ID) {
-            alert('沒有設定預設的 Client ID');
-            return;
-        }
-        
-        const clientIdInput = document.getElementById('googleDriveClientId');
-        if(clientIdInput) {
-            clientIdInput.value = DEFAULT_GOOGLE_DRIVE_CLIENT_ID;
-            settings.googleDriveClientId = DEFAULT_GOOGLE_DRIVE_CLIENT_ID;
-            saveSettings();
-            
-            // 更新授權按鈕狀態
-            const authBtn = document.querySelector('button[onclick="authorizeGoogleDrive()"]');
-            if(authBtn) {
-                authBtn.style.opacity = '1';
-                authBtn.style.cursor = 'pointer';
-                authBtn.disabled = false;
-            }
-            
-            // 移除「使用預設」按鈕
-            const defaultBtn = document.querySelector('button[onclick="useDefaultClientId()"]');
-            if(defaultBtn) {
-                defaultBtn.remove();
-            }
-        }
-    }
-    
-    function updateGoogleDriveApiKey() {
-        const apiKey = document.getElementById('googleDriveApiKey').value.trim();
-        settings.googleDriveApiKey = apiKey;
-        saveSettings();
-    }
-    
-    // Google Identity Services 相關變數
-    let googleDriveTokenClient = null;
-    let googleDriveGapiInited = false;
-    let googleDriveGisInited = false;
-    
-    async function authorizeGoogleDrive() {
-        // 如果沒有設置 Client ID，嘗試使用預設值
-        if(!settings.googleDriveClientId && DEFAULT_GOOGLE_DRIVE_CLIENT_ID) {
-            settings.googleDriveClientId = DEFAULT_GOOGLE_DRIVE_CLIENT_ID;
-            saveSettings();
-        }
-        
-        if(!settings.googleDriveClientId) {
-            alert('請先輸入 Google Client ID 或使用預設值');
-            return;
-        }
-        
-        try {
-            // 等待 Google API 載入
-            await waitForGoogleAPI();
-            
-            // 初始化 Google API Client（新版，不包含 clientId 和 scope）
-            await initializeGoogleDriveGapi();
-            
-            // 初始化 Google Identity Services
-            initializeGoogleDriveGIS();
-            
-            // 設定 token 回調
-            googleDriveTokenClient.callback = async (resp) => {
-                if(resp.error !== undefined) {
-                    throw resp;
-                }
-                
-                // 手動將 token 設置到 gapi.client
-                window.gapi.client.setToken(resp);
-                
-                // 保存 token 資訊
-                settings.googleDriveAccessToken = resp.access_token;
-                if(resp.refresh_token) {
-                    settings.googleDriveRefreshToken = resp.refresh_token;
-                }
-                settings.cloudBackupToken = 'google_drive';
-                settings.googleDriveTokenExpiry = Date.now() + (resp.expires_in * 1000);
-                saveSettings();
-                
-                alert('Google Drive 授權成功！');
-                if(window.cloudBackupModal) {
-                    closeCloudBackupModal();
-                    setTimeout(() => setupCloudBackup(), 300);
-                }
-            };
-            
-            // 請求 access token
-            // 如果沒有 refresh token，強制要求 consent 以獲得 refresh token
-            // 如果有 refresh token 但 token 已過期，先嘗試刷新
-            if(!settings.googleDriveRefreshToken) {
-                // 沒有 refresh token，強制要求 consent 以獲得 refresh token
-                googleDriveTokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                // 有 refresh token，檢查 token 是否過期
-                if(settings.googleDriveTokenExpiry && Date.now() >= settings.googleDriveTokenExpiry - 60000) {
-                    // Token 即將過期或已過期，先嘗試刷新
-                    const refreshedToken = await refreshGoogleDriveToken();
-                    if(refreshedToken) {
-                        // 刷新成功
-                        settings.cloudBackupToken = 'google_drive';
-                        saveSettings();
-                        alert('Google Drive 授權已更新！');
-                        if(window.cloudBackupModal) {
-                            closeCloudBackupModal();
-                            setTimeout(() => setupCloudBackup(), 300);
-                        }
-                    } else {
-                        // 刷新失敗，需要重新授權
-                        googleDriveTokenClient.requestAccessToken({prompt: 'consent'});
-                    }
-                } else {
-                    // Token 仍然有效，直接使用
-                    settings.cloudBackupToken = 'google_drive';
-                    saveSettings();
-                    alert('Google Drive 已授權！');
-                    if(window.cloudBackupModal) {
-                        closeCloudBackupModal();
-                        setTimeout(() => setupCloudBackup(), 300);
-                    }
-                }
-            }
-        } catch(err) {
-            console.error('Google Drive 初始化失敗:', err);
-            
-            // 檢查是否是 origin 未註冊的錯誤
-            if(err.error === 'idpiframe_initialization_failed' || err.details?.includes('has not been registered')) {
-                const currentOrigin = window.location.origin;
-                const clientId = settings.googleDriveClientId;
-                
-                // 構建 Google Cloud Console 的直接連結
-                const consoleUrl = `https://console.cloud.google.com/apis/credentials?project=${clientId ? '&authuser=0' : ''}`;
-                
-                // 顯示詳細的錯誤對話框
-                const errorModal = document.createElement('div');
-                errorModal.className = 'modal';
-                errorModal.style.zIndex = '3002';
-                errorModal.innerHTML = `
-                    <div class="modal-content-wrapper" style="max-width: 500px; padding: 20px;">
-                        <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px;">
-                            <i class="fas fa-exclamation-triangle" style="color: #ff9500; margin-right: 8px;"></i>
-                            需要註冊網址
-                        </div>
-                        <div style="color: var(--text-primary); margin-bottom: 20px; line-height: 1.6;">
-                            <p>當前網址 <strong>${currentOrigin}</strong> 尚未在 Google Cloud Console 中註冊。</p>
-                            <p>請按照以下步驟完成設定：</p>
-                        </div>
-                        <div style="background: var(--card-bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; line-height: 1.8;">
-                            <div style="margin-bottom: 12px;"><strong>步驟 1：</strong> 前往 Google Cloud Console</div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 2：</strong> 選擇您的專案</div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 3：</strong> 前往「API 和服務」→「憑證」</div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 4：</strong> 點擊您的 OAuth 2.0 客戶端 ID</div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 5：</strong> 在「授權的 JavaScript 來源」中添加：</div>
-                            <div style="background: var(--bg-color); padding: 8px; border-radius: 4px; margin: 8px 0; font-family: monospace; word-break: break-all;">
-                                ${currentOrigin}
-                            </div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 6：</strong> 在「授權的重新導向 URI」中添加：</div>
-                            <div style="background: var(--bg-color); padding: 8px; border-radius: 4px; margin: 8px 0; font-family: monospace; word-break: break-all;">
-                                ${currentOrigin}
-                            </div>
-                            <div style="margin-bottom: 12px;"><strong>步驟 7：</strong> 點擊「儲存」</div>
-                            <div><strong>步驟 8：</strong> 等待 1-2 分鐘讓設定生效，然後重新嘗試授權</div>
-                        </div>
-                        <div style="display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="window.open('${consoleUrl}', '_blank')" style="padding: 12px 24px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                                <i class="fab fa-google"></i> 打開 Google Cloud Console
-                            </button>
-                            <button onclick="this.closest('.modal').remove()" style="padding: 12px 24px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                                關閉
-                            </button>
-                        </div>
-                    </div>
-                `;
-                errorModal.onclick = (e) => {
-                    if(e.target === errorModal) errorModal.remove();
-                };
-                document.body.appendChild(errorModal);
-                errorModal.style.display = 'block';
-            } else {
-                let errorMsg = '初始化失敗：' + (err.message || err.error || '未知錯誤');
-                if(err.details) {
-                    errorMsg += '\n\n詳細資訊：' + err.details;
-                }
-                alert(errorMsg);
-            }
-        }
-    }
-    
-    async function refreshGoogleDriveToken() {
-        if(!settings.googleDriveRefreshToken) {
-            console.log('沒有 refresh token，無法刷新');
-            return null;
-        }
-        
-        try {
-            const response = await fetch('https://oauth2.googleapis.com/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    client_id: settings.googleDriveClientId,
-                    refresh_token: settings.googleDriveRefreshToken,
-                    grant_type: 'refresh_token'
-                })
-            });
-            
-            const data = await response.json();
-            if(data.error) {
-                console.error('刷新 token 失敗:', data.error, data.error_description);
-                // 如果 refresh token 無效，清除它
-                if(data.error === 'invalid_grant') {
-                    settings.googleDriveRefreshToken = null;
-                    settings.googleDriveAccessToken = null;
-                    settings.googleDriveTokenExpiry = null;
-                    saveSettings();
-                }
-                return null;
-            }
-            
-            if(data.access_token) {
-                settings.googleDriveAccessToken = data.access_token;
-                settings.googleDriveTokenExpiry = Date.now() + (data.expires_in * 1000);
-                // 如果返回了新的 refresh token，更新它
-                if(data.refresh_token) {
-                    settings.googleDriveRefreshToken = data.refresh_token;
-                }
-                saveSettings();
-                
-                // 更新 gapi.client 的 token
-                if(window.gapi?.client) {
-                    window.gapi.client.setToken({
-                        access_token: data.access_token,
-                        expires_in: data.expires_in
-                    });
-                }
-                
-                console.log('Token 刷新成功');
-                return data.access_token;
-            }
-        } catch(err) {
-            console.error('刷新 token 失敗:', err);
-        }
-        return null;
-    }
-    
-    async function getGoogleDriveAccessToken() {
-        // 檢查 token 是否過期或即將過期（提前 5 分鐘刷新）
-        const expiryBuffer = 5 * 60 * 1000; // 5 分鐘
-        if(!settings.googleDriveTokenExpiry || Date.now() >= settings.googleDriveTokenExpiry - expiryBuffer) {
-            // Token 已過期或即將過期，嘗試刷新
-            if(settings.googleDriveRefreshToken) {
-                const refreshedToken = await refreshGoogleDriveToken();
-                if(refreshedToken) {
-                    return refreshedToken;
-                }
-            }
-            
-            // 如果刷新失敗或沒有 refresh token，嘗試從 gapi.client 獲取
-            const existingToken = window.gapi?.client?.getToken();
-            if(existingToken && existingToken.access_token) {
-                // 檢查 gapi token 是否有效
-                const gapiExpiry = existingToken.expires_at || (existingToken.expires_in ? Date.now() + existingToken.expires_in * 1000 : null);
-                if(!gapiExpiry || Date.now() < gapiExpiry - expiryBuffer) {
-                    return existingToken.access_token;
-                }
-            }
-            
-            // 如果都沒有，返回保存的 token（可能已過期，但讓調用者處理錯誤）
-            return settings.googleDriveAccessToken;
-        }
-        
-        // Token 仍然有效，先從 gapi.client 獲取
-        const gapiToken = window.gapi?.client?.getToken();
-        if(gapiToken && gapiToken.access_token) {
-            return gapiToken.access_token;
-        }
-        
-        // 如果 gapi 沒有 token，返回保存的 token
-        return settings.googleDriveAccessToken;
-    }
+    // Google Drive 相關函數已完全移除，改用 Firebase
     
     async function performCloudBackup() {
         if(!settings.cloudBackupEnabled) return;
@@ -4710,9 +4389,15 @@
                 settings.cloudBackupLastTime = new Date().toISOString();
                 saveSettings();
                 console.log('雲端備份完成（本地）:', filename);
-            } else if(settings.cloudBackupToken === 'google_drive') {
-                // 完整版本：上傳到 Google Drive
-                await uploadToGoogleDrive(jsonStr, filename);
+            } else if(settings.cloudBackupToken === 'firebase') {
+                // Firebase 備份
+                if (window.firebasePerformBackup) {
+                    await window.firebasePerformBackup(jsonStr, false);
+                    settings.cloudBackupLastTime = new Date().toISOString();
+                    saveSettings();
+                } else {
+                    throw new Error('Firebase 功能尚未載入，請重新整理頁面');
+                }
             }
         } catch(e) {
             console.error('雲端備份失敗:', e);
@@ -4747,222 +4432,7 @@
         };
     }
     
-    async function uploadToGoogleDrive(jsonStr, filename, retryCount = 0) {
-        const accessToken = await getGoogleDriveAccessToken();
-        if(!accessToken) {
-            throw new Error('無法獲取有效的訪問令牌，請重新授權');
-        }
-        
-        // 由於檔名包含日期和時間，每個備份都是新文件，不需要檢查同名文件
-        const metadata = {
-            name: filename,
-            mimeType: 'application/json'
-        };
-        
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', new Blob([jsonStr], { type: 'application/json' }));
-        
-        // 創建新文件（檔名包含時間，不會重複）
-        const url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: form
-        });
-        
-        if(!response.ok) {
-            // 如果是 401 未授權錯誤且還有 refresh token，嘗試刷新並重試
-            if(response.status === 401 && settings.googleDriveRefreshToken && retryCount === 0) {
-                console.log('Token 無效，嘗試刷新...');
-                const refreshedToken = await refreshGoogleDriveToken();
-                if(refreshedToken) {
-                    // 刷新成功，重試一次
-                    return uploadToGoogleDrive(jsonStr, filename, 1);
-                }
-            }
-            
-            const error = await response.json().catch(() => ({ error: { message: '上傳失敗' } }));
-            throw new Error(error.error?.message || '上傳失敗');
-        }
-        
-        const file = await response.json();
-        settings.cloudBackupLastTime = new Date().toISOString();
-        saveSettings();
-        console.log('Google Drive 備份完成:', file.name);
-        return file;
-    }
-    
-    async function findGoogleDriveFile(filename, retryCount = 0) {
-        const accessToken = await getGoogleDriveAccessToken();
-        if(!accessToken) return null;
-        
-        try {
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(filename)}'&fields=files(id,name)`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                }
-            );
-            
-            if(response.ok) {
-                const data = await response.json();
-                return data.files && data.files.length > 0 ? data.files[0] : null;
-            }
-            
-            // 如果是 401 未授權錯誤且還有 refresh token，嘗試刷新並重試
-            if(response.status === 401 && settings.googleDriveRefreshToken && retryCount === 0) {
-                console.log('Token 無效，嘗試刷新...');
-                const refreshedToken = await refreshGoogleDriveToken();
-                if(refreshedToken) {
-                    // 刷新成功，重試一次
-                    return findGoogleDriveFile(filename, 1);
-                }
-            }
-        } catch(err) {
-            console.error('查找文件失敗:', err);
-        }
-        return null;
-    }
-    
-    async function listGoogleDriveBackups(retryCount = 0) {
-        const accessToken = await getGoogleDriveAccessToken();
-        if(!accessToken) {
-            alert('無法獲取訪問令牌，請重新授權');
-            return;
-        }
-        
-        try {
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q=name contains 'my_assets_backup'&orderBy=createdTime desc&fields=files(id,name,createdTime,size)`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                }
-            );
-            
-            if(!response.ok) {
-                // 如果是 401 未授權錯誤且還有 refresh token，嘗試刷新並重試
-                if(response.status === 401 && settings.googleDriveRefreshToken && retryCount === 0) {
-                    console.log('Token 無效，嘗試刷新...');
-                    const refreshedToken = await refreshGoogleDriveToken();
-                    if(refreshedToken) {
-                        // 刷新成功，重試一次
-                        return listGoogleDriveBackups(1);
-                    }
-                }
-                throw new Error('獲取備份列表失敗');
-            }
-            
-            const data = await response.json();
-            const backups = data.files || [];
-            
-            if(backups.length === 0) {
-                alert('尚未有備份文件');
-                return;
-            }
-            
-            // 顯示備份列表
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.zIndex = '3001';
-            modal.innerHTML = `
-                <div class="modal-content-wrapper" style="max-width: 500px; padding: 20px; max-height: 80vh; overflow-y: auto;">
-                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px;">備份列表</div>
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        ${backups.map(backup => `
-                            <div style="padding: 12px; margin-bottom: 8px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">${backup.name}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                                        ${new Date(backup.createdTime).toLocaleString('zh-TW')}
-                                    </div>
-                                </div>
-                                <button onclick="restoreFromGoogleDrive('${backup.id}', '${backup.name}')" style="padding: 8px 16px; background: var(--color-up); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                                    還原
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; cursor: pointer;">關閉</button>
-                    </div>
-                </div>
-            `;
-            modal.onclick = (e) => {
-                if(e.target === modal) modal.remove();
-            };
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
-        } catch(err) {
-            alert('獲取備份列表失敗：' + err.message);
-        }
-    }
-    
-    async function restoreFromGoogleDrive(fileId, filename, retryCount = 0) {
-        if(!confirm(`確定要還原備份「${filename}」嗎？這將覆蓋現有的所有資料。`)) return;
-        
-        const accessToken = await getGoogleDriveAccessToken();
-        if(!accessToken) {
-            alert('無法獲取訪問令牌，請重新授權');
-            return;
-        }
-        
-        try {
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                }
-            );
-            
-            if(!response.ok) {
-                // 如果是 401 未授權錯誤且還有 refresh token，嘗試刷新並重試
-                if(response.status === 401 && settings.googleDriveRefreshToken && retryCount === 0) {
-                    console.log('Token 無效，嘗試刷新...');
-                    const refreshedToken = await refreshGoogleDriveToken();
-                    if(refreshedToken) {
-                        // 刷新成功，重試一次
-                        return restoreFromGoogleDrive(fileId, filename, 1);
-                    }
-                }
-                throw new Error('下載備份失敗');
-            }
-            
-            const jsonStr = await response.text();
-            const data = JSON.parse(jsonStr);
-            
-            // 使用現有的匯入邏輯
-            if(data.version === '2.0' && data.users && data.usersData) {
-                localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(data.users));
-                Object.keys(data.usersData).forEach(userId => {
-                    const userData = data.usersData[userId];
-                                    localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
-                                    localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
-                                    if(userData.journal !== undefined) {
-                                        localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
-                                    }
-                                    if(userData.fixedTransfers !== undefined) {
-                                        localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
-                                    }
-                                });
-                alert('還原成功！頁面將重新載入。');
-                                setTimeout(() => location.reload(), 500);
-                        } else {
-                alert('備份文件格式錯誤');
-                        }
-                } catch(err) {
-            alert('還原失敗：' + err.message);
-        }
-    }
+    // Google Drive 相關函數已完全移除，改用 Firebase
     
     async function testCloudBackup() {
         const btn = event.target;
@@ -12460,6 +11930,272 @@
     }
     
     init();
+</script>
+
+<script type="module">
+    // Firebase 初始化
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
+        authDomain: "travel-30c43.firebaseapp.com",
+        databaseURL: "https://travel-30c43-default-rtdb.firebaseio.com",
+        projectId: "travel-30c43",
+        storageBucket: "travel-30c43.firebasestorage.app",
+        messagingSenderId: "402035619902",
+        appId: "1:402035619902:web:f492adf217821c093f396f",
+        measurementId: "G-SPF452S4LR"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentFirebaseUser = null;
+
+    // 將 Firebase 功能暴露到全域
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseSignIn = () => signInWithPopup(auth, new GoogleAuthProvider());
+    window.firebaseSignOut = () => signOut(auth);
+    window.getCurrentFirebaseUser = () => currentFirebaseUser;
+
+    // 監聽登入狀態
+    onAuthStateChanged(auth, (user) => {
+        currentFirebaseUser = user;
+        if (user) {
+            window.firebaseUserLoggedIn = true;
+            // 觸發自訂事件通知主程式
+            window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
+        } else {
+            window.firebaseUserLoggedIn = false;
+            window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: null } }));
+        }
+    });
+
+    // 備份功能
+    window.firebasePerformBackup = async function(jsonStr, isAuto = false) {
+        if (!currentFirebaseUser) {
+            throw new Error('請先登入 Firebase');
+        }
+
+        try {
+            // 如果沒有傳入 jsonStr，從 localStorage 生成
+            if (!jsonStr) {
+                const allUsersData = {};
+                const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
+                users.forEach(user => {
+                    const userDataKey = `my_assets_stable_data_${user.id}`;
+                    const userSettingsKey = `my_assets_stable_settings_${user.id}`;
+                    const userJournalKey = `my_assets_journal_${user.id}`;
+                    const userFixedTransfersKey = `my_assets_fixed_transfers_${user.id}`;
+                    const userAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                    const userSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+                    const userJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
+                    const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+                    allUsersData[user.id] = {
+                        user: user,
+                        data: userAccounts,
+                        settings: userSettings,
+                        journal: userJournal,
+                        fixedTransfers: userFixedTransfers
+                    };
+                });
+
+                const backupData = {
+                    version: '2.0',
+                    users: users,
+                    usersData: allUsersData,
+                    exportDate: new Date().toISOString()
+                };
+
+                jsonStr = JSON.stringify(backupData);
+            }
+
+            if (!jsonStr || jsonStr.length === 0) {
+                if (isAuto) return;
+                throw new Error('沒有資料可備份');
+            }
+
+            // 準備寫入 backups 集合
+            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
+            const newBackupData = {
+                backupTime: Timestamp.now(),
+                jsonData: jsonStr
+            };
+
+            // 檢查數量限制 (Rolling Logic)
+            const q = query(backupsRef, orderBy("backupTime", "asc"));
+            const backupSnapshot = await getDocs(q);
+
+            const MAX_BACKUPS = 10;
+            if (backupSnapshot.size >= MAX_BACKUPS) {
+                const deleteCount = backupSnapshot.size - MAX_BACKUPS + 1;
+                for (let i = 0; i < deleteCount; i++) {
+                    const docToDelete = backupSnapshot.docs[i];
+                    await deleteDoc(docToDelete.ref);
+                }
+            }
+
+            // 寫入新備份
+            await addDoc(backupsRef, newBackupData);
+            console.log("Firebase 備份完成");
+            if (!isAuto) alert("備份已建立！");
+        } catch (error) {
+            console.error("Firebase 備份失敗", error);
+            if (!isAuto) alert("備份失敗: " + error.message);
+            throw error;
+        }
+    };
+
+    // 列出備份
+    window.firebaseListBackups = async function() {
+        if (!currentFirebaseUser) {
+            alert('請先登入 Firebase');
+            return;
+        }
+
+        try {
+            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
+            const q = query(backupsRef, orderBy("backupTime", "desc"));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                alert('尚未有備份文件');
+                return;
+            }
+
+            const backups = [];
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                backups.push({
+                    id: docSnap.id,
+                    name: `備份 ${new Date(data.backupTime.toDate()).toLocaleString('zh-TW')}`,
+                    createdTime: data.backupTime.toDate().toISOString(),
+                    backupTime: data.backupTime
+                });
+            });
+
+            // 顯示備份列表
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.zIndex = '3001';
+            modal.innerHTML = `
+                <div class="modal-content-wrapper" style="max-width: 500px; padding: 20px; max-height: 80vh; overflow-y: auto;">
+                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px;">備份列表</div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${backups.map((backup, index) => `
+                            <div style="padding: 12px; margin-bottom: 8px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary);">備份 #${index + 1}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        ${new Date(backup.createdTime).toLocaleString('zh-TW')}
+                                    </div>
+                                </div>
+                                <button onclick="window.firebaseRestoreBackup('${backup.id}')" style="padding: 8px 16px; background: var(--color-up); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                    還原
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; cursor: pointer;">關閉</button>
+                    </div>
+                </div>
+            `;
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        } catch (err) {
+            alert('獲取備份列表失敗：' + err.message);
+        }
+    };
+
+    // 還原備份
+    window.firebaseRestoreBackup = async function(backupId) {
+        if (!currentFirebaseUser) {
+            alert('請先登入 Firebase');
+            return;
+        }
+
+        if (!confirm('確定要還原此備份嗎？這將覆蓋現有的所有資料。')) return;
+
+        try {
+            const targetBackupRef = doc(db, "users", currentFirebaseUser.uid, "backups", backupId);
+            const snap = await getDoc(targetBackupRef);
+
+            if (!snap.exists()) {
+                alert("備份檔不存在");
+                return;
+            }
+
+            const jsonStr = snap.data().jsonData;
+            const data = JSON.parse(jsonStr);
+
+            // 使用現有的匯入邏輯
+            if (data.version === '2.0' && data.users && data.usersData) {
+                localStorage.setItem('my_assets_users', JSON.stringify(data.users));
+                Object.keys(data.usersData).forEach(userId => {
+                    const userData = data.usersData[userId];
+                    localStorage.setItem(`my_assets_stable_data_${userId}`, JSON.stringify(userData.data || []));
+                    localStorage.setItem(`my_assets_stable_settings_${userId}`, JSON.stringify(userData.settings || {}));
+                    if (userData.journal !== undefined) {
+                        localStorage.setItem(`my_assets_journal_${userId}`, JSON.stringify(userData.journal || []));
+                    }
+                    if (userData.fixedTransfers !== undefined) {
+                        localStorage.setItem(`my_assets_fixed_transfers_${userId}`, JSON.stringify(userData.fixedTransfers || []));
+                    }
+                });
+                alert('還原成功！頁面將重新載入。');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                alert('備份文件格式錯誤');
+            }
+        } catch (err) {
+            alert('還原失敗：' + err.message);
+        }
+    };
+
+    // 自動檢查與備份
+    window.firebaseCheckAndAutoBackup = async function() {
+        if (!currentFirebaseUser) return;
+
+        const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
+        const q = query(backupsRef, orderBy("backupTime", "desc"), limit(1));
+        const snapshot = await getDocs(q);
+
+        let shouldBackup = false;
+        if (snapshot.empty) {
+            shouldBackup = true;
+        } else {
+            const lastTime = snapshot.docs[0].data().backupTime.toDate();
+            const now = new Date();
+            const diffHours = (now - lastTime) / (1000 * 60 * 60);
+
+            if (diffHours >= 1) {
+                shouldBackup = true;
+            }
+        }
+
+        if (shouldBackup) {
+            try {
+                await window.firebasePerformBackup(null, true);
+            } catch (e) {
+                console.error('自動備份失敗:', e);
+            }
+        }
+    };
+
+    // 定時器：每分鐘檢查一次是否該備份了
+    setInterval(() => {
+        if (window.firebaseUserLoggedIn) {
+            window.firebaseCheckAndAutoBackup();
+        }
+    }, 60 * 1000);
 </script>
 </body>
 </html>
