@@ -4109,12 +4109,20 @@
     }
     function saveData() { 
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts)); 
+        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        // 同步到 Firestore
+        if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
+            window.syncAccountsToFirestore(accounts);
+        }
     }
     
     function saveSettings() {
         const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
         localStorage.setItem(userSettingsKey, JSON.stringify(settings));
+        // 同步到 Firestore
+        if (window.syncSettingsToFirestore && window.firebaseUserLoggedIn) {
+            window.syncSettingsToFirestore(settings);
+        }
     }
     function updateOrder(type,container){ let ids=Array.from(container.children).map(c=>parseInt(c.getAttribute('data-id'))); ids.forEach((id,idx)=>{ let a=accounts.find(x=>x.id===id); if(a)a.order=idx; }); saveData(); }
     function setApiKey(t) { if(t==='finnhub'){const k=prompt("Finnhub Key:", settings.apiKey);if(k)settings.apiKey=k.trim();} else if(t==='fugle'){const k=prompt("Fugle Key:", settings.fugleKey);if(k)settings.fugleKey=k.trim();} else {const k=prompt("Gemini Key:", settings.geminiKey);if(k)settings.geminiKey=k.trim();} saveSettings(); refreshAllData(); }
@@ -4299,6 +4307,20 @@
     // 監聽 Firebase 登入狀態變化
     window.addEventListener('firebaseAuthStateChanged', (e) => {
         updateFirebaseUI();
+    });
+    
+    // 監聽 Firebase 資料載入完成事件
+    window.addEventListener('firebaseDataLoaded', () => {
+        // 重新載入資料並渲染
+        if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+            const userData = loadUserData(currentUserId);
+            if (userData) {
+                accounts = userData.accounts;
+                settings = userData.settings;
+                renderAssets();
+                updateChartData();
+            }
+        }
     });
     
     function updateCloudBackupSetting() {
@@ -8803,6 +8825,10 @@
         clearJournalDatesCache();
         try {
             localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
+            // 同步到 Firestore
+            if (window.syncJournalToFirestore && window.firebaseUserLoggedIn) {
+                window.syncJournalToFirestore(records);
+            }
         } catch(e) {
             console.error('Failed to save journal records:', e);
         }
@@ -11933,7 +11959,7 @@
     // Firebase 初始化
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
@@ -11966,6 +11992,13 @@
     window.firebaseSignOut = () => signOut(auth);
     window.getCurrentFirebaseUser = () => currentFirebaseUser;
 
+    // Firestore 同步相關變數
+    let firestoreSyncEnabled = false;
+    let accountsUnsubscribe = null;
+    let journalUnsubscribe = null;
+    let settingsUnsubscribe = null;
+    let isSyncingFromFirestore = false; // 防止同步循環
+
     // 監聽登入狀態
     onAuthStateChanged(auth, (user) => {
         currentFirebaseUser = user;
@@ -11973,52 +12006,219 @@
             window.firebaseUserLoggedIn = true;
             // 觸發自訂事件通知主程式
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
-            // 登入後自動檢查並還原最新備份
-            checkAndAutoRestore();
+            // 登入後從 Firestore 載入資料
+            loadDataFromFirestore();
+            // 啟動 Firestore 同步監聽
+            startFirestoreSync();
         } else {
             window.firebaseUserLoggedIn = false;
+            // 停止 Firestore 同步監聽
+            stopFirestoreSync();
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: null } }));
         }
     });
     
-    // 自動檢查並還原最新備份
-    async function checkAndAutoRestore() {
+    // 從 Firestore 載入資料
+    async function loadDataFromFirestore() {
         if (!currentFirebaseUser) return;
         
         try {
-            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
-            const q = query(backupsRef, orderBy("backupTime", "desc"), limit(1));
-            const snapshot = await getDocs(q);
+            isSyncingFromFirestore = true;
+            let dataLoaded = false;
             
-            if (!snapshot.empty) {
-                // 有備份，檢查 localStorage 是否有資料
-                const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
-                let hasData = false;
-                
-                if (users.length > 0) {
-                    // 檢查是否有任何使用者的資料
-                    for (const user of users) {
-                        const userDataKey = `my_assets_stable_data_${user.id}`;
-                        const data = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                        if (data.length > 0) {
-                            hasData = true;
-                            break;
-                        }
-                    }
+            // 檢查 Firestore 是否有 accounts 資料
+            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+            const accountsSnap = await getDoc(accountsRef);
+            const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
+            const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+            
+            if (accountsSnap.exists()) {
+                const firestoreAccounts = accountsSnap.data().accounts || [];
+                if (firestoreAccounts.length > 0) {
+                    // Firestore 有資料，使用 Firestore 的資料
+                    localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
+                    dataLoaded = true;
+                } else if (localAccounts.length > 0) {
+                    // Firestore 沒有資料，但 localStorage 有資料，上傳到 Firestore
+                    console.log('Firestore 無資料，將 localStorage 資料上傳到 Firestore');
+                    await window.syncAccountsToFirestore(localAccounts);
                 }
-                
-                // 如果 localStorage 沒有資料，自動還原最新備份
-                if (!hasData) {
-                    const latestBackup = snapshot.docs[0];
-                    const backupId = latestBackup.id;
-                    console.log('檢測到 localStorage 無資料，自動還原最新備份...');
-                    await window.firebaseRestoreBackup(backupId);
-                }
+            } else if (localAccounts.length > 0) {
+                // Firestore 不存在，但 localStorage 有資料，上傳到 Firestore
+                console.log('Firestore 不存在，將 localStorage 資料上傳到 Firestore');
+                await window.syncAccountsToFirestore(localAccounts);
             }
+            
+            // 檢查 Firestore 是否有 journal 資料
+            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+            const journalSnap = await getDoc(journalRef);
+            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
+            const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
+            
+            if (journalSnap.exists()) {
+                const firestoreJournal = journalSnap.data().records || [];
+                if (firestoreJournal.length > 0) {
+                    localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                } else if (localJournal.length > 0) {
+                    await window.syncJournalToFirestore(localJournal);
+                }
+            } else if (localJournal.length > 0) {
+                await window.syncJournalToFirestore(localJournal);
+            }
+            
+            // 檢查 Firestore 是否有 settings 資料
+            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+            const settingsSnap = await getDoc(settingsRef);
+            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
+            const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+            
+            if (settingsSnap.exists()) {
+                const firestoreSettings = settingsSnap.data().settings || {};
+                // 合併設定（優先使用 Firestore，但保留本地的重要設定）
+                const mergedSettings = { ...localSettings, ...firestoreSettings };
+                localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                if (Object.keys(firestoreSettings).length > 0) {
+                    await window.syncSettingsToFirestore(mergedSettings);
+                }
+            } else if (Object.keys(localSettings).length > 0) {
+                await window.syncSettingsToFirestore(localSettings);
+            }
+            
+            // 如果有載入資料，觸發重新載入和渲染
+            if (dataLoaded) {
+                // 觸發自訂事件通知主程式重新載入資料
+                window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
+            }
+            
+            console.log('從 Firestore 載入資料完成');
         } catch (err) {
-            console.error('自動還原檢查失敗:', err);
+            console.error('從 Firestore 載入資料失敗:', err);
+        } finally {
+            isSyncingFromFirestore = false;
         }
     }
+    
+    // 啟動 Firestore 同步監聽
+    function startFirestoreSync() {
+        if (!currentFirebaseUser || firestoreSyncEnabled) return;
+        
+        firestoreSyncEnabled = true;
+        
+        // 監聽 accounts 變化
+        const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+        accountsUnsubscribe = onSnapshot(accountsRef, (snap) => {
+            if (isSyncingFromFirestore) return; // 避免循環同步
+            if (snap.exists()) {
+                const firestoreAccounts = snap.data().accounts || [];
+                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
+                const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                
+                // 檢查是否有變化（簡單比較長度，實際應該更精確）
+                if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                    localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
+                    if (typeof loadUserData === 'function') {
+                        loadUserData();
+                    }
+                }
+            }
+        });
+        
+        // 監聽 journal 變化
+        const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+        journalUnsubscribe = onSnapshot(journalRef, (snap) => {
+            if (isSyncingFromFirestore) return;
+            if (snap.exists()) {
+                const firestoreJournal = snap.data().records || [];
+                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
+                const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
+                
+                if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                    localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                }
+            }
+        });
+        
+        // 監聽 settings 變化
+        const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+        settingsUnsubscribe = onSnapshot(settingsRef, (snap) => {
+            if (isSyncingFromFirestore) return;
+            if (snap.exists()) {
+                const firestoreSettings = snap.data().settings || {};
+                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
+                const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+                const mergedSettings = { ...currentSettings, ...firestoreSettings };
+                localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                if (typeof loadUserData === 'function') {
+                    loadUserData();
+                }
+            }
+        });
+        
+        console.log('Firestore 同步監聽已啟動');
+    }
+    
+    // 停止 Firestore 同步監聽
+    function stopFirestoreSync() {
+        if (accountsUnsubscribe) {
+            accountsUnsubscribe();
+            accountsUnsubscribe = null;
+        }
+        if (journalUnsubscribe) {
+            journalUnsubscribe();
+            journalUnsubscribe = null;
+        }
+        if (settingsUnsubscribe) {
+            settingsUnsubscribe();
+            settingsUnsubscribe = null;
+        }
+        firestoreSyncEnabled = false;
+        console.log('Firestore 同步監聽已停止');
+    }
+    
+    // 同步 accounts 到 Firestore
+    window.syncAccountsToFirestore = async function(accountsData) {
+        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        
+        try {
+            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+            await setDoc(accountsRef, {
+                accounts: accountsData,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+        } catch (err) {
+            console.error('同步 accounts 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步 journal 到 Firestore
+    window.syncJournalToFirestore = async function(records) {
+        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        
+        try {
+            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+            await setDoc(journalRef, {
+                records: records,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+        } catch (err) {
+            console.error('同步 journal 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步 settings 到 Firestore
+    window.syncSettingsToFirestore = async function(settingsData) {
+        if (!currentFirebaseUser || isSyncingFromFirestore) return;
+        
+        try {
+            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+            await setDoc(settingsRef, {
+                settings: settingsData,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+        } catch (err) {
+            console.error('同步 settings 到 Firestore 失敗:', err);
+        }
+    };
 
     // 備份功能
     window.firebasePerformBackup = async function(jsonStr, isAuto = false) {
