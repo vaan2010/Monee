@@ -2166,7 +2166,7 @@
         }
     }
 
-    let { accounts, settings } = loadUserData(currentUserId);
+    var { accounts, settings } = loadUserData(currentUserId);
     
     // 分頁顯示設置（預設全部顯示）
     let pageVisibility = JSON.parse(localStorage.getItem('pageVisibility')) || {
