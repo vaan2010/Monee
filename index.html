@@ -12449,11 +12449,15 @@
         accountsUnsubscribe = onSnapshot(userDataRef, (snap) => {
             if (isSyncingFromFirestore) return;
             
-            // 【關鍵修正 2】安全檢查：
-            // 如果全域的 currentUserId 已經變了（例如正在切換使用者），
-            // 但這個舊的監聽器還沒被關閉，絕對不能讓它去寫入資料！
+            // 【關鍵修正】忽略本地尚未寫入伺服器的快照 (防止自己覆寫自己)
+            // 當我們刪除資產時，SDK 會立即觸發一次 snap，此時 hasPendingWrites 為 true
+            // 我們應該忽略這次觸發，因為本地資料已經是最新的了
+            if (snap.metadata.hasPendingWrites) {
+                return;
+            }
+
+            // 安全檢查：防止寫入到錯誤的使用者
             if (currentUserId !== syncTargetUserId) {
-                console.warn(`[同步忽略] 偵測到使用者切換 (監聽目標: ${syncTargetUserId}, 當前全域: ${currentUserId})，忽略舊監聽器的更新。`);
                 return;
             }
 
@@ -12520,10 +12524,18 @@
                     }
                 }
                 
-                // 只有當更新的是「目前正在檢視的使用者」時，才刷新畫面
+                // 如果有變更，且是當前使用者，則刷新介面
                 if (hasChanges && currentUserId === syncTargetUserId) {
                     console.log(`[同步更新] 收到使用者 ${syncTargetUserId} 的雲端更新，刷新介面`);
-                    if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                    
+                    // 呼叫橋樑函式更新介面
+                    if (window.applyCloudUpdate && window.loadUserData) {
+                        const updatedData = window.loadUserData(currentUserId);
+                        if (updatedData) {
+                            window.applyCloudUpdate(updatedData);
+                        }
+                    } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                        // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
                         const userData = loadUserData(currentUserId);
                         if (userData) {
                             accounts = userData.accounts;
@@ -12550,9 +12562,9 @@
                             if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
                         }
                     }
+                    
                     setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                 } else if (hasChanges) {
-                    // 如果更新了背景使用者的資料，只解鎖旗標，不刷新畫面
                     setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                 }
             }
@@ -12610,41 +12622,33 @@
         console.log('Firestore 同步監聽已啟動');
     }
     
-    // 停止 Firestore 同步監聽
+    // 停止 Firestore 同步監聽 (修正版)
     function stopFirestoreSync() {
-        // 只需要取消主監聽器，因為其他變數都是指向同一個
+        // 只需取消主監聽器，避免重複呼叫導致錯誤
         if (accountsUnsubscribe) {
             try {
                 accountsUnsubscribe();
             } catch (e) {
-                console.error("取消監聽時發生錯誤:", e);
+                console.error("取消監聽失敗:", e);
             }
             accountsUnsubscribe = null;
         }
         
-        // 將其他引用直接設為 null，不要呼叫它們
+        // 將其他引用直接設為 null
         journalUnsubscribe = null;
         settingsUnsubscribe = null;
         fixedTransfersUnsubscribe = null;
         
         if (usersUnsubscribe) {
-            try { 
-                usersUnsubscribe(); 
-            } catch(e) {
-                console.error("取消 users 監聽時發生錯誤:", e);
-            }
+            try { usersUnsubscribe(); } catch(e) {}
             usersUnsubscribe = null;
         }
         if (currentUserUnsubscribe) {
-            try { 
-                currentUserUnsubscribe(); 
-            } catch(e) {
-                console.error("取消 currentUser 監聽時發生錯誤:", e);
-            }
+            try { currentUserUnsubscribe(); } catch(e) {}
             currentUserUnsubscribe = null;
         }
         
-        firestoreSyncEnabled = false; // 確保這行一定會執行
+        firestoreSyncEnabled = false;
         console.log('Firestore 同步監聽已停止');
     }
     
