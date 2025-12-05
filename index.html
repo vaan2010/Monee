@@ -12397,8 +12397,8 @@
                 if (userData) {
                     accounts = userData.accounts;
                     settings = userData.settings;
-                    // 如果有載入資料，觸發重新載入和渲染
-                    if (dataLoaded) {
+                    // 如果套用了 Firestore 資料，觸發重新載入和渲染
+                    if (shouldApplyFirestoreData) {
                         // 觸發自訂事件通知主程式重新載入資料
                         window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
                     }
