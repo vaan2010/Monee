@@ -4779,56 +4779,85 @@
     }
 
     async function switchUser(userId) {
-        // 1. 先暫停可能的背景干擾 (如果有的話)
+        console.log(`[切換使用者] 開始切換至: ${userId}`);
         
-        // 2. 儲存舊使用者的資料 (最後一次寫入舊 ID)
+        // 1. 鎖定並儲存舊使用者的資料
         saveData();
         saveSettings();
         
-        // 3. 切換 ID
+        // 2. 核彈級清空 (記憶體變數)
+        accounts = [];
+        settings = {}; 
+        
+        // 【關鍵新增】清除記帳相關的快取 (避免日曆上的點點殘留)
+        if (typeof clearJournalDatesCache === 'function') {
+            clearJournalDatesCache();
+        }
+        // 清除當前選中的日期 (讓新使用者回到預設狀態，或者您可以選擇保留)
+        // selectedDate = null; 
+        
+        // 3. 安全切換 ID
         currentUserId = userId;
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
         
-        // 4. 【關鍵修正】立即切換記憶體中的資料
-        // 在等待任何雲端回應之前，先強制載入本地的新使用者資料 (如果是新使用者，這裡會變為空)
-        // 這確保了如果在接下來的幾秒內發生任何存檔動作，存入的會是正確的使用者資料，而不是舊使用者的殘留資料
+        // 4. 從本地載入新使用者的資料
         const localData = loadUserData(currentUserId);
         accounts = localData.accounts;
         settings = localData.settings;
         
-        // 5. 立即更新 UI (讓畫面馬上反應切換，避免誤會)
+        console.log(`[切換使用者] 本地資料載入完成`);
+
+        // 5. 更新介面 (資產頁面)
         updateUserAvatar();
         renderAssets();
         updateChartData();
         
-        // 6. 處理雲端同步 (現在可以安全地慢慢等待了)
+        // 【關鍵新增】刷新記帳與日曆介面 (如果目前在記帳頁面，需立即更新)
+        if (typeof renderCalendar === 'function') {
+            renderCalendar();
+        }
+        // 如果有選中日期，重新顯示該日期的詳情 (載入新使用者的記帳紀錄)
+        if (selectedDate && typeof showFixedTransferDetailsForDate === 'function') {
+            showFixedTransferDetailsForDate(selectedDate);
+        } else {
+            // 如果沒選中，隱藏詳情區塊 (避免殘留舊使用者的詳情)
+            const detailsDiv = document.getElementById('calendarTransferDetails');
+            if (detailsDiv) detailsDiv.style.display = 'none';
+        }
+        
+        // 6. 處理雲端同步
         if (window.firebaseUserLoggedIn) {
-            // 同步當前使用者 ID
             if (window.syncCurrentUserToFirestore) {
-                window.syncCurrentUserToFirestore(currentUserId);
+                window.syncCurrentUserToFirestore(currentUserId).catch(e => console.error(e));
             }
             
-            // 重啟監聽
             if (typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
                 stopFirestoreSync();
-                // 稍微延遲以確保連接完全重置
                 setTimeout(() => {
                     startFirestoreSync(); 
                 }, 50);
             }
             
-            // 嘗試載入雲端資料
             if (typeof loadDataFromFirestore === 'function') {
-                await loadDataFromFirestore();
-                
-                // 雲端載入可能更新了 LocalStorage，所以完成後要「再次」載入記憶體
-                const finalData = loadUserData(currentUserId);
-                accounts = finalData.accounts;
-                settings = finalData.settings;
-                
-                // 再次渲染以顯示雲端回來的最新資料
-                renderAssets();
-                updateChartData();
+                try {
+                    await loadDataFromFirestore();
+                    // 雲端載入後再次刷新所有資料
+                    const finalData = loadUserData(currentUserId);
+                    accounts = finalData.accounts;
+                    settings = finalData.settings;
+                    
+                    // 清除快取並重繪
+                    if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
+                    
+                    renderAssets();
+                    updateChartData();
+                    if (typeof renderCalendar === 'function') renderCalendar();
+                    if (selectedDate && typeof showFixedTransferDetailsForDate === 'function') {
+                        showFixedTransferDetailsForDate(selectedDate);
+                    }
+                } catch (e) {
+                    console.error("雲端資料載入失敗", e);
+                }
             }
         }
         
@@ -13029,6 +13058,7 @@
 </script>
 </body>
 </html>
+
 
 
 
