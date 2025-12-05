@@ -12454,20 +12454,31 @@
         }
     }
     
-    // 啟動 Firestore 同步監聽
+    // 啟動 Firestore 同步監聽 (修正版：鎖定 User ID)
     function startFirestoreSync() {
         if (!currentFirebaseUser || firestoreSyncEnabled) return;
         
+        // 【關鍵修正 1】在監聽器啟動的當下，鎖定目前的使用者 ID
+        // 這個變數會被下面的 callback 閉包 (Closure) 記住
+        const syncTargetUserId = currentUserId;
+        
+        console.log(`[同步啟動] 開始監聽使用者: ${syncTargetUserId}`);
         firestoreSyncEnabled = true;
         
-        // 監聽使用者資料變化（使用 currentUserId 區分不同應用內使用者）
-        // 所有資料存儲在同一個文件中：users/{uid}/appUsers/{currentUserId}
-        const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+        // 監聽使用者資料變化
+        const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", syncTargetUserId);
+        
         accountsUnsubscribe = onSnapshot(userDataRef, (snap) => {
-            if (isSyncingFromFirestore) {
-                console.log('正在從 Firestore 同步，跳過 onSnapshot 觸發');
-                return; // 避免循環同步
+            if (isSyncingFromFirestore) return;
+            
+            // 【關鍵修正 2】安全檢查：
+            // 如果全域的 currentUserId 已經變了（例如正在切換使用者），
+            // 但這個舊的監聽器還沒被關閉，絕對不能讓它去寫入資料！
+            if (currentUserId !== syncTargetUserId) {
+                console.warn(`[同步忽略] 偵測到使用者切換 (監聽目標: ${syncTargetUserId}, 當前全域: ${currentUserId})，忽略舊監聽器的更新。`);
+                return;
             }
+
             if (snap.exists()) {
                 const userData = snap.data();
                 const firestoreAccounts = userData.accounts || [];
@@ -12475,10 +12486,12 @@
                 const firestoreSettings = userData.settings || {};
                 const firestoreFixedTransfers = userData.fixedTransfers || [];
                 
-                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
-                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
-                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
+                // 【關鍵修正 3】使用鎖定的 syncTargetUserId 來產生 Key，而不是讀取全域變數
+                // 這樣即使上面檢查失效，它也只會寫回原本的使用者空間，不會污染新使用者
+                const userDataKey = `${STORAGE_KEY_DATA}_${syncTargetUserId}`;
+                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${syncTargetUserId}`;
+                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${syncTargetUserId}`;
+                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${syncTargetUserId}`;
                 
                 const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                 const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
@@ -12487,143 +12500,92 @@
                 
                 let hasChanges = false;
                 
-                // 檢查 accounts 是否有變化
-                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                // Accounts 同步邏輯
                 if (firestoreAccounts.length > 0 && JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
-                    console.log('Firestore accounts 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                     hasChanges = true;
                 } else if (firestoreAccounts.length === 0 && localAccounts.length > 0) {
-                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
-                    console.log('Firestore accounts 為空但本地有資料，上傳本地資料到 Firestore');
-                    if (window.syncAccountsToFirestore) {
+                    // 如果是針對當前操作的使用者，才允許上傳
+                    if (window.syncAccountsToFirestore && currentUserId === syncTargetUserId) {
                         window.syncAccountsToFirestore(localAccounts);
                     }
                 }
                 
-                // 檢查 journal 是否有變化
-                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                // Journal 同步邏輯
                 if (firestoreJournal.length > 0 && JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
-                    console.log('Firestore journal 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
                     hasChanges = true;
                 } else if (firestoreJournal.length === 0 && localJournal.length > 0) {
-                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
-                    console.log(`Firestore journal 為空但本地有 ${localJournal.length} 筆資料，上傳本地資料到 Firestore（保留本地）`);
-                    if (window.syncJournalToFirestore) {
-                        window.syncJournalToFirestore(localJournal).catch(err => {
-                            console.error('上傳 journal 到 Firestore 失敗:', err);
-                        });
+                    if (window.syncJournalToFirestore && currentUserId === syncTargetUserId) {
+                        window.syncJournalToFirestore(localJournal);
                     }
-                } else if (firestoreJournal.length === 0 && localJournal.length === 0) {
-                    // 兩邊都為空，正常情況
-                    console.log('Firestore 和本地 journal 都為空');
                 }
                 
-                // 檢查 settings 是否有變化
+                // Settings 同步邏輯
                 const mergedSettings = { ...currentSettings, ...firestoreSettings };
-                const hasPageVisibilityChange = firestoreSettings.pageVisibility && 
-                    JSON.stringify(firestoreSettings.pageVisibility) !== JSON.stringify(currentSettings.pageVisibility);
-                const hasPageOrderChange = firestoreSettings.pageOrder && 
-                    JSON.stringify(firestoreSettings.pageOrder) !== JSON.stringify(currentSettings.pageOrder);
-                const hasDisplayCurrencyChange = firestoreSettings.displayCurrency && 
-                    firestoreSettings.displayCurrency !== currentSettings.displayCurrency;
-                const hasOtherChanges = JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings);
-                
-                if (hasPageVisibilityChange || hasPageOrderChange || hasDisplayCurrencyChange || hasOtherChanges) {
-                    console.log('Firestore settings 有更新，同步到本地');
+                if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
                     hasChanges = true;
                 }
                 
-                // 檢查 fixedTransfers 是否有變化
-                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                // FixedTransfers 同步邏輯
                 if (firestoreFixedTransfers.length > 0 && JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
-                    console.log('Firestore fixedTransfers 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
                     hasChanges = true;
                 } else if (firestoreFixedTransfers.length === 0 && localFixedTransfers.length > 0) {
-                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
-                    console.log('Firestore fixedTransfers 為空但本地有資料，上傳本地資料到 Firestore');
-                    if (window.syncFixedTransfersToFirestore) {
+                    if (window.syncFixedTransfersToFirestore && currentUserId === syncTargetUserId) {
                         window.syncFixedTransfersToFirestore(localFixedTransfers);
                     }
                 }
                 
-                // 如果有變化，更新全域變數並重新渲染
-                if (hasChanges) {
+                // 只有當更新的是「目前正在檢視的使用者」時，才刷新畫面
+                if (hasChanges && currentUserId === syncTargetUserId) {
+                    console.log(`[同步更新] 收到使用者 ${syncTargetUserId} 的雲端更新，刷新介面`);
                     if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
                         const userData = loadUserData(currentUserId);
                         if (userData) {
                             accounts = userData.accounts;
                             settings = userData.settings;
                             
-                            // 同步關鍵 UI 狀態變數
-                            if (settings.pageVisibility) { 
-                                pageVisibility = settings.pageVisibility; 
-                            }
-                            if (settings.pageOrder) { 
-                                pageOrder = settings.pageOrder; 
-                            }
-                            if (settings.displayCurrency) {
-                                currentDisplayCurrency = settings.displayCurrency;
-                            }
+                            // 同步 UI 狀態
+                            if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                            if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                            if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
                             
-                            // 更新貨幣切換按鈕文字
                             const ctt = document.getElementById('currencyToggleText');
                             if (ctt) ctt.textContent = currentDisplayCurrency;
                             
-                            // 如果主題改變，重新應用主題
-                            if (typeof applyTheme === 'function') {
-                                applyTheme();
-                            }
+                            if (typeof applyTheme === 'function') applyTheme();
                             
-                            // 重新渲染資產和圖表
                             renderAssets();
-                            if (typeof updateChartData === 'function') {
-                                updateChartData();
-                            }
+                            if (typeof updateChartData === 'function') updateChartData();
+                            if (typeof reorderPageItems === 'function') reorderPageItems(); 
+                            if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
+                            if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
                             
-                            // 重新套用頁面排序和可見性設定
-                            if (typeof reorderPageItems === 'function') { 
-                                reorderPageItems(); 
-                            }
-                            if (typeof renderPageIndicator === 'function') { 
-                                renderPageIndicator(); 
-                            }
-                            if (typeof renderPageVisibilitySettings === 'function') { 
-                                renderPageVisibilitySettings(); 
-                            }
-                            
-                            // 如果有記帳相關的渲染函數，觸發重新渲染
-                            if (typeof renderCalendar === 'function') {
-                                renderCalendar();
-                            }
-                            if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
-                                showFixedTransferDetailsForDate(selectedDate);
-                            }
-                            if (typeof renderFixedTransferList === 'function') {
-                                renderFixedTransferList();
-                            }
+                            if (typeof renderCalendar === 'function') renderCalendar();
+                            if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                            if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
                         }
                     }
-                    setTimeout(() => {
-                        isSyncingFromFirestore = false;
-                    }, 100);
+                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                } else if (hasChanges) {
+                    // 如果更新了背景使用者的資料，只解鎖旗標，不刷新畫面
+                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                 }
             }
         });
         
-        // 使用同一個監聽器處理所有資料類型
+        // 設定其他監聽器的 Unsubscribe 參照
         journalUnsubscribe = accountsUnsubscribe;
         settingsUnsubscribe = accountsUnsubscribe;
         fixedTransfersUnsubscribe = accountsUnsubscribe;
         
-        // 監聽 users 變化
+        // 監聽 Users List (全域，不需鎖定 App User ID)
         const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
         usersUnsubscribe = onSnapshot(usersRef, (snap) => {
             if (isSyncingFromFirestore) return;
@@ -12632,49 +12594,36 @@
                 const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
                 
                 if (JSON.stringify(firestoreUsers) !== JSON.stringify(localUsers)) {
-                    console.log('Firestore users 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
-                    
-                    // 更新全域變數 users（這是 renderUserList 使用的變數）
                     users = firestoreUsers;
-                    
-                    // 如果有使用者列表相關的渲染函數，觸發重新渲染
-                    if (typeof renderUserList === 'function') {
-                        renderUserList();
-                    }
-                    setTimeout(() => {
-                        isSyncingFromFirestore = false;
-                    }, 100);
+                    if (typeof renderUserList === 'function') renderUserList();
+                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                 }
             }
         });
         
-        // 監聽 currentUser 變化
+        // 監聽 Current User (全域)
         const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
         currentUserUnsubscribe = onSnapshot(currentUserRef, (snap) => {
             if (isSyncingFromFirestore) return;
             if (snap.exists()) {
-                const firestoreCurrentUser = snap.data().currentUserId || null;
+                const firestoreCurrentUser = snap.data().currentUserId;
                 const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
                 
-                if (firestoreCurrentUser !== localCurrentUser) {
-                    console.log('Firestore currentUser 有更新，同步到本地');
+                // 只有當雲端有變，且跟本地不同時才切換
+                if (firestoreCurrentUser && firestoreCurrentUser !== localCurrentUser) {
+                    console.log('雲端 currentUserId 變更，同步切換');
                     isSyncingFromFirestore = true;
-                    if (firestoreCurrentUser) {
-                        localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
-                        // 更新全域變數
-                        if (typeof window !== 'undefined' && window.currentUserId !== undefined) {
-                            window.currentUserId = firestoreCurrentUser;
-                        }
-                        // 如果當前使用者改變，需要切換使用者
-                        if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserId) {
-                            switchUser(firestoreCurrentUser);
-                        }
+                    localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
+                    if (typeof window !== 'undefined') window.currentUserId = firestoreCurrentUser;
+                    
+                    // 如果當前使用者不一致，執行切換
+                    // 注意：這裡可能會跟 switchUser 衝突，所以要小心
+                    if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserId) {
+                        switchUser(firestoreCurrentUser);
                     }
-                    setTimeout(() => {
-                        isSyncingFromFirestore = false;
-                    }, 100);
+                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                 }
             }
         });
@@ -13080,5 +13029,6 @@
 </script>
 </body>
 </html>
+
 
 
