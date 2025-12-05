@@ -4689,10 +4689,17 @@
             editBtn.title = '編輯使用者';
             
             const deleteBtn = document.createElement('button');
-            deleteBtn.style.cssText = 'background: none; border: none; color: #ff453a; font-size: 18px; padding: 5px 10px; cursor: pointer;';
+            // 如果是當前使用者，禁用刪除按鈕
+            if (isCurrent) {
+                deleteBtn.style.cssText = 'background: none; border: none; color: #666; font-size: 18px; padding: 5px 10px; cursor: not-allowed; opacity: 0.5;';
+                deleteBtn.disabled = true;
+                deleteBtn.title = '無法刪除當前使用者';
+            } else {
+                deleteBtn.style.cssText = 'background: none; border: none; color: #ff453a; font-size: 18px; padding: 5px 10px; cursor: pointer;';
+                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteUser(user.id); };
+                deleteBtn.title = '刪除使用者';
+            }
             deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.onclick = (e) => { e.stopPropagation(); deleteUser(user.id); };
-            deleteBtn.title = '刪除使用者';
             
             btnGroup.appendChild(editBtn);
             btnGroup.appendChild(deleteBtn);
@@ -4740,6 +4747,15 @@
             window.syncCurrentUserToFirestore(currentUserId);
         }
         
+        // 重新啟動 Firestore 同步監聽（因為 currentUserId 改變了，監聽路徑需要更新）
+        if (window.firebaseUserLoggedIn && typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
+            stopFirestoreSync();
+            // 延遲一點再啟動，確保舊的監聽已完全停止
+            setTimeout(() => {
+                startFirestoreSync();
+            }, 100);
+        }
+        
         // 載入新使用者資料
         const userData = loadUserData(currentUserId);
         accounts = userData.accounts;
@@ -4755,6 +4771,12 @@
     function deleteUser(userId) {
         if (users.length <= 1) {
             alert('至少需要保留一個使用者');
+            return;
+        }
+        
+        // 檢查是否嘗試刪除當前使用者
+        if (userId === currentUserId) {
+            alert('無法刪除當前正在使用的使用者，請先切換到其他使用者');
             return;
         }
         
@@ -12214,8 +12236,8 @@
             isSyncingFromFirestore = true;
             let dataLoaded = false;
             
-            // 檢查 Firestore 是否有 accounts 資料
-            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+            // 檢查 Firestore 是否有 accounts 資料（使用 currentUserId 區分不同應用內使用者）
+            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "accounts");
             const accountsSnap = await getDoc(accountsRef);
             const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
             const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
@@ -12237,8 +12259,8 @@
                 await window.syncAccountsToFirestore(localAccounts);
             }
             
-            // 檢查 Firestore 是否有 journal 資料
-            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+            // 檢查 Firestore 是否有 journal 資料（使用 currentUserId 區分不同應用內使用者）
+            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "journal");
             const journalSnap = await getDoc(journalRef);
             const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
             const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
@@ -12254,8 +12276,8 @@
                 await window.syncJournalToFirestore(localJournal);
             }
             
-            // 檢查 Firestore 是否有 settings 資料
-            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+            // 檢查 Firestore 是否有 settings 資料（使用 currentUserId 區分不同應用內使用者）
+            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "settings");
             const settingsSnap = await getDoc(settingsRef);
             const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
             const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
@@ -12272,8 +12294,8 @@
                 await window.syncSettingsToFirestore(localSettings);
             }
             
-            // 檢查 Firestore 是否有 fixedTransfers 資料
-            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+            // 檢查 Firestore 是否有 fixedTransfers 資料（使用 currentUserId 區分不同應用內使用者）
+            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "fixedTransfers");
             const fixedTransfersSnap = await getDoc(fixedTransfersRef);
             const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
             const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
@@ -12349,8 +12371,8 @@
         
         firestoreSyncEnabled = true;
         
-        // 監聽 accounts 變化
-        const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+        // 監聽 accounts 變化（使用 currentUserId 區分不同應用內使用者）
+        const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "accounts");
         accountsUnsubscribe = onSnapshot(accountsRef, (snap) => {
             if (isSyncingFromFirestore) return; // 避免循環同步
             if (snap.exists()) {
@@ -12389,8 +12411,8 @@
             }
         });
         
-        // 監聽 journal 變化
-        const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+        // 監聽 journal 變化（使用 currentUserId 區分不同應用內使用者）
+        const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "journal");
         journalUnsubscribe = onSnapshot(journalRef, (snap) => {
             if (isSyncingFromFirestore) return;
             if (snap.exists()) {
@@ -12417,8 +12439,8 @@
             }
         });
         
-        // 監聽 settings 變化
-        const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+        // 監聽 settings 變化（使用 currentUserId 區分不同應用內使用者）
+        const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "settings");
         settingsUnsubscribe = onSnapshot(settingsRef, (snap) => {
             if (isSyncingFromFirestore) return;
             if (snap.exists()) {
@@ -12495,8 +12517,8 @@
             }
         });
         
-        // 監聽 fixedTransfers 變化
-        const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+        // 監聽 fixedTransfers 變化（使用 currentUserId 區分不同應用內使用者）
+        const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "fixedTransfers");
         fixedTransfersUnsubscribe = onSnapshot(fixedTransfersRef, (snap) => {
             if (isSyncingFromFirestore) return;
             if (snap.exists()) {
@@ -12612,13 +12634,13 @@
         console.log('Firestore 同步監聽已停止');
     }
     
-    // 同步 accounts 到 Firestore
+    // 同步 accounts 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncAccountsToFirestore = async function(accountsData) {
-        if (!currentFirebaseUser) return;
+        if (!currentFirebaseUser || !currentUserId) return;
         // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
         
         try {
-            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", "accounts");
+            const accountsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "accounts");
             await setDoc(accountsRef, {
                 accounts: accountsData,
                 updatedAt: Timestamp.now()
@@ -12629,12 +12651,12 @@
         }
     };
     
-    // 同步 journal 到 Firestore
+    // 同步 journal 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncJournalToFirestore = async function(records) {
-        if (!currentFirebaseUser) return;
+        if (!currentFirebaseUser || !currentUserId) return;
         
         try {
-            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", "journal");
+            const journalRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "journal");
             await setDoc(journalRef, {
                 records: records,
                 updatedAt: Timestamp.now()
@@ -12645,12 +12667,12 @@
         }
     };
     
-    // 同步 settings 到 Firestore
+    // 同步 settings 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncSettingsToFirestore = async function(settingsData) {
-        if (!currentFirebaseUser) return;
+        if (!currentFirebaseUser || !currentUserId) return;
         
         try {
-            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", "settings");
+            const settingsRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "settings");
             await setDoc(settingsRef, {
                 settings: settingsData,
                 updatedAt: Timestamp.now()
@@ -12661,12 +12683,12 @@
         }
     };
     
-    // 同步 fixedTransfers 到 Firestore
+    // 同步 fixedTransfers 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncFixedTransfersToFirestore = async function(transfers) {
-        if (!currentFirebaseUser) return;
+        if (!currentFirebaseUser || !currentUserId) return;
         
         try {
-            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", currentUserId, "fixedTransfers");
             await setDoc(fixedTransfersRef, {
                 transfers: transfers,
                 updatedAt: Timestamp.now()
