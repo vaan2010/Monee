@@ -12425,10 +12425,21 @@
                 const firestoreSettings = snap.data().settings || {};
                 const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
                 const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                const mergedSettings = { ...currentSettings, ...firestoreSettings };
                 
-                // 檢查是否有變化
-                if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
+                // 檢查關鍵欄位是否有變化（pageVisibility, pageOrder, displayCurrency）
+                const hasPageVisibilityChange = firestoreSettings.pageVisibility && 
+                    JSON.stringify(firestoreSettings.pageVisibility) !== JSON.stringify(currentSettings.pageVisibility);
+                const hasPageOrderChange = firestoreSettings.pageOrder && 
+                    JSON.stringify(firestoreSettings.pageOrder) !== JSON.stringify(currentSettings.pageOrder);
+                const hasDisplayCurrencyChange = firestoreSettings.displayCurrency && 
+                    firestoreSettings.displayCurrency !== currentSettings.displayCurrency;
+                
+                // 檢查其他設定是否有變化（使用完整比較作為備用）
+                const mergedSettings = { ...currentSettings, ...firestoreSettings };
+                const hasOtherChanges = JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings);
+                
+                // 如果有任何變化，進行同步
+                if (hasPageVisibilityChange || hasPageOrderChange || hasDisplayCurrencyChange || hasOtherChanges) {
                     console.log('Firestore settings 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
@@ -12438,23 +12449,43 @@
                         const userData = loadUserData(currentUserId);
                         if (userData) {
                             settings = userData.settings;
+                            
+                            // 同步關鍵 UI 狀態變數
+                            if (settings.pageVisibility) { 
+                                pageVisibility = settings.pageVisibility; 
+                            }
+                            if (settings.pageOrder) { 
+                                pageOrder = settings.pageOrder; 
+                            }
+                            if (settings.displayCurrency) {
+                                currentDisplayCurrency = settings.displayCurrency;
+                            }
+                            
+                            // 更新貨幣切換按鈕文字
+                            const ctt = document.getElementById('currencyToggleText');
+                            if (ctt) ctt.textContent = currentDisplayCurrency;
+                            
                             // 如果主題改變，重新應用主題
                             if (typeof applyTheme === 'function') {
                                 applyTheme();
                             }
+                            
+                            // 重新渲染資產和圖表
                             renderAssets();
                             if (typeof updateChartData === 'function') {
                                 updateChartData();
                             }
-                            // Sync pageVisibility/pageOrder/currentDisplayCurrency and re-apply related UI
-                            if (settings.pageVisibility) { pageVisibility = settings.pageVisibility; }
-                            if (settings.pageOrder) { pageOrder = settings.pageOrder; }
-                            currentDisplayCurrency = settings.displayCurrency || localStorage.getItem('displayCurrency') || 'TWD';
-                            const ctt = document.getElementById('currencyToggleText');
-                            if (ctt) ctt.textContent = currentDisplayCurrency;
-                            if (typeof reorderPageItems === 'function') { reorderPageItems(); }
-                            if (typeof renderPageIndicator === 'function') { renderPageIndicator(); }
-                            if (typeof renderPageVisibilitySettings === 'function') { renderPageVisibilitySettings(); }
+                            
+                            // 重新套用頁面排序和可見性設定
+                            if (typeof reorderPageItems === 'function') { 
+                                reorderPageItems(); 
+                            }
+                            if (typeof renderPageIndicator === 'function') { 
+                                renderPageIndicator(); 
+                            }
+                            if (typeof renderPageVisibilitySettings === 'function') { 
+                                renderPageVisibilitySettings(); 
+                            }
                         }
                     }
                     setTimeout(() => {
