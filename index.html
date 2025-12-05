@@ -12451,11 +12451,11 @@
                     localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                     hasChanges = true;
                 } else if (firestoreAccounts.length === 0 && localAccounts.length > 0) {
-                    // Firestore 為空但本地有資料，清空本地（避免使用錯誤的資料）
-                    console.log('Firestore accounts 為空，清空本地資料');
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userDataKey, JSON.stringify([]));
-                    hasChanges = true;
+                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
+                    console.log('Firestore accounts 為空但本地有資料，上傳本地資料到 Firestore');
+                    if (window.syncAccountsToFirestore) {
+                        window.syncAccountsToFirestore(localAccounts);
+                    }
                 }
                 
                 // 檢查 journal 是否有變化
@@ -12466,11 +12466,11 @@
                     localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
                     hasChanges = true;
                 } else if (firestoreJournal.length === 0 && localJournal.length > 0) {
-                    // Firestore 為空但本地有資料，清空本地
-                    console.log('Firestore journal 為空，清空本地資料');
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userJournalKey, JSON.stringify([]));
-                    hasChanges = true;
+                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
+                    console.log('Firestore journal 為空但本地有資料，上傳本地資料到 Firestore');
+                    if (window.syncJournalToFirestore) {
+                        window.syncJournalToFirestore(localJournal);
+                    }
                 }
                 
                 // 檢查 settings 是否有變化
@@ -12498,11 +12498,11 @@
                     localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
                     hasChanges = true;
                 } else if (firestoreFixedTransfers.length === 0 && localFixedTransfers.length > 0) {
-                    // Firestore 為空但本地有資料，清空本地
-                    console.log('Firestore fixedTransfers 為空，清空本地資料');
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
-                    hasChanges = true;
+                    // Firestore 為空但本地有資料，上傳本地資料到 Firestore（不清空本地）
+                    console.log('Firestore fixedTransfers 為空但本地有資料，上傳本地資料到 Firestore');
+                    if (window.syncFixedTransfersToFirestore) {
+                        window.syncFixedTransfersToFirestore(localFixedTransfers);
+                    }
                 }
                 
                 // 如果有變化，更新全域變數並重新渲染
