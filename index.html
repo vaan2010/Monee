@@ -12416,7 +12416,8 @@
             
             // 確保記憶體變數是最新的
             if (typeof loadUserData === 'function') {
-                const userData = loadUserData(currentUserId);
+                const currentUserIdFromStorage = localStorage.getItem('my_assets_current_user');
+                const userData = loadUserData(currentUserIdFromStorage);
                 if (userData) {
                     accounts = userData.accounts;
                     settings = userData.settings;
@@ -12436,9 +12437,16 @@
     function startFirestoreSync() {
         if (!currentFirebaseUser || firestoreSyncEnabled) return;
         
-        // 【關鍵修正 1】在監聽器啟動的當下，鎖定目前的使用者 ID
+        // 【關鍵修正 1】從 localStorage 讀取 currentUserId（因為模組作用域無法直接訪問主腳本的全域變數）
+        // 在監聽器啟動的當下，鎖定目前的使用者 ID
         // 這個變數會被下面的 callback 閉包 (Closure) 記住
-        const syncTargetUserId = currentUserId;
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const syncTargetUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        
+        if (!syncTargetUserId) {
+            console.warn('[同步啟動] 沒有 currentUserId，無法啟動');
+            return;
+        }
         
         console.log(`[同步啟動] 開始監聽使用者: ${syncTargetUserId}`);
         firestoreSyncEnabled = true;
@@ -12457,7 +12465,10 @@
             }
 
             // 安全檢查：防止寫入到錯誤的使用者
-            if (currentUserId !== syncTargetUserId) {
+            // 從 localStorage 讀取最新的 currentUserId
+            const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (currentUserIdNow !== syncTargetUserId) {
+                console.warn(`[同步忽略] 使用者已切換 (監聽目標: ${syncTargetUserId}, 當前: ${currentUserIdNow})`);
                 return;
             }
 
@@ -12518,18 +12529,19 @@
                 // 移除自動上傳邏輯：else if (firestoreFixedTransfers.length === 0 && localFixedTransfers.length > 0)
                 
                 // 如果有變更，且是當前使用者，則刷新介面
-                if (hasChanges && currentUserId === syncTargetUserId) {
+                const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                if (hasChanges && currentUserIdNow === syncTargetUserId) {
                     console.log(`[同步更新] 收到使用者 ${syncTargetUserId} 的雲端更新，刷新介面`);
                     
                     // 呼叫橋樑函式更新介面
                     if (window.applyCloudUpdate && window.loadUserData) {
-                        const updatedData = window.loadUserData(currentUserId);
+                        const updatedData = window.loadUserData(currentUserIdNow);
                         if (updatedData) {
                             window.applyCloudUpdate(updatedData);
                         }
                     } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
                         // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
-                        const userData = loadUserData(currentUserId);
+                        const userData = loadUserData(currentUserIdNow);
                         if (userData) {
                             accounts = userData.accounts;
                             settings = userData.settings;
@@ -12604,7 +12616,8 @@
                     
                     // 如果當前使用者不一致，執行切換
                     // 注意：這裡可能會跟 switchUser 衝突，所以要小心
-                    if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserId) {
+                    const currentUserIdFromStorage = localStorage.getItem('my_assets_current_user');
+                    if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserIdFromStorage) {
                         switchUser(firestoreCurrentUser);
                     }
                     setTimeout(() => { isSyncingFromFirestore = false; }, 100);
