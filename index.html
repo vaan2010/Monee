@@ -4560,9 +4560,9 @@
                         // 新格式：多使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        setTimeout(() => {
-                            progressBar.style.width = '100%';
-                            progressText.innerText = '完成！';
+                        setTimeout(async () => {
+                            progressBar.style.width = '90%';
+                            progressText.innerText = '寫入資料中...';
                             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
                             
                             // 匯入每個使用者的資料
@@ -4578,7 +4578,52 @@
                                 }
                             });
                             
-                            setTimeout(() => location.reload(), 500);
+                            // 如果已登入 Firestore，先上傳所有資料到 Firestore，再重新載入
+                            if (window.firebaseUserLoggedIn) {
+                                progressBar.style.width = '95%';
+                                progressText.innerText = '上傳到雲端中...';
+                                // 上傳所有使用者的資料到 Firestore
+                                const uploadPromises = [];
+                                const originalCurrentUserId = currentUserId; // 保存原始 currentUserId
+                                
+                                Object.keys(d.usersData).forEach((userId) => {
+                                    const userData = d.usersData[userId];
+                                    // 臨時設置 currentUserId，以便同步函數使用正確的路徑
+                                    currentUserId = userId;
+                                    
+                                    if (userData.data && userData.data.length > 0) {
+                                        uploadPromises.push(window.syncAccountsToFirestore(userData.data));
+                                    }
+                                    if (userData.journal && userData.journal.length > 0) {
+                                        uploadPromises.push(window.syncJournalToFirestore(userData.journal));
+                                    }
+                                    if (userData.settings && Object.keys(userData.settings).length > 0) {
+                                        uploadPromises.push(window.syncSettingsToFirestore(userData.settings));
+                                    }
+                                    if (userData.fixedTransfers && userData.fixedTransfers.length > 0) {
+                                        uploadPromises.push(window.syncFixedTransfersToFirestore(userData.fixedTransfers));
+                                    }
+                                });
+                                
+                                // 恢復原始 currentUserId
+                                currentUserId = originalCurrentUserId;
+                                
+                                // 等待所有上傳完成
+                                Promise.all(uploadPromises).then(() => {
+                                    progressBar.style.width = '100%';
+                                    progressText.innerText = '完成！';
+                                    setTimeout(() => location.reload(), 500);
+                                }).catch((err) => {
+                                    console.error('上傳到 Firestore 失敗:', err);
+                                    progressBar.style.width = '100%';
+                                    progressText.innerText = '完成！（部分上傳失敗）';
+                                    setTimeout(() => location.reload(), 500);
+                                });
+                            } else {
+                                progressBar.style.width = '100%';
+                                progressText.innerText = '完成！';
+                                setTimeout(() => location.reload(), 500);
+                            }
                         }, 200);
                     } else if (d.data && d.settings) {
                         // 舊格式：單使用者，匯入到當前使用者
@@ -12418,14 +12463,30 @@
     
     // 啟動 Firestore 同步監聽
     function startFirestoreSync() {
-        if (!currentFirebaseUser || firestoreSyncEnabled) return;
+        if (!currentFirebaseUser || !currentUserId) {
+            console.log('無法啟動 Firestore 同步：缺少 currentFirebaseUser 或 currentUserId');
+            return;
+        }
+        
+        // 如果已經啟用，先停止舊的監聽
+        if (firestoreSyncEnabled) {
+            stopFirestoreSync();
+        }
         
         firestoreSyncEnabled = true;
         
         // 監聽使用者資料變化（使用 currentUserId 區分不同應用內使用者）
         // 所有資料存儲在同一個文件中：users/{uid}/appUsers/{currentUserId}
-        const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+        // 重要：使用閉包捕獲當前的 currentUserId，確保監聽器使用正確的使用者ID
+        const syncUserId = currentUserId; // 捕獲當前的 currentUserId
+        const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", syncUserId);
         accountsUnsubscribe = onSnapshot(userDataRef, (snap) => {
+            // 檢查 currentUserId 是否改變（如果改變了，這個監聽器應該被停止）
+            if (currentUserId !== syncUserId) {
+                console.log(`監聽器中的使用者ID (${syncUserId}) 與當前使用者ID (${currentUserId}) 不符，忽略此次更新`);
+                return;
+            }
+            
             if (isSyncingFromFirestore) return; // 避免循環同步
             if (snap.exists()) {
                 const userData = snap.data();
@@ -12434,10 +12495,11 @@
                 const firestoreSettings = userData.settings || {};
                 const firestoreFixedTransfers = userData.fixedTransfers || [];
                 
-                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
-                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
-                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
+                // 使用捕獲的 syncUserId，確保使用正確的使用者ID
+                const userDataKey = `${STORAGE_KEY_DATA}_${syncUserId}`;
+                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${syncUserId}`;
+                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${syncUserId}`;
+                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${syncUserId}`;
                 
                 const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                 const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
