@@ -2055,16 +2055,6 @@
     let currentPage = 0;
     const PAGE_TYPES = ['overview', 'bank', 'stock', 'twstock', 'crypto'];
     
-    // Currency Display（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
-    let currentDisplayCurrency = settings.displayCurrency || localStorage.getItem('displayCurrency') || 'TWD'; // 'TWD' or 'USD'
-    // 如果 settings 中有值，同步到 localStorage（向後兼容）
-    if(settings.displayCurrency) {
-        localStorage.setItem('displayCurrency', settings.displayCurrency);
-    }
-    // 如果 settings 中沒有值但 localStorage 有值，更新 settings
-    if(!settings.displayCurrency && localStorage.getItem('displayCurrency')) {
-        settings.displayCurrency = currentDisplayCurrency;
-    }
     const PAGE_NAMES = ['總覽', '錢包', '美股', '台股', '加密貨幣'];
     
     // 頁面載入時立即顯示載入遮罩
@@ -2197,6 +2187,17 @@
     }
 
     let { accounts, settings } = loadUserData(currentUserId);
+    
+    // Currency Display（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
+    let currentDisplayCurrency = settings.displayCurrency || localStorage.getItem('displayCurrency') || 'TWD'; // 'TWD' or 'USD'
+    // 如果 settings 中有值，同步到 localStorage（向後兼容）
+    if(settings.displayCurrency) {
+        localStorage.setItem('displayCurrency', settings.displayCurrency);
+    }
+    // 如果 settings 中沒有值但 localStorage 有值，更新 settings
+    if(!settings.displayCurrency && localStorage.getItem('displayCurrency')) {
+        settings.displayCurrency = currentDisplayCurrency;
+    }
     
     // 分頁顯示設置（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
     let pageVisibility = settings.pageVisibility || JSON.parse(localStorage.getItem('pageVisibility')) || {
