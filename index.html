@@ -12284,7 +12284,7 @@
         
         try {
             isSyncingFromFirestore = true;
-            let dataLoaded = false;
+            let shouldApplyFirestoreData = false;
             
             // 檢查 Firestore 是否有使用者資料（使用 currentUserId 區分不同應用內使用者）
             // 所有資料存儲在同一個文件中：users/{uid}/appUsers/{currentUserId}
@@ -12308,77 +12308,44 @@
                 const firestoreSettings = userData.settings || {};
                 const firestoreFixedTransfers = userData.fixedTransfers || [];
                 
-                // 處理 accounts - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
-                if (firestoreAccounts.length > 0) {
-                    localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                    dataLoaded = true;
-                } else {
-                    // Firestore 有文件但 accounts 為空，清空本地資料（避免使用其他使用者的資料）
-                    localStorage.setItem(userDataKey, JSON.stringify([]));
+                const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || Object.keys(firestoreSettings).length > 0 || firestoreFixedTransfers.length > 0;
+                
+                // 只有雲端有資料時才詢問是否套用
+                if (hasFirestoreData) {
+                    const msg = `偵測到雲端資料（帳戶 ${firestoreAccounts.length} 筆，記帳 ${firestoreJournal.length} 筆）。\n是否使用雲端資料覆蓋本地？\n按「確定」使用雲端，按「取消」保留本地。`;
+                    shouldApplyFirestoreData = confirm(msg);
                 }
                 
-                // 處理 journal - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
-                if (firestoreJournal.length > 0) {
-                    localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                if (shouldApplyFirestoreData) {
+                    if (firestoreAccounts.length > 0) {
+                        localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
+                    }
+                    if (firestoreJournal.length > 0) {
+                        localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                    }
+                    if (Object.keys(firestoreSettings).length > 0) {
+                        const mergedSettings = { ...localSettings, ...firestoreSettings };
+                        localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                    }
+                    if (firestoreFixedTransfers.length > 0) {
+                        localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                    }
+                    
+                    // 觸發重新載入與渲染
+                    window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
                 } else {
-                    // Firestore 有文件但 journal 為空，清空本地資料
-                    localStorage.setItem(userJournalKey, JSON.stringify([]));
-                }
-                
-                // 處理 settings - 優先使用 Firestore 的資料
-                if (Object.keys(firestoreSettings).length > 0) {
-                    const mergedSettings = { ...localSettings, ...firestoreSettings };
-                    localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
-                    await window.syncSettingsToFirestore(mergedSettings);
-                } else {
-                    // Firestore 有文件但 settings 為空，使用預設設定
-                    const defaultSettings = { 
-                        apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
-                        cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
-                        pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
-                        pageOrder: [0, 1, 2, 3, 4],
-                        displayCurrency: 'TWD'
-                    };
-                    localStorage.setItem(userSettingsKey, JSON.stringify(defaultSettings));
-                }
-                
-                // 處理 fixedTransfers - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
-                if (firestoreFixedTransfers.length > 0) {
-                    localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                } else {
-                    // Firestore 有文件但 fixedTransfers 為空，清空本地資料
-                    localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
+                    console.log('使用者選擇保留本地資料或雲端無資料，未覆蓋。');
                 }
             } else {
-                // Firestore 不存在
-                // 如果本地有資料，上傳到 Firestore（可能是剛匯入的資料）
+                // Firestore 不存在，若本地有資料則上傳，不覆蓋本地
                 if (localAccounts.length > 0 || localJournal.length > 0 || Object.keys(localSettings).length > 0 || localFixedTransfers.length > 0) {
                     console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，但本地有資料，上傳到 Firestore`);
-                    // 上傳本地資料到 Firestore
-                    if (localAccounts.length > 0 && window.syncAccountsToFirestore) {
-                        await window.syncAccountsToFirestore(localAccounts);
-                    }
-                    if (localJournal.length > 0 && window.syncJournalToFirestore) {
-                        await window.syncJournalToFirestore(localJournal);
-                    }
-                    if (Object.keys(localSettings).length > 0 && window.syncSettingsToFirestore) {
-                        await window.syncSettingsToFirestore(localSettings);
-                    }
-                    if (localFixedTransfers.length > 0 && window.syncFixedTransfersToFirestore) {
-                        await window.syncFixedTransfersToFirestore(localFixedTransfers);
+                    if (window.syncAllDataToFirestore) {
+                        await window.syncAllDataToFirestore();
                     }
                 } else {
                     console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，本地也沒有資料（新使用者）`);
                 }
-                // settings 使用預設值
-                const defaultSettings = { 
-                    apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
-                    cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
-                    pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
-                    pageOrder: [0, 1, 2, 3, 4],
-                    displayCurrency: 'TWD'
-                };
-                localStorage.setItem(userSettingsKey, JSON.stringify(defaultSettings));
             }
             
             // 檢查 Firestore 是否有 fixedTransfers 資料（使用 currentUserId 區分不同應用內使用者）
