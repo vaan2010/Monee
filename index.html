@@ -12374,6 +12374,12 @@
                             if (typeof updateChartData === 'function') {
                                 updateChartData();
                             }
+                            // Apply UI state that depends on accounts/settings
+                            if (typeof reorderPageItems === 'function') { reorderPageItems(); }
+                            if (typeof renderPageIndicator === 'function') { renderPageIndicator(); }
+                            if (typeof renderPageVisibilitySettings === 'function') { renderPageVisibilitySettings(); }
+                            const ctt = document.getElementById('currencyToggleText');
+                            if (ctt) ctt.textContent = (typeof currentDisplayCurrency !== 'undefined' ? currentDisplayCurrency : 'TWD');
                         }
                     }
                     setTimeout(() => {
@@ -12440,6 +12446,15 @@
                             if (typeof updateChartData === 'function') {
                                 updateChartData();
                             }
+                            // Sync pageVisibility/pageOrder/currentDisplayCurrency and re-apply related UI
+                            if (settings.pageVisibility) { pageVisibility = settings.pageVisibility; }
+                            if (settings.pageOrder) { pageOrder = settings.pageOrder; }
+                            currentDisplayCurrency = settings.displayCurrency || localStorage.getItem('displayCurrency') || 'TWD';
+                            const ctt = document.getElementById('currencyToggleText');
+                            if (ctt) ctt.textContent = currentDisplayCurrency;
+                            if (typeof reorderPageItems === 'function') { reorderPageItems(); }
+                            if (typeof renderPageIndicator === 'function') { renderPageIndicator(); }
+                            if (typeof renderPageVisibilitySettings === 'function') { renderPageVisibilitySettings(); }
                         }
                     }
                     setTimeout(() => {
