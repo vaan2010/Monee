@@ -4767,7 +4767,7 @@
         // 2. 【開啟鎖定】禁止任何寫入操作
         isUserSwitching = true;
         
-        // 3. 停止監聽
+        // 3. 停止監聽（必須先停止，確保 firestoreSyncEnabled 被重置）
         if (window.firebaseUserLoggedIn && typeof stopFirestoreSync === 'function') {
             stopFirestoreSync();
         }
@@ -4780,7 +4780,7 @@
         selectedDate = new Date(); 
         selectedDate.setHours(0,0,0,0);
         
-        // 5. 切換 ID
+        // 5. 切換 ID（必須先更新 localStorage，這樣 startFirestoreSync 才能讀取到正確的值）
         currentUserId = userId;
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
         
@@ -4805,9 +4805,12 @@
                 window.syncCurrentUserToFirestore(currentUserId).catch(e => console.error(e));
             }
             
-            // 延遲啟動監聽，避開切換瞬間
+            // 延遲啟動監聽，確保 stopFirestoreSync 已完成，且 localStorage 已更新
             if (typeof startFirestoreSync === 'function') {
-                setTimeout(() => { startFirestoreSync(); }, 100);
+                setTimeout(() => {
+                    console.log(`[切換使用者] 準備啟動新使用者的監聽器，當前 localStorage 中的 currentUserId: ${localStorage.getItem(STORAGE_KEY_CURRENT_USER)}`);
+                    startFirestoreSync();
+                }, 200); // 增加延遲時間，確保舊監聽器完全停止
             }
             
             // 下載雲端資料
@@ -12435,7 +12438,20 @@
     
     // 啟動 Firestore 同步監聽 (修正版：鎖定 User ID)
     function startFirestoreSync() {
-        if (!currentFirebaseUser || firestoreSyncEnabled) return;
+        if (!currentFirebaseUser) {
+            console.warn('[同步啟動] 沒有 Firebase 使用者，無法啟動');
+            return;
+        }
+        
+        if (firestoreSyncEnabled) {
+            console.warn('[同步啟動] 監聽器已經啟動，先停止舊監聽器');
+            stopFirestoreSync();
+            // 等待一下確保舊監聽器完全停止
+            setTimeout(() => {
+                startFirestoreSync();
+            }, 100);
+            return;
+        }
         
         // 【關鍵修正 1】從 localStorage 讀取 currentUserId（因為模組作用域無法直接訪問主腳本的全域變數）
         // 在監聽器啟動的當下，鎖定目前的使用者 ID
@@ -12448,7 +12464,7 @@
             return;
         }
         
-        console.log(`[同步啟動] 開始監聽使用者: ${syncTargetUserId}`);
+        console.log(`[同步啟動] 開始監聽使用者: ${syncTargetUserId} (從 localStorage 讀取)`);
         firestoreSyncEnabled = true;
         
         // 監聽使用者資料變化
