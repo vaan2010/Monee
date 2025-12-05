@@ -12264,50 +12264,52 @@
                 const firestoreSettings = userData.settings || {};
                 const firestoreFixedTransfers = userData.fixedTransfers || [];
                 
-                // 處理 accounts
+                // 處理 accounts - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
                 if (firestoreAccounts.length > 0) {
                     localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                     dataLoaded = true;
-                } else if (localAccounts.length > 0) {
-                    await window.syncAccountsToFirestore(localAccounts);
+                } else {
+                    // Firestore 有文件但 accounts 為空，清空本地資料（避免使用其他使用者的資料）
+                    localStorage.setItem(userDataKey, JSON.stringify([]));
                 }
                 
-                // 處理 journal
+                // 處理 journal - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
                 if (firestoreJournal.length > 0) {
                     localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
-                } else if (localJournal.length > 0) {
-                    await window.syncJournalToFirestore(localJournal);
+                } else {
+                    // Firestore 有文件但 journal 為空，清空本地資料
+                    localStorage.setItem(userJournalKey, JSON.stringify([]));
                 }
                 
-                // 處理 settings
+                // 處理 settings - 優先使用 Firestore 的資料
                 if (Object.keys(firestoreSettings).length > 0) {
                     const mergedSettings = { ...localSettings, ...firestoreSettings };
                     localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
                     await window.syncSettingsToFirestore(mergedSettings);
-                } else if (Object.keys(localSettings).length > 0) {
-                    await window.syncSettingsToFirestore(localSettings);
+                } else {
+                    // Firestore 有文件但 settings 為空，使用預設設定
+                    const defaultSettings = { 
+                        apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
+                        cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
+                        pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
+                        pageOrder: [0, 1, 2, 3, 4],
+                        displayCurrency: 'TWD'
+                    };
+                    localStorage.setItem(userSettingsKey, JSON.stringify(defaultSettings));
                 }
                 
-                // 處理 fixedTransfers
+                // 處理 fixedTransfers - 優先使用 Firestore 的資料，如果 Firestore 為空則清空本地
                 if (firestoreFixedTransfers.length > 0) {
                     localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                } else if (localFixedTransfers.length > 0) {
-                    await window.syncFixedTransfersToFirestore(localFixedTransfers);
+                } else {
+                    // Firestore 有文件但 fixedTransfers 為空，清空本地資料
+                    localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
                 }
             } else {
-                // Firestore 不存在，上傳本地資料
-                if (localAccounts.length > 0) {
-                    await window.syncAccountsToFirestore(localAccounts);
-                }
-                if (localJournal.length > 0) {
-                    await window.syncJournalToFirestore(localJournal);
-                }
-                if (Object.keys(localSettings).length > 0) {
-                    await window.syncSettingsToFirestore(localSettings);
-                }
-                if (localFixedTransfers.length > 0) {
-                    await window.syncFixedTransfersToFirestore(localFixedTransfers);
-                }
+                // Firestore 不存在，且本地也沒有資料，不進行任何操作
+                // 這樣新使用者就會有全新的空資料，不會複製其他使用者的資料
+                // 只有在本地確實有資料時才上傳（但通常新使用者本地也不會有資料）
+                console.log(`使用者 ${currentUserId} 在 Firestore 和本地都沒有資料，保持空白狀態`);
             }
             
             // 檢查 Firestore 是否有 fixedTransfers 資料（使用 currentUserId 區分不同應用內使用者）
