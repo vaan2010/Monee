@@ -4806,11 +4806,11 @@
         localStorage.removeItem(userFixedTransfersKey);
         
         // 刪除 Firestore 資料
-        if (window.firebaseUserLoggedIn && window.firebaseDb && window.getCurrentFirebaseUser && window.firebaseDeleteDoc) {
+        if (window.firebaseUserLoggedIn && window.firebaseDb && window.getCurrentFirebaseUser && window.firebaseDeleteDoc && window.firebaseDoc) {
             const firebaseUser = window.getCurrentFirebaseUser();
             if (firebaseUser) {
                 try {
-                    const userDataRef = doc(window.firebaseDb, "users", firebaseUser.uid, "appUsers", userId);
+                    const userDataRef = window.firebaseDoc(window.firebaseDb, "users", firebaseUser.uid, "appUsers", userId);
                     window.firebaseDeleteDoc(userDataRef).then(() => {
                         console.log(`已刪除使用者 ${userId} 的 Firestore 資料`);
                     }).catch((err) => {
@@ -12228,6 +12228,7 @@
     window.firebaseSignOut = () => signOut(auth);
     window.getCurrentFirebaseUser = () => currentFirebaseUser;
     window.firebaseDeleteDoc = deleteDoc;
+    window.firebaseDoc = doc;
 
     // Firestore 同步相關變數
     let firestoreSyncEnabled = false;
