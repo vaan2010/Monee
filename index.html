@@ -2055,8 +2055,16 @@
     let currentPage = 0;
     const PAGE_TYPES = ['overview', 'bank', 'stock', 'twstock', 'crypto'];
     
-    // Currency Display
-    let currentDisplayCurrency = localStorage.getItem('displayCurrency') || 'TWD'; // 'TWD' or 'USD'
+    // Currency Display（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
+    let currentDisplayCurrency = settings.displayCurrency || localStorage.getItem('displayCurrency') || 'TWD'; // 'TWD' or 'USD'
+    // 如果 settings 中有值，同步到 localStorage（向後兼容）
+    if(settings.displayCurrency) {
+        localStorage.setItem('displayCurrency', settings.displayCurrency);
+    }
+    // 如果 settings 中沒有值但 localStorage 有值，更新 settings
+    if(!settings.displayCurrency && localStorage.getItem('displayCurrency')) {
+        settings.displayCurrency = currentDisplayCurrency;
+    }
     const PAGE_NAMES = ['總覽', '錢包', '美股', '台股', '加密貨幣'];
     
     // 頁面載入時立即顯示載入遮罩
@@ -2164,7 +2172,9 @@
         const defaultSettings = { 
             apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
             cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
-            googleDriveClientId: '', googleDriveApiKey: '', googleDriveAccessToken: null, googleDriveRefreshToken: null, googleDriveTokenExpiry: null
+            pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
+            pageOrder: [0, 1, 2, 3, 4],
+            displayCurrency: 'TWD'
         };
         
         // 載入用戶設定
@@ -2188,17 +2198,33 @@
 
     let { accounts, settings } = loadUserData(currentUserId);
     
-    // 分頁顯示設置（預設全部顯示）
-    let pageVisibility = JSON.parse(localStorage.getItem('pageVisibility')) || {
+    // 分頁顯示設置（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
+    let pageVisibility = settings.pageVisibility || JSON.parse(localStorage.getItem('pageVisibility')) || {
         'overview': true,
         'bank': true,
         'stock': true,
         'twstock': true,
         'crypto': true
     };
+    // 如果 settings 中有值，同步到 localStorage（向後兼容）
+    if(settings.pageVisibility) {
+        localStorage.setItem('pageVisibility', JSON.stringify(settings.pageVisibility));
+    }
+    // 如果 settings 中沒有值但 localStorage 有值，更新 settings
+    if(!settings.pageVisibility && localStorage.getItem('pageVisibility')) {
+        settings.pageVisibility = pageVisibility;
+    }
     
-    // 分頁順序設置（預設順序：總覽、錢包、美股、台股、加密）
-    let pageOrder = JSON.parse(localStorage.getItem('pageOrder')) || [0, 1, 2, 3, 4];
+    // 分頁順序設置（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
+    let pageOrder = settings.pageOrder || JSON.parse(localStorage.getItem('pageOrder')) || [0, 1, 2, 3, 4];
+    // 如果 settings 中有值，同步到 localStorage（向後兼容）
+    if(settings.pageOrder) {
+        localStorage.setItem('pageOrder', JSON.stringify(settings.pageOrder));
+    }
+    // 如果 settings 中沒有值但 localStorage 有值，更新 settings
+    if(!settings.pageOrder && localStorage.getItem('pageOrder')) {
+        settings.pageOrder = pageOrder;
+    }
     
     // 選單區塊摺疊狀態（預設全部摺疊，不記錄上次狀態）
     let menuSectionsState = {
@@ -2305,11 +2331,17 @@
     // 保存分頁顯示設置
     function savePageVisibility() {
         localStorage.setItem('pageVisibility', JSON.stringify(pageVisibility));
+        // 同步到 settings 並保存到 Firestore
+        settings.pageVisibility = pageVisibility;
+        saveSettings();
     }
     
     // 保存分頁順序
     function savePageOrder() {
         localStorage.setItem('pageOrder', JSON.stringify(pageOrder));
+        // 同步到 settings 並保存到 Firestore
+        settings.pageOrder = pageOrder;
+        saveSettings();
     }
     
     // 獲取排序後的分頁順序（只包含啟用的分頁）
@@ -4684,6 +4716,10 @@
         
         users.push(newUser);
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        // 同步到 Firestore
+        if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
+            window.syncUsersToFirestore(users);
+        }
         
         // 切換到新使用者
         switchUser(newUser.id);
@@ -4698,6 +4734,10 @@
         // 切換使用者
         currentUserId = userId;
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
+        // 同步到 Firestore
+        if (window.syncCurrentUserToFirestore && window.firebaseUserLoggedIn) {
+            window.syncCurrentUserToFirestore(currentUserId);
+        }
         
         // 載入新使用者資料
         const userData = loadUserData(currentUserId);
@@ -4733,6 +4773,10 @@
         // 從使用者列表中移除
         users = users.filter(u => u.id !== userId);
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        // 同步到 Firestore
+        if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
+            window.syncUsersToFirestore(users);
+        }
         
         // 如果刪除的是當前使用者，切換到第一個使用者
         if (currentUserId === userId) {
@@ -4783,6 +4827,10 @@
         }
         
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        // 同步到 Firestore
+        if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
+            window.syncUsersToFirestore(users);
+        }
         
         // 更新顯示
         renderUserList();
@@ -4886,6 +4934,10 @@
         if (user) {
             user.avatar = avatar;
             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+            // 同步到 Firestore
+            if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
+                window.syncUsersToFirestore(users);
+            }
             
             // 更新顯示
             if (editingUserId === currentUserId) {
@@ -5292,6 +5344,10 @@
         if (user) {
             user.avatar = croppedImageData;
             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+            // 同步到 Firestore
+            if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
+                window.syncUsersToFirestore(users);
+            }
             
             // 更新顯示
             if (editingUserId === currentUserId) {
@@ -7056,6 +7112,9 @@
     function toggleCurrency() {
         currentDisplayCurrency = currentDisplayCurrency === 'TWD' ? 'USD' : 'TWD';
         localStorage.setItem('displayCurrency', currentDisplayCurrency);
+        // 同步到 settings 並保存到 Firestore
+        settings.displayCurrency = currentDisplayCurrency;
+        saveSettings();
         updateCurrencyButton();
         renderAssets();
         // 只有在詳細視圖已經打開的情況下才更新詳細視圖，不要重新打開已關閉的視圖
@@ -11271,6 +11330,10 @@
     function saveFixedTransfers(transfers) {
         try {
             localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`, JSON.stringify(transfers));
+            // 同步到 Firestore
+            if (window.syncFixedTransfersToFirestore && window.firebaseUserLoggedIn) {
+                window.syncFixedTransfersToFirestore(transfers);
+            }
         } catch(e) {
             console.error('Failed to save fixed transfers:', e);
         }
@@ -12118,6 +12181,9 @@
     let accountsUnsubscribe = null;
     let journalUnsubscribe = null;
     let settingsUnsubscribe = null;
+    let fixedTransfersUnsubscribe = null;
+    let usersUnsubscribe = null;
+    let currentUserUnsubscribe = null;
     let isSyncingFromFirestore = false; // 防止同步循環
 
     // 監聽登入狀態
@@ -12203,6 +12269,63 @@
                 }
             } else if (Object.keys(localSettings).length > 0) {
                 await window.syncSettingsToFirestore(localSettings);
+            }
+            
+            // 檢查 Firestore 是否有 fixedTransfers 資料
+            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+            const fixedTransfersSnap = await getDoc(fixedTransfersRef);
+            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
+            const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+            
+            if (fixedTransfersSnap.exists()) {
+                const firestoreFixedTransfers = fixedTransfersSnap.data().transfers || [];
+                if (firestoreFixedTransfers.length > 0) {
+                    localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                } else if (localFixedTransfers.length > 0) {
+                    await window.syncFixedTransfersToFirestore(localFixedTransfers);
+                }
+            } else if (localFixedTransfers.length > 0) {
+                await window.syncFixedTransfersToFirestore(localFixedTransfers);
+            }
+            
+            // 檢查 Firestore 是否有 users 資料
+            const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
+            const usersSnap = await getDoc(usersRef);
+            const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
+            
+            if (usersSnap.exists()) {
+                const firestoreUsers = usersSnap.data().users || [];
+                if (firestoreUsers.length > 0) {
+                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
+                    // 更新全域變數
+                    if (typeof window !== 'undefined' && window.users !== undefined) {
+                        window.users = firestoreUsers;
+                    }
+                } else if (localUsers.length > 0) {
+                    await window.syncUsersToFirestore(localUsers);
+                }
+            } else if (localUsers.length > 0) {
+                await window.syncUsersToFirestore(localUsers);
+            }
+            
+            // 檢查 Firestore 是否有 currentUser 資料
+            const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
+            const currentUserSnap = await getDoc(currentUserRef);
+            const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            
+            if (currentUserSnap.exists()) {
+                const firestoreCurrentUser = currentUserSnap.data().currentUserId || null;
+                if (firestoreCurrentUser) {
+                    localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
+                    // 更新全域變數
+                    if (typeof window !== 'undefined' && window.currentUserId !== undefined) {
+                        window.currentUserId = firestoreCurrentUser;
+                    }
+                } else if (localCurrentUser) {
+                    await window.syncCurrentUserToFirestore(localCurrentUser);
+                }
+            } else if (localCurrentUser) {
+                await window.syncCurrentUserToFirestore(localCurrentUser);
             }
             
             // 如果有載入資料，觸發重新載入和渲染
@@ -12325,6 +12448,91 @@
             }
         });
         
+        // 監聽 fixedTransfers 變化
+        const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+        fixedTransfersUnsubscribe = onSnapshot(fixedTransfersRef, (snap) => {
+            if (isSyncingFromFirestore) return;
+            if (snap.exists()) {
+                const firestoreFixedTransfers = snap.data().transfers || [];
+                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
+                const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+                
+                if (JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
+                    console.log('Firestore fixedTransfers 有更新，同步到本地');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                    
+                    // 如果有固定轉帳相關的渲染函數，觸發重新渲染
+                    if (typeof renderFixedTransferList === 'function') {
+                        renderFixedTransferList();
+                    }
+                    if (typeof renderCalendar === 'function') {
+                        renderCalendar();
+                    }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
+                }
+            }
+        });
+        
+        // 監聽 users 變化
+        const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
+        usersUnsubscribe = onSnapshot(usersRef, (snap) => {
+            if (isSyncingFromFirestore) return;
+            if (snap.exists()) {
+                const firestoreUsers = snap.data().users || [];
+                const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
+                
+                if (JSON.stringify(firestoreUsers) !== JSON.stringify(localUsers)) {
+                    console.log('Firestore users 有更新，同步到本地');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
+                    
+                    // 更新全域變數
+                    if (typeof window !== 'undefined' && window.users !== undefined) {
+                        window.users = firestoreUsers;
+                    }
+                    // 如果有使用者列表相關的渲染函數，觸發重新渲染
+                    if (typeof renderUserList === 'function') {
+                        renderUserList();
+                    }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
+                }
+            }
+        });
+        
+        // 監聽 currentUser 變化
+        const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
+        currentUserUnsubscribe = onSnapshot(currentUserRef, (snap) => {
+            if (isSyncingFromFirestore) return;
+            if (snap.exists()) {
+                const firestoreCurrentUser = snap.data().currentUserId || null;
+                const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                
+                if (firestoreCurrentUser !== localCurrentUser) {
+                    console.log('Firestore currentUser 有更新，同步到本地');
+                    isSyncingFromFirestore = true;
+                    if (firestoreCurrentUser) {
+                        localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
+                        // 更新全域變數
+                        if (typeof window !== 'undefined' && window.currentUserId !== undefined) {
+                            window.currentUserId = firestoreCurrentUser;
+                        }
+                        // 如果當前使用者改變，需要切換使用者
+                        if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserId) {
+                            switchUser(firestoreCurrentUser);
+                        }
+                    }
+                    setTimeout(() => {
+                        isSyncingFromFirestore = false;
+                    }, 100);
+                }
+            }
+        });
+        
         console.log('Firestore 同步監聽已啟動');
     }
     
@@ -12341,6 +12549,18 @@
         if (settingsUnsubscribe) {
             settingsUnsubscribe();
             settingsUnsubscribe = null;
+        }
+        if (fixedTransfersUnsubscribe) {
+            fixedTransfersUnsubscribe();
+            fixedTransfersUnsubscribe = null;
+        }
+        if (usersUnsubscribe) {
+            usersUnsubscribe();
+            usersUnsubscribe = null;
+        }
+        if (currentUserUnsubscribe) {
+            currentUserUnsubscribe();
+            currentUserUnsubscribe = null;
         }
         firestoreSyncEnabled = false;
         console.log('Firestore 同步監聽已停止');
@@ -12392,6 +12612,54 @@
             console.log('settings 已同步到 Firestore');
         } catch (err) {
             console.error('同步 settings 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步 fixedTransfers 到 Firestore
+    window.syncFixedTransfersToFirestore = async function(transfers) {
+        if (!currentFirebaseUser) return;
+        
+        try {
+            const fixedTransfersRef = doc(db, "users", currentFirebaseUser.uid, "data", "fixedTransfers");
+            await setDoc(fixedTransfersRef, {
+                transfers: transfers,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+            console.log('fixedTransfers 已同步到 Firestore');
+        } catch (err) {
+            console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步 users 到 Firestore
+    window.syncUsersToFirestore = async function(usersData) {
+        if (!currentFirebaseUser) return;
+        
+        try {
+            const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
+            await setDoc(usersRef, {
+                users: usersData,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+            console.log('users 已同步到 Firestore');
+        } catch (err) {
+            console.error('同步 users 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步 currentUser 到 Firestore
+    window.syncCurrentUserToFirestore = async function(currentUserId) {
+        if (!currentFirebaseUser) return;
+        
+        try {
+            const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
+            await setDoc(currentUserRef, {
+                currentUserId: currentUserId,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+            console.log('currentUser 已同步到 Firestore');
+        } catch (err) {
+            console.error('同步 currentUser 到 Firestore 失敗:', err);
         }
     };
 
