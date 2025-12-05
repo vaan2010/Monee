@@ -4779,42 +4779,59 @@
     }
 
     async function switchUser(userId) {
-        // 儲存當前使用者資料
+        // 1. 先暫停可能的背景干擾 (如果有的話)
+        
+        // 2. 儲存舊使用者的資料 (最後一次寫入舊 ID)
         saveData();
         saveSettings();
         
-        // 切換使用者
+        // 3. 切換 ID
         currentUserId = userId;
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
-        // 同步到 Firestore
-        if (window.syncCurrentUserToFirestore && window.firebaseUserLoggedIn) {
-            window.syncCurrentUserToFirestore(currentUserId);
-        }
         
-        // 重新啟動 Firestore 同步監聽（因為 currentUserId 改變了，監聽路徑需要更新）
-        if (window.firebaseUserLoggedIn && typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
-            stopFirestoreSync();
-            // 延遲一點再啟動，確保舊的監聽已完全停止
-            setTimeout(() => {
-                startFirestoreSync();
-            }, 100);
-        }
+        // 4. 【關鍵修正】立即切換記憶體中的資料
+        // 在等待任何雲端回應之前，先強制載入本地的新使用者資料 (如果是新使用者，這裡會變為空)
+        // 這確保了如果在接下來的幾秒內發生任何存檔動作，存入的會是正確的使用者資料，而不是舊使用者的殘留資料
+        const localData = loadUserData(currentUserId);
+        accounts = localData.accounts;
+        settings = localData.settings;
         
-        // 從 Firestore 重新載入新使用者的資料（如果已登入）
-        // loadDataFromFirestore 會更新全域變數 accounts 和 settings
-        if (window.firebaseUserLoggedIn && typeof loadDataFromFirestore === 'function') {
-            await loadDataFromFirestore();
-        } else {
-            // 如果沒有登入，只從 localStorage 載入
-            const userData = loadUserData(currentUserId);
-            accounts = userData.accounts;
-            settings = userData.settings;
-        }
-        
-        // 更新顯示
+        // 5. 立即更新 UI (讓畫面馬上反應切換，避免誤會)
         updateUserAvatar();
         renderAssets();
         updateChartData();
+        
+        // 6. 處理雲端同步 (現在可以安全地慢慢等待了)
+        if (window.firebaseUserLoggedIn) {
+            // 同步當前使用者 ID
+            if (window.syncCurrentUserToFirestore) {
+                window.syncCurrentUserToFirestore(currentUserId);
+            }
+            
+            // 重啟監聽
+            if (typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
+                stopFirestoreSync();
+                // 稍微延遲以確保連接完全重置
+                setTimeout(() => {
+                    startFirestoreSync(); 
+                }, 50);
+            }
+            
+            // 嘗試載入雲端資料
+            if (typeof loadDataFromFirestore === 'function') {
+                await loadDataFromFirestore();
+                
+                // 雲端載入可能更新了 LocalStorage，所以完成後要「再次」載入記憶體
+                const finalData = loadUserData(currentUserId);
+                accounts = finalData.accounts;
+                settings = finalData.settings;
+                
+                // 再次渲染以顯示雲端回來的最新資料
+                renderAssets();
+                updateChartData();
+            }
+        }
+        
         closeUserSelector();
     }
 
@@ -13063,4 +13080,5 @@
 </script>
 </body>
 </html>
+
 
