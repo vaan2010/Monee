@@ -9071,6 +9071,131 @@
         } catch(e) { console.error(e); }
     }
     
+    // 根據記帳記錄重新計算帳戶餘額
+    // 這個函式會在記帳記錄從 Firestore 同步後被調用
+    function recalculateAccountBalancesFromJournal(userId, journalRecords, accounts) {
+        if (!accounts || !Array.isArray(accounts)) {
+            console.warn('[重新計算餘額] 沒有帳戶資料');
+            return;
+        }
+        
+        if (!journalRecords || !Array.isArray(journalRecords)) {
+            console.warn('[重新計算餘額] 沒有記帳記錄');
+            return;
+        }
+        
+        console.log(`[重新計算餘額] 開始為使用者 ${userId} 重新計算帳戶餘額，記帳記錄數: ${journalRecords.length}`);
+        
+        // 策略：先反向計算得到初始餘額，再正向計算得到最終餘額
+        // 1. 從當前餘額反向計算，得到初始餘額（未受記帳記錄影響的餘額）
+        const accountInitialBalances = {};
+        accounts.forEach(acc => {
+            let initialBalance = parseFloat(acc.balance) || 0;
+            
+            // 反向計算：從當前餘額減去所有記帳記錄的影響
+            journalRecords.forEach(record => {
+                const amount = parseFloat(record.amount) || 0;
+                
+                if (record.type === 'income') {
+                    // 收入：反向操作是減去
+                    if (String(record.accountId) === String(acc.id)) {
+                        initialBalance -= amount;
+                    }
+                } else if (record.type === 'expense') {
+                    // 支出：反向操作是加上
+                    if (String(record.accountId) === String(acc.id)) {
+                        initialBalance += amount;
+                    }
+                } else if (record.type === 'transfer') {
+                    // 轉帳：反向操作
+                    if (String(record.fromAccountId) === String(acc.id)) {
+                        initialBalance += amount; // 轉出帳戶反向是加上
+                    }
+                    if (String(record.toAccountId) === String(acc.id)) {
+                        initialBalance -= amount; // 轉入帳戶反向是減去
+                    }
+                }
+            });
+            
+            accountInitialBalances[acc.id] = initialBalance;
+        });
+        
+        // 2. 從初始餘額正向計算，得到最終餘額
+        const accountFinalBalances = {};
+        accounts.forEach(acc => {
+            accountFinalBalances[acc.id] = accountInitialBalances[acc.id] || 0;
+        });
+        
+        // 按照時間順序排序記帳記錄
+        const sortedRecords = [...journalRecords].sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            if (dateA !== dateB) return dateA - dateB;
+            // 如果日期相同，按照創建時間排序
+            const createA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const createB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return createA - createB;
+        });
+        
+        // 逐一應用記帳記錄對帳戶餘額的影響
+        sortedRecords.forEach(record => {
+            const amount = parseFloat(record.amount) || 0;
+            
+            if (record.type === 'income') {
+                // 收入：增加帳戶餘額
+                const accountId = String(record.accountId);
+                if (accountFinalBalances[accountId] !== undefined) {
+                    accountFinalBalances[accountId] += amount;
+                }
+            } else if (record.type === 'expense') {
+                // 支出：減少帳戶餘額
+                const accountId = String(record.accountId);
+                if (accountFinalBalances[accountId] !== undefined) {
+                    accountFinalBalances[accountId] -= amount;
+                }
+            } else if (record.type === 'transfer') {
+                // 轉帳：轉出帳戶減少，轉入帳戶增加
+                const fromAccountId = String(record.fromAccountId);
+                const toAccountId = String(record.toAccountId);
+                if (accountFinalBalances[fromAccountId] !== undefined) {
+                    accountFinalBalances[fromAccountId] -= amount;
+                }
+                if (accountFinalBalances[toAccountId] !== undefined) {
+                    accountFinalBalances[toAccountId] += amount;
+                }
+            }
+        });
+        
+        // 更新帳戶餘額
+        let hasBalanceChanges = false;
+        accounts.forEach(acc => {
+            const newBalance = accountFinalBalances[acc.id];
+            const currentBalance = parseFloat(acc.balance) || 0;
+            if (newBalance !== undefined && Math.abs(currentBalance - newBalance) > 0.01) {
+                acc.balance = newBalance;
+                hasBalanceChanges = true;
+                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): ${currentBalance} -> ${newBalance}`);
+            }
+        });
+        
+        if (hasBalanceChanges) {
+            console.log(`[重新計算餘額] 帳戶餘額已更新，保存到 localStorage`);
+            // 保存更新後的帳戶資料
+            const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
+            localStorage.setItem(userDataKey, JSON.stringify(accounts));
+            
+            // 同步到 Firestore
+            if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
+                window.syncAccountsToFirestore(accounts);
+            }
+        } else {
+            console.log(`[重新計算餘額] 帳戶餘額無變化`);
+        }
+    }
+    
+    // 將函式暴露到 window，讓模組可以調用
+    window.recalculateAccountBalancesFromJournal = recalculateAccountBalancesFromJournal;
+    
     // 編輯記帳記錄
     let editingJournalRecordId = null;
     
@@ -12507,6 +12632,22 @@
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
                         hasChanges = true;
+                        
+                        // 【關鍵修正】記帳資料更新後，需要重新計算帳戶餘額
+                        // 因為記帳記錄會影響帳戶餘額（收入增加、支出減少、轉帳會轉移）
+                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
+                        if (window.recalculateAccountBalancesFromJournal) {
+                            // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
+                            const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                            window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
+                            // 重新讀取更新後的帳戶資料
+                            const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                            // 更新 localAccounts 變數，以便後續使用
+                            if (recalculatedAccounts.length > 0) {
+                                // 標記 accounts 也需要更新
+                                hasChanges = true;
+                            }
+                        }
                     }
                     
                     // Settings 同步邏輯
