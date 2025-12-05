@@ -4796,8 +4796,31 @@
         // 刪除使用者的資料
         const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
         const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${userId}`;
+        const userJournalKey = `${STORAGE_KEY_JOURNAL}_${userId}`;
+        const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`;
+        
+        // 刪除 localStorage 資料
         localStorage.removeItem(userDataKey);
         localStorage.removeItem(userSettingsKey);
+        localStorage.removeItem(userJournalKey);
+        localStorage.removeItem(userFixedTransfersKey);
+        
+        // 刪除 Firestore 資料
+        if (window.firebaseUserLoggedIn && window.firebaseDb && window.getCurrentFirebaseUser && window.firebaseDeleteDoc) {
+            const firebaseUser = window.getCurrentFirebaseUser();
+            if (firebaseUser) {
+                try {
+                    const userDataRef = doc(window.firebaseDb, "users", firebaseUser.uid, "appUsers", userId);
+                    window.firebaseDeleteDoc(userDataRef).then(() => {
+                        console.log(`已刪除使用者 ${userId} 的 Firestore 資料`);
+                    }).catch((err) => {
+                        console.error('刪除 Firestore 資料失敗:', err);
+                    });
+                } catch (err) {
+                    console.error('刪除 Firestore 資料失敗:', err);
+                }
+            }
+        }
         
         // 從使用者列表中移除
         users = users.filter(u => u.id !== userId);
@@ -12204,6 +12227,7 @@
     };
     window.firebaseSignOut = () => signOut(auth);
     window.getCurrentFirebaseUser = () => currentFirebaseUser;
+    window.firebaseDeleteDoc = deleteDoc;
 
     // Firestore 同步相關變數
     let firestoreSyncEnabled = false;
@@ -12306,10 +12330,24 @@
                     localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
                 }
             } else {
-                // Firestore 不存在，且本地也沒有資料，不進行任何操作
-                // 這樣新使用者就會有全新的空資料，不會複製其他使用者的資料
-                // 只有在本地確實有資料時才上傳（但通常新使用者本地也不會有資料）
-                console.log(`使用者 ${currentUserId} 在 Firestore 和本地都沒有資料，保持空白狀態`);
+                // Firestore 不存在
+                // 只有在本地確實有資料且是該使用者的資料時才上傳
+                // 但為了安全起見，新使用者應該保持空白，不從本地上傳
+                // 因為本地資料可能是其他使用者的殘留資料
+                console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，保持空白狀態（新使用者）`);
+                // 清空本地資料，確保新使用者從空白開始
+                localStorage.setItem(userDataKey, JSON.stringify([]));
+                localStorage.setItem(userJournalKey, JSON.stringify([]));
+                localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
+                // settings 使用預設值
+                const defaultSettings = { 
+                    apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
+                    cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
+                    pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
+                    pageOrder: [0, 1, 2, 3, 4],
+                    displayCurrency: 'TWD'
+                };
+                localStorage.setItem(userSettingsKey, JSON.stringify(defaultSettings));
             }
             
             // 檢查 Firestore 是否有 fixedTransfers 資料（使用 currentUserId 區分不同應用內使用者）
@@ -12408,18 +12446,32 @@
                 let hasChanges = false;
                 
                 // 檢查 accounts 是否有變化
-                if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                if (firestoreAccounts.length > 0 && JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
                     console.log('Firestore accounts 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                     hasChanges = true;
+                } else if (firestoreAccounts.length === 0 && localAccounts.length > 0) {
+                    // Firestore 為空但本地有資料，清空本地（避免使用錯誤的資料）
+                    console.log('Firestore accounts 為空，清空本地資料');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(userDataKey, JSON.stringify([]));
+                    hasChanges = true;
                 }
                 
                 // 檢查 journal 是否有變化
-                if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                if (firestoreJournal.length > 0 && JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
                     console.log('Firestore journal 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                    hasChanges = true;
+                } else if (firestoreJournal.length === 0 && localJournal.length > 0) {
+                    // Firestore 為空但本地有資料，清空本地
+                    console.log('Firestore journal 為空，清空本地資料');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(userJournalKey, JSON.stringify([]));
                     hasChanges = true;
                 }
                 
@@ -12441,10 +12493,17 @@
                 }
                 
                 // 檢查 fixedTransfers 是否有變化
-                if (JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
+                // 只有在 Firestore 有資料時才同步（避免覆蓋本地刪除的資料）
+                if (firestoreFixedTransfers.length > 0 && JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
                     console.log('Firestore fixedTransfers 有更新，同步到本地');
                     isSyncingFromFirestore = true;
                     localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                    hasChanges = true;
+                } else if (firestoreFixedTransfers.length === 0 && localFixedTransfers.length > 0) {
+                    // Firestore 為空但本地有資料，清空本地
+                    console.log('Firestore fixedTransfers 為空，清空本地資料');
+                    isSyncingFromFirestore = true;
+                    localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
                     hasChanges = true;
                 }
                 
