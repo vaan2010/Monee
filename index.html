@@ -4734,7 +4734,7 @@
         closeUserSelector();
     }
 
-    function switchUser(userId) {
+    async function switchUser(userId) {
         // 儲存當前使用者資料
         saveData();
         saveSettings();
@@ -4756,10 +4756,16 @@
             }, 100);
         }
         
-        // 載入新使用者資料
-        const userData = loadUserData(currentUserId);
-        accounts = userData.accounts;
-        settings = userData.settings;
+        // 從 Firestore 重新載入新使用者的資料（如果已登入）
+        // loadDataFromFirestore 會更新全域變數 accounts 和 settings
+        if (window.firebaseUserLoggedIn && typeof loadDataFromFirestore === 'function') {
+            await loadDataFromFirestore();
+        } else {
+            // 如果沒有登入，只從 localStorage 載入
+            const userData = loadUserData(currentUserId);
+            accounts = userData.accounts;
+            settings = userData.settings;
+        }
         
         // 更新顯示
         updateUserAvatar();
@@ -12347,10 +12353,18 @@
                 await window.syncCurrentUserToFirestore(localCurrentUser);
             }
             
-            // 如果有載入資料，觸發重新載入和渲染
-            if (dataLoaded) {
-                // 觸發自訂事件通知主程式重新載入資料
-                window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
+            // 無論是否有載入資料，都更新全域變數（確保切換使用者時資料正確）
+            if (typeof loadUserData === 'function') {
+                const userData = loadUserData(currentUserId);
+                if (userData) {
+                    accounts = userData.accounts;
+                    settings = userData.settings;
+                    // 如果有載入資料，觸發重新載入和渲染
+                    if (dataLoaded) {
+                        // 觸發自訂事件通知主程式重新載入資料
+                        window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
+                    }
+                }
             }
             
             console.log('從 Firestore 載入資料完成');
