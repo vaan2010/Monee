@@ -4560,7 +4560,7 @@
                         // 新格式：多使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        setTimeout(() => {
+                        setTimeout(async () => {
                             progressBar.style.width = '100%';
                             progressText.innerText = '完成！';
                             localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
@@ -4578,17 +4578,36 @@
                                 }
                             });
                             
+                            // 如果已登入 Firebase，立即同步匯入的資料到 Firestore
+                            if (window.firebaseUserLoggedIn && window.syncAllDataToFirestore) {
+                                progressText.innerText = '同步到雲端...';
+                                try {
+                                    await window.syncAllDataToFirestore();
+                                    progressText.innerText = '同步完成！';
+                                } catch (err) {
+                                    console.error('同步到 Firestore 失敗:', err);
+                                    progressText.innerText = '同步失敗，但資料已匯入';
+                                }
+                            }
+                            
                             setTimeout(() => location.reload(), 500);
                         }, 200);
                     } else if (d.data && d.settings) {
                         // 舊格式：單使用者，匯入到當前使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        setTimeout(() => {
+                        setTimeout(async () => {
                             progressBar.style.width = '100%';
                             progressText.innerText = '完成！';
                             localStorage.setItem(`${STORAGE_KEY_DATA}_${currentUserId}`, JSON.stringify(d.data));
                             localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${currentUserId}`, JSON.stringify(d.settings));
+                            
+                            // 如果已登入 Firebase，立即同步匯入的資料到 Firestore
+                            if (window.firebaseUserLoggedIn && window.syncAllDataToFirestore) {
+                                progressText.innerText = '同步到雲端...';
+                                await window.syncAllDataToFirestore();
+                            }
+                            
                             setTimeout(() => location.reload(), 500);
                         }, 200);
                     } else {
@@ -12332,14 +12351,25 @@
                 }
             } else {
                 // Firestore 不存在
-                // 只有在本地確實有資料且是該使用者的資料時才上傳
-                // 但為了安全起見，新使用者應該保持空白，不從本地上傳
-                // 因為本地資料可能是其他使用者的殘留資料
-                console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，保持空白狀態（新使用者）`);
-                // 清空本地資料，確保新使用者從空白開始
-                localStorage.setItem(userDataKey, JSON.stringify([]));
-                localStorage.setItem(userJournalKey, JSON.stringify([]));
-                localStorage.setItem(userFixedTransfersKey, JSON.stringify([]));
+                // 如果本地有資料，上傳到 Firestore（可能是剛匯入的資料）
+                if (localAccounts.length > 0 || localJournal.length > 0 || Object.keys(localSettings).length > 0 || localFixedTransfers.length > 0) {
+                    console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，但本地有資料，上傳到 Firestore`);
+                    // 上傳本地資料到 Firestore
+                    if (localAccounts.length > 0 && window.syncAccountsToFirestore) {
+                        await window.syncAccountsToFirestore(localAccounts);
+                    }
+                    if (localJournal.length > 0 && window.syncJournalToFirestore) {
+                        await window.syncJournalToFirestore(localJournal);
+                    }
+                    if (Object.keys(localSettings).length > 0 && window.syncSettingsToFirestore) {
+                        await window.syncSettingsToFirestore(localSettings);
+                    }
+                    if (localFixedTransfers.length > 0 && window.syncFixedTransfersToFirestore) {
+                        await window.syncFixedTransfersToFirestore(localFixedTransfers);
+                    }
+                } else {
+                    console.log(`使用者 ${currentUserId} 在 Firestore 沒有資料，本地也沒有資料（新使用者）`);
+                }
                 // settings 使用預設值
                 const defaultSettings = { 
                     apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
@@ -12728,6 +12758,53 @@
             console.log('fixedTransfers 已同步到 Firestore');
         } catch (err) {
             console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
+        }
+    };
+    
+    // 同步所有資料到 Firestore（用於匯入資料後）
+    window.syncAllDataToFirestore = async function() {
+        if (!currentFirebaseUser) {
+            console.log('未登入 Firebase，跳過同步');
+            return;
+        }
+        
+        // 如果沒有 currentUserId，嘗試從 localStorage 獲取
+        let targetUserId = currentUserId;
+        if (!targetUserId) {
+            const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
+            if (users.length > 0) {
+                targetUserId = users[0].id;
+            } else {
+                console.error('無法確定要同步的使用者 ID');
+                return;
+            }
+        }
+        
+        try {
+            const userDataKey = `${STORAGE_KEY_DATA}_${targetUserId}`;
+            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${targetUserId}`;
+            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${targetUserId}`;
+            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${targetUserId}`;
+            
+            const accounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+            const journal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
+            const settings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+            const fixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+            
+            // 一次性同步所有資料
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", targetUserId);
+            await setDoc(userDataRef, {
+                accounts: accounts,
+                journal: journal,
+                settings: settings,
+                fixedTransfers: fixedTransfers,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+            
+            console.log(`使用者 ${targetUserId} 的所有資料已同步到 Firestore`);
+        } catch (err) {
+            console.error('同步所有資料到 Firestore 失敗:', err);
+            throw err;
         }
     };
     
