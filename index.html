@@ -12755,7 +12755,8 @@
     // 同步 accounts 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncAccountsToFirestore = async function(accountsData) {
         if (!currentFirebaseUser || !currentUserId) return;
-        // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12766,12 +12767,19 @@
             console.log('accounts 已同步到 Firestore');
         } catch (err) {
             console.error('同步 accounts 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
     
     // 同步 journal 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncJournalToFirestore = async function(records) {
         if (!currentFirebaseUser || !currentUserId) return;
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12782,12 +12790,19 @@
             console.log('journal 已同步到 Firestore');
         } catch (err) {
             console.error('同步 journal 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
     
     // 同步 settings 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncSettingsToFirestore = async function(settingsData) {
         if (!currentFirebaseUser || !currentUserId) return;
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12798,12 +12813,19 @@
             console.log('settings 已同步到 Firestore');
         } catch (err) {
             console.error('同步 settings 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
     
     // 同步 fixedTransfers 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncFixedTransfersToFirestore = async function(transfers) {
         if (!currentFirebaseUser || !currentUserId) return;
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12814,12 +12836,19 @@
             console.log('fixedTransfers 已同步到 Firestore');
         } catch (err) {
             console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
     
     // 同步 users 到 Firestore
     window.syncUsersToFirestore = async function(usersData) {
         if (!currentFirebaseUser) return;
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
@@ -12830,12 +12859,19 @@
             console.log('users 已同步到 Firestore');
         } catch (err) {
             console.error('同步 users 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
     
     // 同步 currentUser 到 Firestore
     window.syncCurrentUserToFirestore = async function(currentUserId) {
         if (!currentFirebaseUser) return;
+        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
+        isSyncingFromFirestore = true;
         
         try {
             const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
@@ -12846,6 +12882,11 @@
             console.log('currentUser 已同步到 Firestore');
         } catch (err) {
             console.error('同步 currentUser 到 Firestore 失敗:', err);
+        } finally {
+            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
+            setTimeout(() => {
+                isSyncingFromFirestore = false;
+            }, 500);
         }
     };
 
