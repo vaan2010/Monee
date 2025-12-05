@@ -6,7 +6,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a84ff">
-    <link rel="manifest" href="./manifest.json">
     <title>Monee</title>
     
     <!-- Firebase SDK -->
@@ -767,15 +766,15 @@
         }
 
         /* Calendar */
-        .calendar-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); border-radius: 12px; padding: 20px; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .calendar-nav-btn { background: transparent; border: none; color: var(--text-primary); font-size: 18px; cursor: pointer; padding: 8px; }
+        .calendar-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); border-radius: 12px; padding: 10px; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-nav-btn { background: transparent; border: none; color: var(--text-primary); font-size: 18px; cursor: pointer; padding: 6px; }
         .calendar-nav-btn:hover { color: #0a84ff; }
         .calendar-month-year { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-primary); }
         .calendar-dropdown { font-size: 12px; opacity: 0.6; }
-        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 12px; }
-        .calendar-weekday { text-align: center; font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 8px 0; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
+        .calendar-weekday { text-align: center; font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 3px 0; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
         .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 15px; cursor: pointer; transition: all 0.2s; color: var(--text-primary); background: transparent; border: none; }
         .switch { position: relative; display: inline-block; width: 44px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -1065,7 +1064,7 @@
                     <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()"><i class="fas fa-sort-amount-down"></i></button>
                     <button class="btn-icon" id="addBtn" onclick="openModal()"><i class="fas fa-plus"></i></button>
                     <button class="btn-icon" id="calendarChartBtn" onclick="toggleJournalChartView()" style="display: none;"><i class="fas fa-chart-pie"></i></button>
-                    <button class="btn-icon" id="calendarSettingsBtn" onclick="openCalendarJournalModal()" style="display: none;"><i class="fas fa-plus"></i></button>
+                    <button class="btn-icon" id="calendarSettingsBtn" onclick="openNewExpenseFromCalendar()" style="display: none;"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
 
@@ -1142,7 +1141,7 @@
             </div>
 
             <!-- Calendar Page -->
-            <div id="calendarPage" style="display: none; padding: 20px; overflow-y: visible; height: calc(100% - 60px); margin-top: 60px; background: var(--bg-color); position: fixed; top: 0; left: 0; right: 0; bottom: 60px;">
+            <div id="calendarPage" style="display: none; padding: 10px 20px 20px 20px; overflow-y: visible; height: calc(100% - 60px); margin-top: 0; background: var(--bg-color); position: fixed; top: 60px; left: 0; right: 0; bottom: 60px;">
                 <div class="calendar-container">
                     <div class="calendar-header">
                         <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)"><i class="fas fa-chevron-left"></i></button>
@@ -1254,8 +1253,8 @@
             </div>
 
             <div class="tab-bar">
-                <button class="tab-item active" id="assetListTab" onclick="switchToCalendarPage(false)"><i class="fas fa-wallet"></i>資產列表</button>
-                <button class="tab-item" id="calendarTabBtn" onclick="switchToCalendarPage(true)"><i class="fas fa-book"></i>記帳日程</button>
+                <button class="tab-item active" id="assetListTab" onclick="switchToCalendarPage(false)"><i class="fas fa-wallet"></i>資產</button>
+                <button class="tab-item" id="calendarTabBtn" onclick="switchToCalendarPage(true)"><i class="fas fa-book"></i>記帳</button>
             </div>
         </div>
     </div>
@@ -1548,6 +1547,13 @@
                     </div>
                     <div class="form-row">
                         <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
+                            <span class="form-label">標題</span>
+                        </div>
+                        <input type="text" id="incomeTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
+                    </div>
+                    <div class="form-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
                             <span class="form-label">金額</span>
                         </div>
@@ -1608,6 +1614,13 @@
                     </div>
                     <div class="form-row">
                         <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
+                            <span class="form-label">標題</span>
+                        </div>
+                        <input type="text" id="expenseTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
+                    </div>
+                    <div class="form-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
                             <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
                             <span class="form-label">金額</span>
                         </div>
@@ -1665,6 +1678,13 @@
                             <span id="transferDateDisplay" style="color: var(--text-primary);"></span>
                             <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                         </div>
+                    </div>
+                    <div class="form-row">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
+                            <span class="form-label">標題</span>
+                        </div>
+                        <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
                     </div>
                     <div class="form-row" style="cursor: pointer;" onclick="openJournalAccountSelector('transferFrom')">
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -3376,7 +3396,7 @@
         document.getElementById('modalTitle').innerText='新增'; 
         document.getElementById('inpName').value=''; 
         document.getElementById('inpSymbol').value=''; 
-        document.getElementById('inpBalance').value=''; // 清空股數
+        document.getElementById('inpBalance').value='0'; // 預設金額為0
         document.getElementById('inpCost').value=''; // 清空平均成本
         // 確保名稱欄位可編輯
         const nameInput = document.getElementById('inpName');
@@ -4094,7 +4114,7 @@
             } 
         } 
     }
-    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '') : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(!auto && balanceInput === '')return alert("請輸入金額"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; const newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); saveData(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
+    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '') : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; const newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); saveData(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
     function deleteAccount() { 
         const acc = accounts.find(x => x.id === editingId);
         if (!acc) return;
@@ -7443,7 +7463,7 @@
                 pageIndicator.style.display = 'none';  // 完全隱藏頁面指示器
             }
             if(navbarTitle) {
-                navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">記帳日程';
+                navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">記帳';
             }
             // 隱藏右上角的新增和排序按鈕，顯示圖表按鈕和新增按鈕
             const addBtn = document.getElementById('addBtn');
@@ -7590,11 +7610,15 @@
         const lastDay = new Date(year, month + 1, 0);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
+        // 計算需要的總天數：從上個月的第一天到當月的最後一天（不包含下個月的日期）
+        const lastDayOfMonth = lastDay.getDate();
+        const daysInPrevMonth = firstDay.getDay(); // 上個月需要顯示的天數
+        const totalDays = daysInPrevMonth + lastDayOfMonth; // 不包含下個月的日期
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const selected = selectedDate ? new Date(selectedDate) : null;
         if(selected) selected.setHours(0, 0, 0, 0);
-        for(let i = 0; i < 42; i++) {
+        for(let i = 0; i < totalDays; i++) {
             const date = new Date(startDate);
             date.setDate(startDate.getDate() + i);
             date.setHours(0, 0, 0, 0); // 確保時間部分為0，以便正確比較
@@ -7662,7 +7686,30 @@
                 // 如果兩者都有，保持固定轉帳的顏色標記
             }
             
-            dayBtn.onclick = () => selectDate(date);
+            // 使用計時器區分單擊和雙擊
+            let clickTimer = null;
+            let clickCount = 0;
+            dayBtn.addEventListener('click', (e) => {
+                clickCount++;
+                if(clickCount === 1) {
+                    clickTimer = setTimeout(() => {
+                        // 單擊：選中日期
+                        selectDate(date);
+                        clickCount = 0;
+                    }, 300); // 300ms 內沒有第二次點擊，視為單擊
+                } else if(clickCount === 2) {
+                    // 雙擊：打開記帳選單
+                    clearTimeout(clickTimer);
+                    e.stopPropagation();
+                    // 先選中該日期
+                    selectDate(date);
+                    // 然後打開記帳選單
+                    setTimeout(() => {
+                        openCalendarJournalModal();
+                    }, 100);
+                    clickCount = 0;
+                }
+            });
             grid.appendChild(dayBtn);
         }
     }
@@ -8470,19 +8517,26 @@
             
             if(record.type === 'income') {
                 borderColor = 'var(--color-up)';
-                icon = '<i class="fas fa-arrow-up" style="color: var(--color-up); margin-right: 8px;"></i>';
-                title = record.category || '收入';
+                const displayTitle = record.title || '收入';
                 const account = accounts.find(acc => acc.id === record.accountId);
                 const accountName = account ? account.name : '未知帳戶';
+                const accountTagClass = account ? getAccountTagClass(account) : 'account-tag-account';
+                const accountTagHTML = `<span class="account-tag ${accountTagClass}">${accountName}</span>`;
+                const categoryTagHTML = record.category ? `<span class="account-tag account-tag-account" style="background: #e3f2fd; color: #1565c0;">${record.category}</span>` : '';
+                const isAdvanceIcon = record.isAdvance ? '<i class="fas fa-hand-holding-usd" style="color: var(--text-secondary); font-size: 14px;" title="代墊"></i>' : '';
                 detailItem.style.cssText = 'padding: 12px; background: var(--bg-color); border-radius: 8px; border-left: 4px solid ' + borderColor + '; width: calc(100% - 0px); max-width: 100%; box-sizing: border-box; overflow: visible; cursor: pointer;';
                 detailItem.onclick = () => editJournalRecord(record.id);
                 detailItem.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; width: 100%; box-sizing: border-box; gap: 8px;">
-                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${icon}${title}</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayTitle}</div>
                         <div style="font-size: 18px; font-weight: 600; color: var(--color-up); flex-shrink: 0; white-space: nowrap;">+$${record.amount.toLocaleString()}</div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                        <div style="font-size: 14px; color: var(--text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${accountName}</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; width: 100%; flex-wrap: wrap;">
+                        ${categoryTagHTML}
+                        ${accountTagHTML}
+                        ${isAdvanceIcon}
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
@@ -8491,19 +8545,26 @@
                 `;
             } else if(record.type === 'expense') {
                 borderColor = 'var(--color-down)';
-                icon = '<i class="fas fa-arrow-down" style="color: var(--color-down); margin-right: 8px;"></i>';
-                title = record.category || '支出';
+                const displayTitle = record.title || '支出';
                 const account = accounts.find(acc => acc.id === record.accountId);
                 const accountName = account ? account.name : '未知帳戶';
+                const accountTagClass = account ? getAccountTagClass(account) : 'account-tag-account';
+                const accountTagHTML = `<span class="account-tag ${accountTagClass}">${accountName}</span>`;
+                const categoryTagHTML = record.category ? `<span class="account-tag account-tag-account" style="background: #fce4ec; color: #c2185b;">${record.category}</span>` : '';
+                const isAdvanceIcon = record.isAdvance ? '<i class="fas fa-hand-holding-usd" style="color: var(--text-secondary); font-size: 14px;" title="代墊"></i>' : '';
                 detailItem.style.cssText = 'padding: 12px; background: var(--bg-color); border-radius: 8px; border-left: 4px solid ' + borderColor + '; width: calc(100% - 0px); max-width: 100%; box-sizing: border-box; overflow: visible; cursor: pointer;';
                 detailItem.onclick = () => editJournalRecord(record.id);
                 detailItem.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; width: 100%; box-sizing: border-box; gap: 8px;">
-                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${icon}${title}</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayTitle}</div>
                         <div style="font-size: 18px; font-weight: 600; color: var(--color-down); flex-shrink: 0; white-space: nowrap;">-$${record.amount.toLocaleString()}</div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                        <div style="font-size: 14px; color: var(--text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${accountName}</div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; width: 100%; flex-wrap: wrap;">
+                        ${categoryTagHTML}
+                        ${accountTagHTML}
+                        ${isAdvanceIcon}
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
@@ -8512,8 +8573,7 @@
                 `;
             } else if(record.type === 'transfer') {
                 borderColor = '#0a84ff';
-                icon = '<i class="fas fa-exchange-alt" style="color: #0a84ff; margin-right: 8px;"></i>';
-                title = '轉帳';
+                const displayTitle = record.title || '轉帳';
                 const fromAccount = accounts.find(acc => acc.id === record.fromAccountId);
                 const toAccount = accounts.find(acc => acc.id === record.toAccountId);
                 const fromAccountName = fromAccount ? fromAccount.name : '未知帳戶';
@@ -8529,15 +8589,15 @@
                 detailItem.onclick = () => editJournalRecord(record.id);
                 detailItem.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; width: 100%; box-sizing: border-box; gap: 8px;">
-                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${icon}${title}</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${displayTitle}</div>
                         <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); flex-shrink: 0; white-space: nowrap;">$${record.amount.toLocaleString()}</div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; flex-wrap: wrap;">
-                            ${fromAccountTagHTML}
-                            <i class="fas fa-arrow-right" style="color: var(--text-secondary); font-size: 12px; margin: 0 2px;"></i>
-                            ${toAccountTagHTML}
-                        </div>
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; width: 100%; flex-wrap: wrap;">
+                        ${fromAccountTagHTML}
+                        <i class="fas fa-arrow-right" style="color: var(--text-secondary); font-size: 12px; margin: 0 2px;"></i>
+                        ${toAccountTagHTML}
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
@@ -8974,6 +9034,10 @@
         // 填充或重置表單
         if(record) {
             document.getElementById('incomeAmount').value = record.amount || '';
+            const titleInput = document.getElementById('incomeTitle');
+            if(titleInput) {
+                titleInput.value = record.title || '';
+            }
             document.getElementById('incomeCategory').textContent = record.category || '選擇類別';
             document.getElementById('incomeCategory').style.color = record.category ? 'var(--text-primary)' : 'var(--text-secondary)';
             const account = accounts.find(acc => acc.id === record.accountId);
@@ -9008,6 +9072,10 @@
             }
         } else {
             document.getElementById('incomeAmount').value = '';
+            const titleInput = document.getElementById('incomeTitle');
+            if(titleInput) {
+                titleInput.value = '';
+            }
             document.getElementById('incomeCategory').textContent = '選擇類別';
             document.getElementById('incomeCategory').style.color = 'var(--text-secondary)';
             document.getElementById('incomeAccount').textContent = '選擇帳戶';
@@ -9080,6 +9148,10 @@
         // 填充或重置表單
         if(record) {
             document.getElementById('expenseAmount').value = record.amount || '';
+            const titleInput = document.getElementById('expenseTitle');
+            if(titleInput) {
+                titleInput.value = record.title || '';
+            }
             document.getElementById('expenseCategory').textContent = record.category || '選擇類別';
             document.getElementById('expenseCategory').style.color = record.category ? 'var(--text-primary)' : 'var(--text-secondary)';
             const account = accounts.find(acc => acc.id === record.accountId);
@@ -9114,6 +9186,10 @@
             }
         } else {
             document.getElementById('expenseAmount').value = '';
+            const titleInput = document.getElementById('expenseTitle');
+            if(titleInput) {
+                titleInput.value = '';
+            }
             document.getElementById('expenseCategory').textContent = '選擇類別';
             document.getElementById('expenseCategory').style.color = 'var(--text-secondary)';
             document.getElementById('expenseAccount').textContent = '選擇帳戶';
@@ -9332,6 +9408,14 @@
     
     // Calendar Journal Functions (新增支出/收入)
     function openCalendarJournalModal() {
+        // 如果沒有選中日期，使用今天
+        if(!selectedDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate = new Date(today);
+            renderCalendar();
+        }
+        
         const modal = document.getElementById('calendarJournalModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
         
@@ -9347,6 +9431,19 @@
                 }
             }, 10);
         });
+    }
+    
+    // 從日曆頁面直接打開支出新增（使用當前日期或選中的日期）
+    function openNewExpenseFromCalendar() {
+        // 如果沒有選中日期，使用今天
+        if(!selectedDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate = new Date(today);
+            renderCalendar();
+        }
+        // 直接打開支出新增
+        openNewExpense();
     }
     
     function closeCalendarJournalModal() {
@@ -9528,6 +9625,10 @@
         // 填充或重置表單
         if(record) {
             document.getElementById('transferAmount').value = record.amount || '';
+            const titleInput = document.getElementById('transferTitle');
+            if(titleInput) {
+                titleInput.value = record.title || '';
+            }
             const fromAccount = accounts.find(acc => acc.id === record.fromAccountId);
             document.getElementById('transferFromAccount').textContent = fromAccount ? fromAccount.name : '選擇轉出帳戶';
             document.getElementById('transferFromAccount').style.color = fromAccount ? 'var(--text-primary)' : 'var(--text-secondary)';
@@ -9565,6 +9666,10 @@
             }
         } else {
             document.getElementById('transferAmount').value = '';
+            const titleInput = document.getElementById('transferTitle');
+            if(titleInput) {
+                titleInput.value = '';
+            }
             document.getElementById('transferFromAccount').textContent = '選擇轉出帳戶';
             document.getElementById('transferFromAccount').style.color = 'var(--text-secondary)';
             document.getElementById('transferToAccount').textContent = '選擇轉入帳戶';
@@ -9904,10 +10009,16 @@
                 oldRecord.amount = amount;
                 oldRecord.category = currentJournalCategory;
                 oldRecord.accountId = currentJournalAccountId;
+                const titleInput = document.getElementById('incomeTitle');
+                oldRecord.title = titleInput ? titleInput.value.trim() : '';
+                const isAdvanceCheckbox = document.getElementById('incomeIsAdvance');
+                oldRecord.isAdvance = isAdvanceCheckbox ? isAdvanceCheckbox.checked : false;
                 oldRecord.updatedAt = new Date().toISOString();
             }
         } else {
             // 新增模式：創建新記錄
+            const titleInput = document.getElementById('incomeTitle');
+            const isAdvanceCheckbox = document.getElementById('incomeIsAdvance');
             const newRecord = {
                 id: Date.now().toString(),
                 type: 'income',
@@ -9915,6 +10026,8 @@
                 amount: amount,
                 category: currentJournalCategory,
                 accountId: currentJournalAccountId,
+                title: titleInput ? titleInput.value.trim() : '',
+                isAdvance: isAdvanceCheckbox ? isAdvanceCheckbox.checked : false,
                 createdAt: new Date().toISOString()
             };
             records.push(newRecord);
@@ -10003,11 +10116,14 @@
                 oldRecord.accountId = currentJournalAccountId;
                 const isAdvanceCheckbox = document.getElementById('expenseIsAdvance');
                 oldRecord.isAdvance = isAdvanceCheckbox ? isAdvanceCheckbox.checked : false;
+                const titleInput = document.getElementById('expenseTitle');
+                oldRecord.title = titleInput ? titleInput.value.trim() : '';
                 oldRecord.updatedAt = new Date().toISOString();
             }
         } else {
             // 新增模式：創建新記錄（新增的記錄可以正常修改和刪除，因為創建時間在固定轉帳之後）
             const isAdvanceCheckbox = document.getElementById('expenseIsAdvance');
+            const titleInput = document.getElementById('expenseTitle');
             const newRecord = {
                 id: Date.now().toString(),
                 type: 'expense',
@@ -10016,6 +10132,7 @@
                 category: currentJournalCategory,
                 accountId: currentJournalAccountId,
                 isAdvance: isAdvanceCheckbox ? isAdvanceCheckbox.checked : false,
+                title: titleInput ? titleInput.value.trim() : '',
                 createdAt: new Date().toISOString()
             };
             records.push(newRecord);
@@ -10111,10 +10228,13 @@
                 oldRecord.amount = amount;
                 oldRecord.fromAccountId = currentTransferFromAccountId;
                 oldRecord.toAccountId = currentTransferToAccountId;
+                const titleInput = document.getElementById('transferTitle');
+                oldRecord.title = titleInput ? titleInput.value.trim() : '';
                 oldRecord.updatedAt = new Date().toISOString();
             }
         } else {
             // 新增模式：創建新記錄
+            const titleInput = document.getElementById('transferTitle');
             const newRecord = {
                 id: Date.now().toString(),
                 type: 'transfer',
@@ -10122,6 +10242,7 @@
                 amount: amount,
                 fromAccountId: currentTransferFromAccountId,
                 toAccountId: currentTransferToAccountId,
+                title: titleInput ? titleInput.value.trim() : '',
                 createdAt: new Date().toISOString()
             };
             records.push(newRecord);
