@@ -76,10 +76,7 @@
             }
         })();
     </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- 備用 Font Awesome CDN -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -97,24 +94,6 @@
         }
         * { box-sizing: border-box; }
         body { background-color: var(--bg-color); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; overflow-x: hidden; }
-        /* 確保 Font Awesome 圖示正確顯示 */
-        .fas, .far, .fab, .fa, [class*="fa-"] {
-            font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
-            font-weight: 900;
-            -webkit-font-smoothing: antialiased;
-            display: inline-block;
-            font-style: normal;
-            font-variant: normal;
-            text-rendering: auto;
-            line-height: 1;
-        }
-        .far {
-            font-weight: 400;
-        }
-        .fab {
-            font-family: "Font Awesome 6 Brands" !important;
-            font-weight: 400;
-        }
         body::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
         body { scrollbar-width: none !important; -ms-overflow-style: none !important; }
         * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
@@ -4616,26 +4595,24 @@
                                 const originalCurrentUserId = currentUserId; // 保存原始 currentUserId
                                 
                                 // 上傳所有使用者的資料到 Firestore
-                                // 注意：同步函數使用 currentUserId，所以需要為每個使用者分別設置
-                                for (const userId of Object.keys(d.usersData)) {
+                                Object.keys(d.usersData).forEach((userId) => {
                                     const userData = d.usersData[userId];
                                     // 臨時設置 currentUserId，以便同步函數使用正確的路徑
                                     currentUserId = userId;
                                     
-                                    // 使用 await 確保每個使用者的資料按順序同步，避免 currentUserId 被覆蓋
                                     if (userData.data && userData.data.length > 0) {
-                                        await window.syncAccountsToFirestore(userData.data);
+                                        uploadPromises.push(window.syncAccountsToFirestore(userData.data));
                                     }
                                     if (userData.journal && userData.journal.length > 0) {
-                                        await window.syncJournalToFirestore(userData.journal);
+                                        uploadPromises.push(window.syncJournalToFirestore(userData.journal));
                                     }
                                     if (userData.settings && Object.keys(userData.settings).length > 0) {
-                                        await window.syncSettingsToFirestore(userData.settings);
+                                        uploadPromises.push(window.syncSettingsToFirestore(userData.settings));
                                     }
                                     if (userData.fixedTransfers && userData.fixedTransfers.length > 0) {
-                                        await window.syncFixedTransfersToFirestore(userData.fixedTransfers);
+                                        uploadPromises.push(window.syncFixedTransfersToFirestore(userData.fixedTransfers));
                                     }
-                                }
+                                });
                                 
                                 // 恢復原始 currentUserId
                                 currentUserId = originalCurrentUserId;
@@ -12778,8 +12755,7 @@
     // 同步 accounts 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncAccountsToFirestore = async function(accountsData) {
         if (!currentFirebaseUser || !currentUserId) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
+        // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12790,19 +12766,12 @@
             console.log('accounts 已同步到 Firestore');
         } catch (err) {
             console.error('同步 accounts 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
     
     // 同步 journal 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncJournalToFirestore = async function(records) {
         if (!currentFirebaseUser || !currentUserId) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12813,19 +12782,12 @@
             console.log('journal 已同步到 Firestore');
         } catch (err) {
             console.error('同步 journal 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
     
     // 同步 settings 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncSettingsToFirestore = async function(settingsData) {
         if (!currentFirebaseUser || !currentUserId) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12836,19 +12798,12 @@
             console.log('settings 已同步到 Firestore');
         } catch (err) {
             console.error('同步 settings 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
     
     // 同步 fixedTransfers 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncFixedTransfersToFirestore = async function(transfers) {
         if (!currentFirebaseUser || !currentUserId) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
         
         try {
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
@@ -12859,19 +12814,12 @@
             console.log('fixedTransfers 已同步到 Firestore');
         } catch (err) {
             console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
     
     // 同步 users 到 Firestore
     window.syncUsersToFirestore = async function(usersData) {
         if (!currentFirebaseUser) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
         
         try {
             const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
@@ -12882,19 +12830,12 @@
             console.log('users 已同步到 Firestore');
         } catch (err) {
             console.error('同步 users 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
     
     // 同步 currentUser 到 Firestore
     window.syncCurrentUserToFirestore = async function(currentUserId) {
         if (!currentFirebaseUser) return;
-        // 設置標記，表示這是本地操作觸發的同步，避免監聽器觸發時再次更新本地
-        isSyncingFromFirestore = true;
         
         try {
             const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
@@ -12905,11 +12846,6 @@
             console.log('currentUser 已同步到 Firestore');
         } catch (err) {
             console.error('同步 currentUser 到 Firestore 失敗:', err);
-        } finally {
-            // 延遲一點再清除標記，確保監聽器不會在同步完成前觸發
-            setTimeout(() => {
-                isSyncingFromFirestore = false;
-            }, 500);
         }
     };
 
