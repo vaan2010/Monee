@@ -4129,7 +4129,7 @@
     }
     function saveData() { 
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        localStorage.setItem(userDataKey, JSON.stringify(accounts)); 
         // 同步到 Firestore
         if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
             window.syncAccountsToFirestore(accounts);
@@ -4252,7 +4252,7 @@
         modal.style.display = 'block';
         
         // 初始化 Firebase UI
-        setTimeout(() => {
+                    setTimeout(() => {
             updateFirebaseUI();
         }, 100);
     }
@@ -4260,7 +4260,7 @@
     function closeCloudBackupModal() {
         if(window.cloudBackupModal) {
             window.cloudBackupModal.style.display = 'none';
-            setTimeout(() => {
+                            setTimeout(() => {
                 if(window.cloudBackupModal && window.cloudBackupModal.parentNode) {
                     window.cloudBackupModal.parentNode.removeChild(window.cloudBackupModal);
                 }
@@ -4357,7 +4357,7 @@
         
         if(enabled) {
             startCloudBackupTimer();
-        } else {
+                        } else {
             stopCloudBackupTimer();
         }
     }
@@ -4434,7 +4434,7 @@
                     await window.firebasePerformBackup(jsonStr, false);
                     settings.cloudBackupLastTime = new Date().toISOString();
                     saveSettings();
-                } else {
+        } else {
                     throw new Error('Firebase 功能尚未載入，請重新整理頁面');
                 }
             }
@@ -7771,7 +7771,7 @@
             const calendarGrid = document.getElementById('calendarGrid');
             const calendarWeekdays = document.querySelector('.calendar-weekdays');
             if(calendarGrid) calendarGrid.style.display = 'grid';
-            if(calendarWeekdays) calendarWeekdays.style.display = 'flex';
+            if(calendarWeekdays) calendarWeekdays.style.display = 'grid';  // 使用 grid 與日曆網格對齊
             if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
             renderCalendar();
             // 如果有選中日期，顯示詳情
