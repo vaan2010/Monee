@@ -4616,24 +4616,26 @@
                                 const originalCurrentUserId = currentUserId; // 保存原始 currentUserId
                                 
                                 // 上傳所有使用者的資料到 Firestore
-                                Object.keys(d.usersData).forEach((userId) => {
+                                // 注意：同步函數使用 currentUserId，所以需要為每個使用者分別設置
+                                for (const userId of Object.keys(d.usersData)) {
                                     const userData = d.usersData[userId];
                                     // 臨時設置 currentUserId，以便同步函數使用正確的路徑
                                     currentUserId = userId;
                                     
+                                    // 使用 await 確保每個使用者的資料按順序同步，避免 currentUserId 被覆蓋
                                     if (userData.data && userData.data.length > 0) {
-                                        uploadPromises.push(window.syncAccountsToFirestore(userData.data));
+                                        await window.syncAccountsToFirestore(userData.data);
                                     }
                                     if (userData.journal && userData.journal.length > 0) {
-                                        uploadPromises.push(window.syncJournalToFirestore(userData.journal));
+                                        await window.syncJournalToFirestore(userData.journal);
                                     }
                                     if (userData.settings && Object.keys(userData.settings).length > 0) {
-                                        uploadPromises.push(window.syncSettingsToFirestore(userData.settings));
+                                        await window.syncSettingsToFirestore(userData.settings);
                                     }
                                     if (userData.fixedTransfers && userData.fixedTransfers.length > 0) {
-                                        uploadPromises.push(window.syncFixedTransfersToFirestore(userData.fixedTransfers));
+                                        await window.syncFixedTransfersToFirestore(userData.fixedTransfers);
                                     }
-                                });
+                                }
                                 
                                 // 恢復原始 currentUserId
                                 currentUserId = originalCurrentUserId;
@@ -4642,7 +4644,7 @@
                                 Promise.all(uploadPromises).then(() => {
                                     progressBar.style.width = '100%';
                                     progressText.innerText = '完成！';
-                                    setTimeout(() => location.reload(), 500);
+                            setTimeout(() => location.reload(), 500);
                                 }).catch((err) => {
                                     console.error('上傳到 Firestore 失敗:', err);
                                     progressBar.style.width = '100%';
@@ -4770,9 +4772,9 @@
                 deleteBtn.disabled = true;
                 deleteBtn.title = '無法刪除當前使用者';
             } else {
-                deleteBtn.style.cssText = 'background: none; border: none; color: #ff453a; font-size: 18px; padding: 5px 10px; cursor: pointer;';
-                deleteBtn.onclick = (e) => { e.stopPropagation(); deleteUser(user.id); };
-                deleteBtn.title = '刪除使用者';
+            deleteBtn.style.cssText = 'background: none; border: none; color: #ff453a; font-size: 18px; padding: 5px 10px; cursor: pointer;';
+            deleteBtn.onclick = (e) => { e.stopPropagation(); deleteUser(user.id); };
+            deleteBtn.title = '刪除使用者';
             }
             deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
             
@@ -4842,9 +4844,9 @@
             await loadDataFromFirestore();
         } else {
             // 如果沒有登入，只從 localStorage 載入
-            const userData = loadUserData(currentUserId);
-            accounts = userData.accounts;
-            settings = userData.settings;
+        const userData = loadUserData(currentUserId);
+        accounts = userData.accounts;
+        settings = userData.settings;
         }
         
         // 更新顯示
