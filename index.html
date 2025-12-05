@@ -12536,10 +12536,9 @@
                     isSyncingFromFirestore = true;
                     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
                     
-                    // 更新全域變數
-                    if (typeof window !== 'undefined' && window.users !== undefined) {
-                        window.users = firestoreUsers;
-                    }
+                    // 更新全域變數 users（這是 renderUserList 使用的變數）
+                    users = firestoreUsers;
+                    
                     // 如果有使用者列表相關的渲染函數，觸發重新渲染
                     if (typeof renderUserList === 'function') {
                         renderUserList();
