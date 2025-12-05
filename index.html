@@ -12558,7 +12558,8 @@
             }
         });
         
-        // 設定其他監聽器的 Unsubscribe 參照
+        // 設定其他監聽器的 Unsubscribe 參照（實際上都是同一個監聽器，因為資料存在同一個文件中）
+        // 注意：在 stopFirestoreSync 中只會取消 accountsUnsubscribe，其他變數直接設為 null
         journalUnsubscribe = accountsUnsubscribe;
         settingsUnsubscribe = accountsUnsubscribe;
         fixedTransfersUnsubscribe = accountsUnsubscribe;
@@ -12611,31 +12612,39 @@
     
     // 停止 Firestore 同步監聽
     function stopFirestoreSync() {
+        // 只需要取消主監聽器，因為其他變數都是指向同一個
         if (accountsUnsubscribe) {
-            accountsUnsubscribe();
+            try {
+                accountsUnsubscribe();
+            } catch (e) {
+                console.error("取消監聽時發生錯誤:", e);
+            }
             accountsUnsubscribe = null;
         }
-        if (journalUnsubscribe) {
-            journalUnsubscribe();
-            journalUnsubscribe = null;
-        }
-        if (settingsUnsubscribe) {
-            settingsUnsubscribe();
-            settingsUnsubscribe = null;
-        }
-        if (fixedTransfersUnsubscribe) {
-            fixedTransfersUnsubscribe();
-            fixedTransfersUnsubscribe = null;
-        }
+        
+        // 將其他引用直接設為 null，不要呼叫它們
+        journalUnsubscribe = null;
+        settingsUnsubscribe = null;
+        fixedTransfersUnsubscribe = null;
+        
         if (usersUnsubscribe) {
-            usersUnsubscribe();
+            try { 
+                usersUnsubscribe(); 
+            } catch(e) {
+                console.error("取消 users 監聽時發生錯誤:", e);
+            }
             usersUnsubscribe = null;
         }
         if (currentUserUnsubscribe) {
-            currentUserUnsubscribe();
+            try { 
+                currentUserUnsubscribe(); 
+            } catch(e) {
+                console.error("取消 currentUser 監聽時發生錯誤:", e);
+            }
             currentUserUnsubscribe = null;
         }
-        firestoreSyncEnabled = false;
+        
+        firestoreSyncEnabled = false; // 確保這行一定會執行
         console.log('Firestore 同步監聽已停止');
     }
     
