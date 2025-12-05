@@ -2218,6 +2218,9 @@
     
     // 分頁順序設置（從 settings 讀取，如果沒有則從 localStorage，都沒有則使用預設值）
     let pageOrder = settings.pageOrder || JSON.parse(localStorage.getItem('pageOrder')) || [0, 1, 2, 3, 4];
+    
+    // 【新增】用於防止切換使用者期間的意外存檔
+    let isUserSwitching = false;
     // 如果 settings 中有值，同步到 localStorage（向後兼容）
     if(settings.pageOrder) {
         localStorage.setItem('pageOrder', JSON.stringify(settings.pageOrder));
@@ -4161,18 +4164,18 @@
         renderAssets();
     }
     function saveData() { 
+        if (isUserSwitching) return; // 鎖定攔截
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
         localStorage.setItem(userDataKey, JSON.stringify(accounts)); 
-        // 同步到 Firestore
         if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
             window.syncAccountsToFirestore(accounts);
         }
     }
     
     function saveSettings() {
+        if (isUserSwitching) return; // 鎖定攔截
         const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
         localStorage.setItem(userSettingsKey, JSON.stringify(settings));
-        // 同步到 Firestore
         if (window.syncSettingsToFirestore && window.firebaseUserLoggedIn) {
             window.syncSettingsToFirestore(settings);
         }
@@ -4560,77 +4563,53 @@
                     // 準備要切換的主要使用者 ID
                     let primaryUserId = null;
 
-                    // 支援新格式（多使用者）
                     if (d.version === '2.0' && d.users && d.usersData) {
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
                         
-                        // 1. 寫入使用者列表
                         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
                         
-                        // 2. 決定主要使用者 (通常是列表中的第一個)
                         if (d.users.length > 0) {
                             primaryUserId = d.users[0].id;
-                            // 關鍵修正：立即更新本地的當前使用者
                             localStorage.setItem(STORAGE_KEY_CURRENT_USER, primaryUserId);
                             currentUserId = primaryUserId;
                         }
 
-                        // 3. 匯入每個使用者的資料
                         Object.keys(d.usersData).forEach(userId => {
                             const userData = d.usersData[userId];
                             localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
                             localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
-                            if(userData.journal !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
-                            }
-                            if(userData.fixedTransfers !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
-                            }
+                            // 修正：確保即使是 undefined 也要存成空陣列，避免讀取錯誤
+                            localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
+                            localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
                         });
 
                     } else if (d.data && d.settings) {
-                        // 舊格式：單使用者，匯入到當前使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        
-                        // 使用當前 ID 或預設 ID
                         primaryUserId = currentUserId; 
-                        
                         localStorage.setItem(`${STORAGE_KEY_DATA}_${primaryUserId}`, JSON.stringify(d.data));
                         localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${primaryUserId}`, JSON.stringify(d.settings));
                     } else {
                         throw new Error("檔案格式錯誤");
                     }
 
-                    // --- 同步到雲端的核心修正 ---
                     if (window.firebaseUserLoggedIn) {
                         progressText.innerText = '同步到雲端...';
                         try {
-                            // 1. 如果有使用者列表，先同步使用者列表
                             if (d.users && window.syncUsersToFirestore) {
                                 await window.syncUsersToFirestore(d.users);
                             }
-
-                            // 2. 關鍵修正：強制更新雲端的「當前使用者 ID」
-                            // 這能確保重新整理後，Firebase 知道要載入哪個使用者的資料
+                            // 關鍵：更新雲端紀錄的「當前使用者」，防止重新整理後跳回舊帳號
                             if (primaryUserId && window.syncCurrentUserToFirestore) {
-                                console.log('正在更新雲端當前使用者 ID:', primaryUserId);
                                 await window.syncCurrentUserToFirestore(primaryUserId);
                             }
-
-                            // 3. 同步資料 (這裡做個優化，如果是多使用者，嘗試同步所有資料)
                             if (window.syncAllDataToFirestore) {
-                                // 注意：原本的 syncAllDataToFirestore 可能只同步當前使用者
-                                // 由於我們上面已經切換了 currentUserId，這裡應該會同步主要使用者的資料
                                 await window.syncAllDataToFirestore();
                             }
-                            
                             progressText.innerText = '同步完成！';
                         } catch (err) {
                             console.error('同步到 Firestore 失敗:', err);
-                            progressText.innerText = '同步失敗，但本地已保存';
-                            // 即使失敗也繼續，至少本地有資料
                         }
                     }
                     
@@ -4781,87 +4760,84 @@
     async function switchUser(userId) {
         console.log(`[切換使用者] 開始切換至: ${userId}`);
         
-        // 1. 鎖定並儲存舊使用者的資料
+        // 1. 最後一次安全存檔
         saveData();
         saveSettings();
         
-        // 2. 核彈級清空 (記憶體變數)
+        // 2. 【開啟鎖定】禁止任何寫入操作
+        isUserSwitching = true;
+        
+        // 3. 停止監聽
+        if (window.firebaseUserLoggedIn && typeof stopFirestoreSync === 'function') {
+            stopFirestoreSync();
+        }
+        
+        // 4. 清空記憶體與快取
         accounts = [];
         settings = {}; 
+        if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
+        // 重置選中日期，避免殘留
+        selectedDate = new Date(); 
+        selectedDate.setHours(0,0,0,0);
         
-        // 【關鍵新增】清除記帳相關的快取 (避免日曆上的點點殘留)
-        if (typeof clearJournalDatesCache === 'function') {
-            clearJournalDatesCache();
-        }
-        // 清除當前選中的日期 (讓新使用者回到預設狀態，或者您可以選擇保留)
-        // selectedDate = null; 
-        
-        // 3. 安全切換 ID
+        // 5. 切換 ID
         currentUserId = userId;
         localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
         
-        // 4. 從本地載入新使用者的資料
+        // 6. 載入新資料
         const localData = loadUserData(currentUserId);
         accounts = localData.accounts;
         settings = localData.settings;
         
-        console.log(`[切換使用者] 本地資料載入完成`);
-
-        // 5. 更新介面 (資產頁面)
+        // 7. 更新所有畫面 (包含記帳與日曆)
         updateUserAvatar();
         renderAssets();
         updateChartData();
-        
-        // 【關鍵新增】刷新記帳與日曆介面 (如果目前在記帳頁面，需立即更新)
-        if (typeof renderCalendar === 'function') {
-            renderCalendar();
-        }
-        // 如果有選中日期，重新顯示該日期的詳情 (載入新使用者的記帳紀錄)
-        if (selectedDate && typeof showFixedTransferDetailsForDate === 'function') {
+        if (typeof renderCalendar === 'function') renderCalendar();
+        // 重新顯示今天(或預設日期)的記帳詳情，確保列表也是新的
+        if (typeof showFixedTransferDetailsForDate === 'function') {
             showFixedTransferDetailsForDate(selectedDate);
-        } else {
-            // 如果沒選中，隱藏詳情區塊 (避免殘留舊使用者的詳情)
-            const detailsDiv = document.getElementById('calendarTransferDetails');
-            if (detailsDiv) detailsDiv.style.display = 'none';
         }
         
-        // 6. 處理雲端同步
+        // 8. 處理雲端同步
         if (window.firebaseUserLoggedIn) {
             if (window.syncCurrentUserToFirestore) {
                 window.syncCurrentUserToFirestore(currentUserId).catch(e => console.error(e));
             }
             
-            if (typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
-                stopFirestoreSync();
-                setTimeout(() => {
-                    startFirestoreSync(); 
-                }, 50);
+            // 延遲啟動監聽，避開切換瞬間
+            if (typeof startFirestoreSync === 'function') {
+                setTimeout(() => { startFirestoreSync(); }, 100);
             }
             
+            // 下載雲端資料
             if (typeof loadDataFromFirestore === 'function') {
                 try {
                     await loadDataFromFirestore();
-                    // 雲端載入後再次刷新所有資料
+                    // 下載後再次刷新
                     const finalData = loadUserData(currentUserId);
                     accounts = finalData.accounts;
                     settings = finalData.settings;
-                    
-                    // 清除快取並重繪
                     if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
-                    
                     renderAssets();
                     updateChartData();
                     if (typeof renderCalendar === 'function') renderCalendar();
-                    if (selectedDate && typeof showFixedTransferDetailsForDate === 'function') {
+                    if (typeof showFixedTransferDetailsForDate === 'function') {
                         showFixedTransferDetailsForDate(selectedDate);
                     }
                 } catch (e) {
-                    console.error("雲端資料載入失敗", e);
+                    console.error("雲端載入失敗", e);
                 }
             }
         }
         
         closeUserSelector();
+        
+        // 9. 【解除鎖定】
+        setTimeout(() => {
+            isUserSwitching = false;
+            console.log('[切換使用者] 鎖定解除');
+        }, 500);
     }
 
     function deleteUser(userId) {
@@ -9082,17 +9058,14 @@
     
     // 保存記帳記錄
     function saveJournalRecords(records) {
-        // 清除緩存，因為記錄已更新
+        if (isUserSwitching) return; // 鎖定攔截
         clearJournalDatesCache();
         try {
             localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
-            // 同步到 Firestore
             if (window.syncJournalToFirestore && window.firebaseUserLoggedIn) {
                 window.syncJournalToFirestore(records);
             }
-        } catch(e) {
-            console.error('Failed to save journal records:', e);
-        }
+        } catch(e) { console.error(e); }
     }
     
     // 編輯記帳記錄
@@ -11470,15 +11443,13 @@
     
     // 保存固定轉帳列表
     function saveFixedTransfers(transfers) {
+        if (isUserSwitching) return; // 鎖定攔截
         try {
             localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`, JSON.stringify(transfers));
-            // 同步到 Firestore
             if (window.syncFixedTransfersToFirestore && window.firebaseUserLoggedIn) {
                 window.syncFixedTransfersToFirestore(transfers);
             }
-        } catch(e) {
-            console.error('Failed to save fixed transfers:', e);
-        }
+        } catch(e) { console.error(e); }
     }
     
     function openRepeatSelector() {
@@ -12374,50 +12345,28 @@
             const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
             const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
             
-            // 2. 判斷同步方向
             if (userDataSnap.exists()) {
-                // --- 情境 A：雲端有資料 -> 強制覆蓋本地 (Auto Overwrite) ---
-                console.log(`[同步] 發現使用者 ${currentUserId} 的雲端資料，正在自動覆蓋本地...`);
-                
+                console.log(`[同步] 強制同步使用者 ${currentUserId} 資料`);
                 const userData = userDataSnap.data();
-                const firestoreAccounts = userData.accounts || [];
-                const firestoreJournal = userData.journal || [];
-                const firestoreSettings = userData.settings || {};
-                const firestoreFixedTransfers = userData.fixedTransfers || [];
                 
-                // 直接寫入 LocalStorage，不詢問使用者
-                if (firestoreAccounts.length > 0 || userData.accounts) { // 即使是空陣列也覆蓋，確保同步
-                    localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                }
-                if (firestoreJournal.length > 0 || userData.journal) {
-                    localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
-                }
-                if (firestoreFixedTransfers.length > 0 || userData.fixedTransfers) {
-                    localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                }
-                if (Object.keys(firestoreSettings).length > 0) {
-                    // 設定建議保留本地未衝突的設定，但以雲端為主
-                    const mergedSettings = { ...localSettings, ...firestoreSettings };
-                    localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                // 【關鍵修正】不檢查 length，直接覆蓋 (即使是空陣列)
+                localStorage.setItem(userDataKey, JSON.stringify(userData.accounts || []));
+                localStorage.setItem(userJournalKey, JSON.stringify(userData.journal || []));
+                localStorage.setItem(userFixedTransfersKey, JSON.stringify(userData.fixedTransfers || []));
+                
+                if (userData.settings) {
+                    const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+                    const merged = { ...localSettings, ...userData.settings };
+                    localStorage.setItem(userSettingsKey, JSON.stringify(merged));
                 }
                 
-                // 通知 App 重新載入畫面
                 window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
                 
             } else {
-                // --- 情境 B：雲端無資料 (新使用者/剛匯入) -> 自動上傳本地資料 (Auto Upload) ---
-                // 這能解決「匯入本地 JSON (User 1 有資料) -> 登入 -> 雲端是空的 -> 資料被清空」的問題
-                // 改為：雲端是空的 -> 把本地 User 1 的資料推上去
-                
-                const hasLocalData = localAccounts.length > 0 || localJournal.length > 0 || localFixedTransfers.length > 0;
-                
-                if (hasLocalData) {
-                    console.log(`[同步] 雲端無資料，但發現本地使用者 ${currentUserId} 有資料，正在自動上傳至雲端...`);
-                    if (window.syncAllDataToFirestore) {
-                        await window.syncAllDataToFirestore();
-                    }
-                } else {
-                    console.log(`[同步] 使用者 ${currentUserId} 在雲端與本地皆為空 (新帳號狀態)。`);
+                // 雲端無資料 -> 上傳本地
+                const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                if (localAccounts.length > 0) {
+                    if (window.syncAllDataToFirestore) await window.syncAllDataToFirestore();
                 }
             }
             
@@ -13058,7 +13007,6 @@
 </script>
 </body>
 </html>
-
 
 
 
