@@ -4540,88 +4540,113 @@
         const progressBar = document.getElementById('importProgressBar');
         const progressText = document.getElementById('importProgressText');
         const importOverlay = document.getElementById('importOverlay');
+        
         // 顯示遮罩層和進度條
         if(importOverlay) importOverlay.style.display = 'block';
         progressToast.style.display = 'block';
         progressBar.style.width = '20%';
         progressText.innerText = '讀取檔案中...';
+        
         const reader = new FileReader();
         reader.onload = function(e) {
             progressBar.style.width = '50%';
             progressText.innerText = '解析JSON中...';
             try {
-                setTimeout(() => {
+                setTimeout(async () => {
                     progressBar.style.width = '70%';
                     progressText.innerText = '驗證資料中...';
                     const d = JSON.parse(e.target.result);
                     
-                    // 支援新格式（多使用者）和舊格式（單使用者）
+                    // 準備要切換的主要使用者 ID
+                    let primaryUserId = null;
+
+                    // 支援新格式（多使用者）
                     if (d.version === '2.0' && d.users && d.usersData) {
-                        // 新格式：多使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        setTimeout(async () => {
-                            progressBar.style.width = '100%';
-                            progressText.innerText = '完成！';
-                            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
-                            
-                            // 匯入每個使用者的資料
-                            Object.keys(d.usersData).forEach(userId => {
-                                const userData = d.usersData[userId];
-                                localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
-                                localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
-                                if(userData.journal !== undefined) {
-                                    localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
-                                }
-                                if(userData.fixedTransfers !== undefined) {
-                                    localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
-                                }
-                            });
-                            
-                            // 如果已登入 Firebase，立即同步匯入的資料到 Firestore
-                            if (window.firebaseUserLoggedIn && window.syncAllDataToFirestore) {
-                                progressText.innerText = '同步到雲端...';
-                                try {
-                                    await window.syncAllDataToFirestore();
-                                    progressText.innerText = '同步完成！';
-                                } catch (err) {
-                                    console.error('同步到 Firestore 失敗:', err);
-                                    progressText.innerText = '同步失敗，但資料已匯入';
-                                }
+                        
+                        // 1. 寫入使用者列表
+                        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
+                        
+                        // 2. 決定主要使用者 (通常是列表中的第一個)
+                        if (d.users.length > 0) {
+                            primaryUserId = d.users[0].id;
+                            // 關鍵修正：立即更新本地的當前使用者
+                            localStorage.setItem(STORAGE_KEY_CURRENT_USER, primaryUserId);
+                            currentUserId = primaryUserId;
+                        }
+
+                        // 3. 匯入每個使用者的資料
+                        Object.keys(d.usersData).forEach(userId => {
+                            const userData = d.usersData[userId];
+                            localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
+                            localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
+                            if(userData.journal !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
                             }
-                            
-                            setTimeout(() => location.reload(), 500);
-                        }, 200);
+                            if(userData.fixedTransfers !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
+                            }
+                        });
+
                     } else if (d.data && d.settings) {
                         // 舊格式：單使用者，匯入到當前使用者
                         progressBar.style.width = '90%';
                         progressText.innerText = '寫入資料中...';
-                        setTimeout(async () => {
-                            progressBar.style.width = '100%';
-                            progressText.innerText = '完成！';
-                            localStorage.setItem(`${STORAGE_KEY_DATA}_${currentUserId}`, JSON.stringify(d.data));
-                            localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${currentUserId}`, JSON.stringify(d.settings));
-                            
-                            // 如果已登入 Firebase，立即同步匯入的資料到 Firestore
-                            if (window.firebaseUserLoggedIn && window.syncAllDataToFirestore) {
-                                progressText.innerText = '同步到雲端...';
+                        
+                        // 使用當前 ID 或預設 ID
+                        primaryUserId = currentUserId; 
+                        
+                        localStorage.setItem(`${STORAGE_KEY_DATA}_${primaryUserId}`, JSON.stringify(d.data));
+                        localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${primaryUserId}`, JSON.stringify(d.settings));
+                    } else {
+                        throw new Error("檔案格式錯誤");
+                    }
+
+                    // --- 同步到雲端的核心修正 ---
+                    if (window.firebaseUserLoggedIn) {
+                        progressText.innerText = '同步到雲端...';
+                        try {
+                            // 1. 如果有使用者列表，先同步使用者列表
+                            if (d.users && window.syncUsersToFirestore) {
+                                await window.syncUsersToFirestore(d.users);
+                            }
+
+                            // 2. 關鍵修正：強制更新雲端的「當前使用者 ID」
+                            // 這能確保重新整理後，Firebase 知道要載入哪個使用者的資料
+                            if (primaryUserId && window.syncCurrentUserToFirestore) {
+                                console.log('正在更新雲端當前使用者 ID:', primaryUserId);
+                                await window.syncCurrentUserToFirestore(primaryUserId);
+                            }
+
+                            // 3. 同步資料 (這裡做個優化，如果是多使用者，嘗試同步所有資料)
+                            if (window.syncAllDataToFirestore) {
+                                // 注意：原本的 syncAllDataToFirestore 可能只同步當前使用者
+                                // 由於我們上面已經切換了 currentUserId，這裡應該會同步主要使用者的資料
                                 await window.syncAllDataToFirestore();
                             }
                             
-                            setTimeout(() => location.reload(), 500);
-                        }, 200);
-                    } else {
-                        if(importOverlay) importOverlay.style.display = 'none';
-                        progressToast.style.display = 'none';
-                        progressBar.style.width = '0%';
-                        alert("檔案格式錯誤");
+                            progressText.innerText = '同步完成！';
+                        } catch (err) {
+                            console.error('同步到 Firestore 失敗:', err);
+                            progressText.innerText = '同步失敗，但本地已保存';
+                            // 即使失敗也繼續，至少本地有資料
+                        }
                     }
+                    
+                    progressBar.style.width = '100%';
+                    progressText.innerText = '完成！';
+                    
+                    // 延遲重新整理，確保資料寫入完成
+                    setTimeout(() => location.reload(), 500);
+
                 }, 100);
             } catch(err) {
                 if(importOverlay) importOverlay.style.display = 'none';
                 progressToast.style.display = 'none';
                 progressBar.style.width = '0%';
                 alert("讀取檔案失敗: " + err.message);
+                console.error(err);
             }
         };
         reader.readAsText(file);
