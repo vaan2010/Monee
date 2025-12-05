@@ -12436,7 +12436,7 @@
         }
     }
     
-    // 啟動 Firestore 同步監聽 (修正版：鎖定 User ID)
+    // 啟動 Firestore 同步監聽 (修正版：監聽所有使用者)
     function startFirestoreSync() {
         if (!currentFirebaseUser) {
             console.warn('[同步啟動] 沒有 Firebase 使用者，無法啟動');
@@ -12453,142 +12453,124 @@
             return;
         }
         
-        // 【關鍵修正 1】從 localStorage 讀取 currentUserId（因為模組作用域無法直接訪問主腳本的全域變數）
-        // 在監聽器啟動的當下，鎖定目前的使用者 ID
-        // 這個變數會被下面的 callback 閉包 (Closure) 記住
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const syncTargetUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        
-        if (!syncTargetUserId) {
-            console.warn('[同步啟動] 沒有 currentUserId，無法啟動');
-            return;
-        }
-        
-        console.log(`[同步啟動] 開始監聽使用者: ${syncTargetUserId} (從 localStorage 讀取)`);
+        console.log(`[同步啟動] 開始監聽所有使用者的資料變化`);
         firestoreSyncEnabled = true;
         
-        // 監聽使用者資料變化
-        const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", syncTargetUserId);
+        // 監聽所有使用者的資料變化（使用 collection 監聽整個 appUsers 集合）
+        const appUsersCollectionRef = collection(db, "users", currentFirebaseUser.uid, "appUsers");
         
-        accountsUnsubscribe = onSnapshot(userDataRef, (snap) => {
+        accountsUnsubscribe = onSnapshot(appUsersCollectionRef, (snapshot) => {
             if (isSyncingFromFirestore) return;
             
-            // 【關鍵修正】忽略本地尚未寫入伺服器的快照 (防止自己覆寫自己)
-            // 當我們刪除資產時，SDK 會立即觸發一次 snap，此時 hasPendingWrites 為 true
-            // 我們應該忽略這次觸發，因為本地資料已經是最新的了
-            if (snap.metadata.hasPendingWrites) {
-                return;
-            }
-
-            // 安全檢查：防止寫入到錯誤的使用者
-            // 從 localStorage 讀取最新的 currentUserId
+            const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
             const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            if (currentUserIdNow !== syncTargetUserId) {
-                console.warn(`[同步忽略] 使用者已切換 (監聽目標: ${syncTargetUserId}, 當前: ${currentUserIdNow})`);
-                return;
-            }
-
-            if (snap.exists()) {
-                const userData = snap.data();
-                const firestoreAccounts = userData.accounts || [];
-                const firestoreJournal = userData.journal || [];
-                const firestoreSettings = userData.settings || {};
-                const firestoreFixedTransfers = userData.fixedTransfers || [];
+            
+            // 處理每個使用者的資料變化
+            snapshot.docChanges().forEach((change) => {
+                const userId = change.doc.id; // 這是使用者的 ID
+                const snap = change.doc;
                 
-                // 【關鍵修正 3】使用鎖定的 syncTargetUserId 來產生 Key，而不是讀取全域變數
-                // 這樣即使上面檢查失效，它也只會寫回原本的使用者空間，不會污染新使用者
-                const userDataKey = `${STORAGE_KEY_DATA}_${syncTargetUserId}`;
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${syncTargetUserId}`;
-                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${syncTargetUserId}`;
-                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${syncTargetUserId}`;
-                
-                const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-                const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-                
-                let hasChanges = false;
-                
-                // Accounts 同步邏輯
-                // 【關鍵修正】監聽器只負責「接收」更新，不應該「推送」資料
-                // 只有在 Firestore 有資料且與本地不同時，才更新本地
-                // 如果 Firestore 為空，不要自動上傳本地資料（避免覆蓋其他端的更新）
-                if (firestoreAccounts.length > 0 && JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                    hasChanges = true;
-                }
-                // 移除自動上傳邏輯：else if (firestoreAccounts.length === 0 && localAccounts.length > 0)
-                
-                // Journal 同步邏輯
-                if (firestoreJournal.length > 0 && JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
-                    hasChanges = true;
-                }
-                // 移除自動上傳邏輯：else if (firestoreJournal.length === 0 && localJournal.length > 0)
-                
-                // Settings 同步邏輯
-                const mergedSettings = { ...currentSettings, ...firestoreSettings };
-                if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
-                    hasChanges = true;
+                // 【關鍵修正】忽略本地尚未寫入伺服器的快照 (防止自己覆寫自己)
+                if (snap.metadata && snap.metadata.hasPendingWrites) {
+                    return;
                 }
                 
-                // FixedTransfers 同步邏輯
-                if (firestoreFixedTransfers.length > 0 && JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                    hasChanges = true;
-                }
-                // 移除自動上傳邏輯：else if (firestoreFixedTransfers.length === 0 && localFixedTransfers.length > 0)
-                
-                // 如果有變更，且是當前使用者，則刷新介面
-                const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-                if (hasChanges && currentUserIdNow === syncTargetUserId) {
-                    console.log(`[同步更新] 收到使用者 ${syncTargetUserId} 的雲端更新，刷新介面`);
+                if (snap.exists()) {
+                    const userData = snap.data();
+                    const firestoreAccounts = userData.accounts || [];
+                    const firestoreJournal = userData.journal || [];
+                    const firestoreSettings = userData.settings || {};
+                    const firestoreFixedTransfers = userData.fixedTransfers || [];
                     
-                    // 呼叫橋樑函式更新介面
-                    if (window.applyCloudUpdate && window.loadUserData) {
-                        const updatedData = window.loadUserData(currentUserIdNow);
-                        if (updatedData) {
-                            window.applyCloudUpdate(updatedData);
-                        }
-                    } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
-                        // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
-                        const userData = loadUserData(currentUserIdNow);
-                        if (userData) {
-                            accounts = userData.accounts;
-                            settings = userData.settings;
-                            
-                            // 同步 UI 狀態
-                            if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                            if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                            if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                            
-                            const ctt = document.getElementById('currencyToggleText');
-                            if (ctt) ctt.textContent = currentDisplayCurrency;
-                            
-                            if (typeof applyTheme === 'function') applyTheme();
-                            
-                            renderAssets();
-                            if (typeof updateChartData === 'function') updateChartData();
-                            if (typeof reorderPageItems === 'function') reorderPageItems(); 
-                            if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
-                            if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
-                            
-                            if (typeof renderCalendar === 'function') renderCalendar();
-                            if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
-                            if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                        }
+                    // 使用變化的使用者 ID 來產生 Key
+                    const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
+                    const userJournalKey = `${STORAGE_KEY_JOURNAL}_${userId}`;
+                    const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${userId}`;
+                    const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`;
+                    
+                    const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                    const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
+                    const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
+                    const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+                    
+                    let hasChanges = false;
+                    
+                    // Accounts 同步邏輯
+                    if (firestoreAccounts.length > 0 && JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                        isSyncingFromFirestore = true;
+                        localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
+                        hasChanges = true;
                     }
                     
-                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                } else if (hasChanges) {
-                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                    // Journal 同步邏輯
+                    if (firestoreJournal.length > 0 && JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                        isSyncingFromFirestore = true;
+                        localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                        hasChanges = true;
+                    }
+                    
+                    // Settings 同步邏輯
+                    const mergedSettings = { ...currentSettings, ...firestoreSettings };
+                    if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
+                        isSyncingFromFirestore = true;
+                        localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
+                        hasChanges = true;
+                    }
+                    
+                    // FixedTransfers 同步邏輯
+                    if (firestoreFixedTransfers.length > 0 && JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
+                        isSyncingFromFirestore = true;
+                        localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                        hasChanges = true;
+                    }
+                    
+                    // 如果有變更，且是當前使用者，則刷新介面
+                    if (hasChanges && currentUserIdNow === userId) {
+                        console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新，刷新介面`);
+                        
+                        // 呼叫橋樑函式更新介面
+                        if (window.applyCloudUpdate && window.loadUserData) {
+                            const updatedData = window.loadUserData(currentUserIdNow);
+                            if (updatedData) {
+                                window.applyCloudUpdate(updatedData);
+                            }
+                        } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                            // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
+                            const userData = loadUserData(currentUserIdNow);
+                            if (userData) {
+                                accounts = userData.accounts;
+                                settings = userData.settings;
+                                
+                                // 同步 UI 狀態
+                                if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                                if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                                if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
+                                
+                                const ctt = document.getElementById('currencyToggleText');
+                                if (ctt) ctt.textContent = currentDisplayCurrency;
+                                
+                                if (typeof applyTheme === 'function') applyTheme();
+                                
+                                renderAssets();
+                                if (typeof updateChartData === 'function') updateChartData();
+                                if (typeof reorderPageItems === 'function') reorderPageItems(); 
+                                if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
+                                if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
+                                
+                                if (typeof renderCalendar === 'function') renderCalendar();
+                                if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                                if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                            }
+                        }
+                        
+                        setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                    } else if (hasChanges) {
+                        // 其他使用者的資料更新，只更新 localStorage，不刷新 UI
+                        console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新（背景同步）`);
+                        setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                    }
                 }
-            }
+            });
         });
         
         // 設定其他監聽器的 Unsubscribe 參照（實際上都是同一個監聽器，因為資料存在同一個文件中）
