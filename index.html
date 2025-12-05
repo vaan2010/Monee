@@ -4805,9 +4805,15 @@
         if (window.firebaseUserLoggedIn && typeof stopFirestoreSync === 'function' && typeof startFirestoreSync === 'function') {
             stopFirestoreSync();
             // 延遲一點再啟動，確保舊的監聽已完全停止
+            // 使用更長的延遲，確保舊監聽器完全停止
             setTimeout(() => {
-                startFirestoreSync();
-            }, 100);
+                // 再次確認 currentUserId 沒有改變
+                if (currentUserId === userId) {
+                    startFirestoreSync();
+                } else {
+                    console.warn('切換使用者時 currentUserId 已改變，跳過啟動監聽器');
+                }
+            }, 200);
         }
         
         // 從 Firestore 重新載入新使用者的資料（如果已登入）
@@ -12488,40 +12494,16 @@
         const syncUserId = currentUserId; // 捕獲當前的 currentUserId
         const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", syncUserId);
         accountsUnsubscribe = onSnapshot(userDataRef, (snap) => {
+            // 首先檢查 firestoreSyncEnabled 標記，如果已停止則直接返回
+            if (!firestoreSyncEnabled) {
+                return;
+            }
+            
             // 檢查 currentUserId 是否改變（如果改變了，這個監聽器應該被停止）
             if (currentUserId !== syncUserId) {
-                console.log(`監聽器中的使用者ID (${syncUserId}) 與當前使用者ID (${currentUserId}) 不符，以本地資料為準更新到 Firestore`);
-                // 以本地資料為準，更新到 Firestore
-                const userDataKey = `${STORAGE_KEY_DATA}_${syncUserId}`;
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${syncUserId}`;
-                const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${syncUserId}`;
-                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${syncUserId}`;
-                
-                const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-                const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-                
-                // 臨時設置 currentUserId 為 syncUserId，以便同步函數使用正確的路徑
-                const originalCurrentUserId = currentUserId;
-                currentUserId = syncUserId;
-                
-                // 同步本地資料到 Firestore
-                if (localAccounts.length > 0) {
-                    window.syncAccountsToFirestore(localAccounts).catch(err => console.error('同步 accounts 失敗:', err));
-                }
-                if (localJournal.length > 0) {
-                    window.syncJournalToFirestore(localJournal).catch(err => console.error('同步 journal 失敗:', err));
-                }
-                if (Object.keys(localSettings).length > 0) {
-                    window.syncSettingsToFirestore(localSettings).catch(err => console.error('同步 settings 失敗:', err));
-                }
-                if (localFixedTransfers.length > 0) {
-                    window.syncFixedTransfersToFirestore(localFixedTransfers).catch(err => console.error('同步 fixedTransfers 失敗:', err));
-                }
-                
-                // 恢復 originalCurrentUserId
-                currentUserId = originalCurrentUserId;
+                // 這個監聽器已經不適用於當前使用者，直接返回
+                // 不需要更新 Firestore，因為 switchUser 會啟動新的監聽器
+                // 如果舊監聽器沒有被正確停止，這裡只是忽略它
                 return;
             }
             
