@@ -528,6 +528,31 @@
         .account-tag-debt { background: #ffebee; color: #c62828; } /* 負債：淡紅底 */
         /* 銀行名稱標籤 */
         .account-tag-bank-name { background: #b3e5fc; color: #01579b; } /* 銀行名稱：淡藍底 */
+        
+        /* 計算機按鈕樣式 */
+        .calc-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .calc-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        .calc-btn:hover {
+            background: var(--bg-color);
+        }
+        
+        /* 銀行搜尋結果項目 */
+        .bank-search-item:hover {
+            background: var(--bg-color);
+        }
         .item-row-compact .item-label { opacity: 0.7; flex-shrink: 0; }
         .item-row-compact span { white-space: nowrap; min-width: 0; }
         .item-row-compact .price-label { margin-right: 4px; }
@@ -1325,7 +1350,13 @@
                 <div class="form-group">
                     <div class="form-row"><span class="form-label">類型</span><select id="inpType" class="form-input" onchange="handleTypeChange()"><option value="bank">錢包</option><option value="crypto">加密貨幣</option><option value="stock">美股</option><option value="twstock">台股</option><option value="debt">負債</option></select></div>
                     <div class="form-row" id="rowBankTag" style="display:none;"><span class="form-label">標籤</span><select id="inpBankTag" class="form-input" onchange="handleBankTagChange()"><option value="現金">現金</option><option value="銀行">銀行</option><option value="信用卡">信用卡</option><option value="電子貨幣">電子貨幣</option><option value="簽帳金融卡">簽帳金融卡</option></select></div>
-                    <div class="form-row" id="rowBankName" style="display:none;"><span class="form-label">銀行</span><select id="inpBankName" class="form-input"><option value="">請選擇銀行</option><option value="台灣銀行">台灣銀行</option><option value="土地銀行">土地銀行</option><option value="合作金庫銀行">合作金庫銀行</option><option value="第一銀行">第一銀行</option><option value="華南銀行">華南銀行</option><option value="彰化銀行">彰化銀行</option><option value="上海商業儲蓄銀行">上海商業儲蓄銀行</option><option value="台北富邦銀行">台北富邦銀行</option><option value="國泰世華銀行">國泰世華銀行</option><option value="中國信託銀行">中國信託銀行</option><option value="玉山銀行">玉山銀行</option><option value="台新銀行">台新銀行</option><option value="永豐銀行">永豐銀行</option><option value="元大銀行">元大銀行</option><option value="兆豐銀行">兆豐銀行</option><option value="台灣中小企業銀行">台灣中小企業銀行</option><option value="王道銀行">王道銀行</option><option value="星展銀行">星展銀行</option><option value="花旗銀行">花旗銀行</option><option value="匯豐銀行">匯豐銀行</option><option value="渣打銀行">渣打銀行</option><option value="凱基銀行">凱基銀行</option><option value="遠東銀行">遠東銀行</option><option value="日盛銀行">日盛銀行</option><option value="安泰銀行">安泰銀行</option><option value="陽信銀行">陽信銀行</option><option value="三信商業銀行">三信商業銀行</option><option value="聯邦銀行">聯邦銀行</option><option value="中華郵政">中華郵政</option><option value="其他">其他</option></select></div>
+                    <div class="form-row" id="rowBankName" style="display:none;">
+                        <span class="form-label">銀行</span>
+                        <div style="position: relative; width: 100%;">
+                            <input type="text" id="inpBankName" class="form-input" placeholder="請輸入銀行名稱或代碼搜尋" autocomplete="off" style="padding-right: 40px;">
+                            <div id="bankSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 10000; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+                        </div>
+                    </div>
                     <div class="form-row" id="rowName"><span class="form-label">名稱</span><input type="text" id="inpName" class="form-input"></div>
                     <div class="form-row" id="rowSymbol" style="display:none;"><span class="form-label">代碼</span><input type="text" id="inpSymbol" class="form-input" placeholder="例如: NVDA" oninput="syncNameFromSymbol(); updateAIButtonState();"></div>
                     <div class="form-row" id="rowCurrency"><span class="form-label">幣別</span><select id="inpCurrency" class="form-input"><option value="TWD">TWD (新台幣)</option><option value="USD">USD (美金)</option></select></div>
@@ -1342,6 +1373,41 @@
     </div>
 
     <!-- Calendar Journal Modal (新增支出/收入) -->
+    <!-- 計算機模態框 -->
+    <div id="calculatorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'calculatorModal' && closeCalculatorModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+            <div style="padding: 20px;">
+                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">計算機</div>
+                <div id="calculatorDisplay" style="width: 100%; padding: 20px; background: var(--bg-color); border-radius: 12px; margin-bottom: 20px; text-align: right; font-size: 32px; font-weight: 600; color: var(--text-primary); min-height: 60px; box-sizing: border-box;">0</div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                    <button class="calc-btn" onclick="calculatorInput('C')" style="background: var(--bg-color); color: var(--text-primary);">C</button>
+                    <button class="calc-btn" onclick="calculatorInput('CE')" style="background: var(--bg-color); color: var(--text-primary);">CE</button>
+                    <button class="calc-btn" onclick="calculatorInput('backspace')" style="background: var(--bg-color); color: var(--text-primary);"><i class="fas fa-backspace"></i></button>
+                    <button class="calc-btn" onclick="calculatorInput('/')" style="background: var(--bg-color); color: var(--text-primary);">÷</button>
+                    <button class="calc-btn" onclick="calculatorInput('7')">7</button>
+                    <button class="calc-btn" onclick="calculatorInput('8')">8</button>
+                    <button class="calc-btn" onclick="calculatorInput('9')">9</button>
+                    <button class="calc-btn" onclick="calculatorInput('*')" style="background: var(--bg-color); color: var(--text-primary);">×</button>
+                    <button class="calc-btn" onclick="calculatorInput('4')">4</button>
+                    <button class="calc-btn" onclick="calculatorInput('5')">5</button>
+                    <button class="calc-btn" onclick="calculatorInput('6')">6</button>
+                    <button class="calc-btn" onclick="calculatorInput('-')" style="background: var(--bg-color); color: var(--text-primary);">−</button>
+                    <button class="calc-btn" onclick="calculatorInput('1')">1</button>
+                    <button class="calc-btn" onclick="calculatorInput('2')">2</button>
+                    <button class="calc-btn" onclick="calculatorInput('3')">3</button>
+                    <button class="calc-btn" onclick="calculatorInput('+')" style="background: var(--bg-color); color: var(--text-primary);">+</button>
+                    <button class="calc-btn" onclick="calculatorInput('0')" style="grid-column: span 2;">0</button>
+                    <button class="calc-btn" onclick="calculatorInput('.')">.</button>
+                    <button class="calc-btn" onclick="calculatorInput('=')" style="background: #0a84ff; color: white;">=</button>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 12px;">
+                    <button onclick="confirmCalculator()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">確認</button>
+                    <button onclick="closeCalculatorModal()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div id="calendarJournalModal" class="modal" style="z-index: 2003;" onclick="event.target.id === 'calendarJournalModal' && closeCalendarJournalModal()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
@@ -1511,6 +1577,23 @@
             </div>
         </div>
     </div>
+    
+    <!-- 日期記事編輯模態框 -->
+    <div id="dateNoteModal" class="modal" style="z-index: 2011;" onclick="event.target.id === 'dateNoteModal' && closeDateNoteEditor()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+            <div style="padding: 20px;">
+                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="dateNoteTitle">記事</div>
+                <div style="margin-bottom: 15px;">
+                    <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;" id="dateNoteDateDisplay"></div>
+                    <textarea id="dateNoteInput" style="width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-primary); font-size: 16px; resize: vertical; box-sizing: border-box;" placeholder="輸入記事內容..."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button onclick="saveDateNote()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
+                    <button onclick="closeDateNoteEditor()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Account Selector Modal -->
     <div id="accountSelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'accountSelectorModal' && closeAccountSelector()">
@@ -1557,7 +1640,7 @@
                             <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
                             <span class="form-label">金額</span>
                         </div>
-                        <input type="number" id="incomeAmount" class="form-input" placeholder="金額輸入" style="text-align: right;">
+                        <input type="text" id="incomeAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
                     </div>
                     <div class="form-row" style="cursor: pointer;" onclick="openCategorySelector('income')">
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -1624,7 +1707,7 @@
                             <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
                             <span class="form-label">金額</span>
                         </div>
-                        <input type="number" id="expenseAmount" class="form-input" placeholder="金額輸入" style="text-align: right;">
+                        <input type="text" id="expenseAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
                     </div>
                     <div class="form-row" style="cursor: pointer;" onclick="openCategorySelector('expense')">
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -1711,7 +1794,7 @@
                             <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
                             <span class="form-label">金額</span>
                         </div>
-                        <input type="number" id="transferAmount" class="form-input" placeholder="金額" style="text-align: right;">
+                        <input type="text" id="transferAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
                     </div>
                 </div>
             </div>
@@ -1893,6 +1976,41 @@
     const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
     const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
+    const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes'; // 日期記事
+    
+    // 銀行代碼資料（包含銀行名稱和代碼）
+    const BANK_DATA = [
+        { name: '台灣銀行', code: '004' },
+        { name: '土地銀行', code: '005' },
+        { name: '合作金庫銀行', code: '006' },
+        { name: '第一銀行', code: '007' },
+        { name: '華南銀行', code: '008' },
+        { name: '彰化銀行', code: '009' },
+        { name: '上海商業儲蓄銀行', code: '011' },
+        { name: '台北富邦銀行', code: '012' },
+        { name: '國泰世華銀行', code: '013' },
+        { name: '兆豐銀行', code: '017' },
+        { name: '花旗銀行', code: '021' },
+        { name: '王道銀行', code: '048' },
+        { name: '台灣中小企業銀行', code: '050' },
+        { name: '渣打銀行', code: '052' },
+        { name: '匯豐銀行', code: '081' },
+        { name: '陽信銀行', code: '108' },
+        { name: '三信商業銀行', code: '147' },
+        { name: '中華郵政', code: '700' },
+        { name: '聯邦銀行', code: '803' },
+        { name: '遠東銀行', code: '805' },
+        { name: '元大銀行', code: '806' },
+        { name: '永豐銀行', code: '807' },
+        { name: '玉山銀行', code: '808' },
+        { name: '凱基銀行', code: '809' },
+        { name: '星展銀行', code: '810' },
+        { name: '台新銀行', code: '812' },
+        { name: '安泰銀行', code: '816' },
+        { name: '中國信託銀行', code: '822' },
+        { name: '樂天銀行', code: '826' },
+        { name: '其他', code: '' }
+    ];
     
     // Firebase 配置
     const FIREBASE_CONFIG = {
@@ -3498,16 +3616,8 @@
             document.getElementById('inpBankTag').value = a.bankTag;
         }
         if(a.bankName && document.getElementById('inpBankName')) {
-            const bankNameSelect = document.getElementById('inpBankName');
-            bankNameSelect.value = a.bankName;
-            // 如果選項中沒有該銀行名稱，添加一個選項
-            if(!Array.from(bankNameSelect.options).some(opt => opt.value === a.bankName)) {
-                const option = document.createElement('option');
-                option.value = a.bankName;
-                option.textContent = a.bankName;
-                bankNameSelect.appendChild(option);
-                bankNameSelect.value = a.bankName;
-            }
+            const bankNameInput = document.getElementById('inpBankName');
+            bankNameInput.value = a.bankName;
         }
         window.tempTransactions=a.transactions||[]; 
         renderTransactions(window.tempTransactions); 
@@ -3995,7 +4105,7 @@
         const tag = document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金';
         const nameInput = document.getElementById('inpName');
         const bankNameRow = document.getElementById('rowBankName');
-        const bankNameSelect = document.getElementById('inpBankName');
+        const bankNameInput = document.getElementById('inpBankName');
         const isEditing = editingId !== null; // 判斷是編輯還是新增模式
         const currentName = nameInput ? nameInput.value : ''; // 保存當前名稱
         
@@ -4006,7 +4116,7 @@
                 nameInput.disabled = true;
             }
             if(bankNameRow) bankNameRow.style.display = 'none';
-            if(bankNameSelect) bankNameSelect.value = '';
+            if(bankNameInput) bankNameInput.value = '';
         } else if(tag === '銀行' || tag === '信用卡' || tag === '簽帳金融卡') {
             // 銀行、信用卡、簽帳金融卡：顯示銀行選擇欄位，名稱可編輯
             if(nameInput) {
@@ -4017,6 +4127,10 @@
                 nameInput.disabled = false;
             }
             if(bankNameRow) bankNameRow.style.display = 'flex';
+            // 初始化銀行搜尋功能
+            if(bankNameInput) {
+                initBankSearch(bankNameInput);
+            }
         } else {
             // 電子貨幣等其他標籤：名稱可編輯，不顯示銀行選擇
             if(nameInput) {
@@ -4027,8 +4141,74 @@
                 nameInput.disabled = false;
             }
             if(bankNameRow) bankNameRow.style.display = 'none';
-            if(bankNameSelect) bankNameSelect.value = '';
+            if(bankNameInput) bankNameInput.value = '';
         }
+    }
+    
+    // 初始化銀行搜尋功能
+    function initBankSearch(inputElement) {
+        if(!inputElement) return;
+        
+        const resultsDiv = document.getElementById('bankSearchResults');
+        let selectedBank = null;
+        
+        // 移除舊的事件監聽器（如果有的話）
+        const newInput = inputElement.cloneNode(true);
+        inputElement.parentNode.replaceChild(newInput, inputElement);
+        const bankInput = document.getElementById('inpBankName');
+        
+        // 輸入事件：搜尋銀行
+        bankInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            if(query === '') {
+                resultsDiv.style.display = 'none';
+                selectedBank = null;
+                return;
+            }
+            
+            // 搜尋銀行（名稱或代碼）
+            const matches = BANK_DATA.filter(bank => 
+                bank.name.includes(query) || bank.code.includes(query)
+            );
+            
+            if(matches.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 12px; color: var(--text-secondary); text-align: center;">找不到符合的銀行</div>';
+                resultsDiv.style.display = 'block';
+            } else {
+                resultsDiv.innerHTML = matches.map(bank => {
+                    const displayText = bank.code ? `${bank.name} (${bank.code})` : bank.name;
+                    return `<div class="bank-search-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color);" data-bank-name="${bank.name}" data-bank-code="${bank.code}">
+                        <div style="color: var(--text-primary); font-size: 16px;">${bank.name}</div>
+                        ${bank.code ? `<div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">代碼: ${bank.code}</div>` : ''}
+                    </div>`;
+                }).join('');
+                resultsDiv.style.display = 'block';
+                
+                // 綁定點擊事件
+                resultsDiv.querySelectorAll('.bank-search-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectedBank = {
+                            name: this.getAttribute('data-bank-name'),
+                            code: this.getAttribute('data-bank-code')
+                        };
+                        bankInput.value = selectedBank.name;
+                        resultsDiv.style.display = 'none';
+                    });
+                });
+            }
+        });
+        
+        // 點擊外部關閉搜尋結果
+        document.addEventListener('click', function(e) {
+            if(!bankInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+        
+        // 獲取選中的銀行名稱（用於保存）
+        window.getSelectedBankName = function() {
+            return bankInput.value || selectedBank?.name || '';
+        };
     }
     function updateAIButtonState() { const btnAI=document.getElementById('btnAI'); if(btnAI) btnAI.disabled=false; }
     let nameQueryTimer = null;
@@ -4150,7 +4330,7 @@
             } 
         } 
     }
-    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '') : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; const newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); saveData(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
+    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; const newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); saveData(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
     function deleteAccount() { 
         const acc = accounts.find(x => x.id === editingId);
         if (!acc) return;
@@ -7866,6 +8046,14 @@
                 // 如果兩者都有，保持固定轉帳的顏色標記
             }
             
+            // 檢查是否有記事，如果有則顯示星號
+            if(hasDateNote(date)) {
+                const starIcon = document.createElement('i');
+                starIcon.className = 'fas fa-star';
+                starIcon.style.cssText = 'position: absolute; top: 4px; right: 4px; color: #ffd700; font-size: 12px;';
+                dayBtn.appendChild(starIcon);
+            }
+            
             // 使用計時器區分單擊和雙擊
             let clickTimer = null;
             let clickCount = 0;
@@ -7878,14 +8066,14 @@
                         clickCount = 0;
                     }, 300); // 300ms 內沒有第二次點擊，視為單擊
                 } else if(clickCount === 2) {
-                    // 雙擊：打開記帳選單
+                    // 雙擊：打開記事編輯
                     clearTimeout(clickTimer);
                     e.stopPropagation();
                     // 先選中該日期
                     selectDate(date);
-                    // 然後打開記帳選單
+                    // 然後打開記事編輯
                     setTimeout(() => {
-                        openCalendarJournalModal();
+                        openDateNoteEditor(date);
                     }, 100);
                     clickCount = 0;
                 }
@@ -13381,6 +13569,204 @@
             window.firebaseCheckAndAutoBackup();
         }
     }, 60 * 1000);
+    
+    // ========== 計算機功能 ==========
+    let calculatorValue = '0';
+    let calculatorTargetInput = null;
+    
+    function openCalculatorModal(targetInputId) {
+        calculatorTargetInput = targetInputId;
+        calculatorValue = document.getElementById(targetInputId)?.value || '0';
+        if(calculatorValue === '') calculatorValue = '0';
+        updateCalculatorDisplay();
+        
+        const modal = document.getElementById('calculatorModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+        }
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if(modalWrapper) {
+                    modalWrapper.style.transform = 'translateY(0)';
+                }
+            }, 10);
+        });
+    }
+    
+    function closeCalculatorModal() {
+        const modal = document.getElementById('calculatorModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modalWrapper.style.transform = 'translateY(100%)';
+            }, 300);
+        } else {
+            modal.style.display = 'none';
+        }
+        calculatorTargetInput = null;
+    }
+    
+    function updateCalculatorDisplay() {
+        const display = document.getElementById('calculatorDisplay');
+        if(display) {
+            display.textContent = calculatorValue;
+        }
+    }
+    
+    function calculatorInput(input) {
+        if(input === 'C') {
+            calculatorValue = '0';
+        } else if(input === 'CE') {
+            calculatorValue = '0';
+        } else if(input === 'backspace') {
+            if(calculatorValue.length > 1) {
+                calculatorValue = calculatorValue.slice(0, -1);
+            } else {
+                calculatorValue = '0';
+            }
+        } else if(input === '=') {
+            try {
+                // 替換顯示符號為實際運算符號
+                let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+                const result = Function('"use strict"; return (' + expression + ')')();
+                calculatorValue = String(result);
+                if(calculatorValue.includes('.')) {
+                    calculatorValue = parseFloat(calculatorValue).toString();
+                }
+            } catch(e) {
+                calculatorValue = '0';
+            }
+        } else {
+            if(calculatorValue === '0' && input !== '.') {
+                calculatorValue = input;
+            } else {
+                // 替換顯示符號
+                if(input === '*') input = '×';
+                if(input === '/') input = '÷';
+                if(input === '-') input = '−';
+                calculatorValue += input;
+            }
+        }
+        updateCalculatorDisplay();
+    }
+    
+    function confirmCalculator() {
+        if(calculatorTargetInput) {
+            const targetInput = document.getElementById(calculatorTargetInput);
+            if(targetInput) {
+                // 計算最終結果
+                try {
+                    let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+                    const result = Function('"use strict"; return (' + expression + ')')();
+                    targetInput.value = parseFloat(result).toString();
+                } catch(e) {
+                    targetInput.value = calculatorValue;
+                }
+            }
+        }
+        closeCalculatorModal();
+    }
+    
+    // ========== 修改記帳金額輸入為計算機 ==========
+    // 在收入、支出、轉帳的金額輸入欄位加入點擊事件
+    document.addEventListener('DOMContentLoaded', function() {
+        // 為金額輸入欄位加入點擊事件（使用事件委派）
+        setTimeout(() => {
+            const incomeAmount = document.getElementById('incomeAmount');
+            const expenseAmount = document.getElementById('expenseAmount');
+            const transferAmount = document.getElementById('transferAmount');
+            
+            if(incomeAmount) {
+                incomeAmount.addEventListener('focus', function() {
+                    this.blur();
+                    openCalculatorModal('incomeAmount');
+                });
+            }
+            if(expenseAmount) {
+                expenseAmount.addEventListener('focus', function() {
+                    this.blur();
+                    openCalculatorModal('expenseAmount');
+                });
+            }
+            if(transferAmount) {
+                transferAmount.addEventListener('focus', function() {
+                    this.blur();
+                    openCalculatorModal('transferAmount');
+                });
+            }
+        }, 100);
+    });
+    
+    // ========== 修改右上+號為四個分頁 ==========
+    function openNewExpenseFromCalendar() {
+        // 如果沒有選中日期，使用今天
+        if(!selectedDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate = new Date(today);
+            renderCalendar();
+        }
+        // 打開四個分頁的模態框
+        openJournalTypeSelector();
+    }
+    
+    function openJournalTypeSelector() {
+        const modal = document.getElementById('calendarJournalModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+        }
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if(modalWrapper) {
+                    modalWrapper.style.transform = 'translateY(0)';
+                }
+            }, 10);
+        });
+    }
+    
+    // ========== 日期記事功能 ==========
+    function loadDateNotes() {
+        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
+        return JSON.parse(localStorage.getItem(notesKey) || '{}');
+    }
+    
+    function saveDateNote(date, note) {
+        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
+        const notes = loadDateNotes();
+        const dateStr = formatDateKey(date);
+        if(note && note.trim()) {
+            notes[dateStr] = note.trim();
+        } else {
+            delete notes[dateStr];
+        }
+        localStorage.setItem(notesKey, JSON.stringify(notes));
+    }
+    
+    function getDateNote(date) {
+        const notes = loadDateNotes();
+        const dateStr = formatDateKey(date);
+        return notes[dateStr] || '';
+    }
+    
+    function formatDateKey(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    function hasDateNote(date) {
+        return getDateNote(date) !== '';
+    }
 </script>
 </body>
 </html>
