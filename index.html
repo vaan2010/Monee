@@ -10322,14 +10322,9 @@
         
         if(editingJournalRecordId) {
             // 編輯模式：更新現有記錄
+            // 【關鍵修正】編輯時不需要還原舊記錄的影響，因為會統一重新計算
             const oldRecord = records.find(r => r.id === editingJournalRecordId);
             if(oldRecord) {
-                // 還原舊記錄對帳戶餘額的影響
-                const oldAccount = accounts.find(acc => acc.id === oldRecord.accountId);
-                if(oldAccount) {
-                    oldAccount.balance -= oldRecord.amount;
-                }
-                
                 // 更新記錄
                 oldRecord.date = dateStr;
                 oldRecord.amount = amount;
@@ -10428,13 +10423,7 @@
             // 編輯模式：更新現有記錄
             const oldRecord = records.find(r => r.id === editingJournalRecordId);
             if(oldRecord) {
-                // 還原舊記錄對帳戶餘額的影響
-                const oldAccount = accounts.find(acc => acc.id === oldRecord.accountId);
-                if(oldAccount) {
-                    // 正常恢復舊記錄的金額
-                    oldAccount.balance += oldRecord.amount;
-                }
-                
+                // 【關鍵修正】編輯時不需要還原舊記錄的影響，因為會統一重新計算
                 // 更新記錄
                 oldRecord.date = dateStr;
                 oldRecord.amount = amount;
@@ -10464,14 +10453,33 @@
             records.push(newRecord);
         }
         
-        // 應用新記錄對帳戶餘額的影響
-        // 正常更新餘額
-        account.balance -= amount;
-        
+        // 【關鍵修正】不手動更新餘額，而是先同步 journal，然後統一重新計算餘額
+        // 這樣可以確保本地和其他裝置的計算結果一致
         saveJournalRecords(records);
         
-        // 保存資料
-        saveData();
+        // 等待 journal 同步完成後，重新計算餘額並同步 accounts
+        (async () => {
+            try {
+                if (window.syncJournalToFirestore && window.firebaseUserLoggedIn) {
+                    // 等待 journal 同步完成
+                    await window.syncJournalToFirestore(records);
+                }
+                
+                // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
+                if (window.recalculateAccountBalancesFromJournal) {
+                    await window.recalculateAccountBalancesFromJournal(currentUserId, records, accounts);
+                } else {
+                    // 如果沒有重新計算函式，則手動更新並保存
+                    account.balance -= amount;
+                    saveData();
+                }
+            } catch (err) {
+                console.error('[記帳保存] 同步或計算餘額時發生錯誤:', err);
+                // 如果出錯，至少手動更新餘額
+                account.balance -= amount;
+                saveData();
+            }
+        })();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -10541,14 +10549,7 @@
             // 編輯模式：更新現有記錄
             const oldRecord = records.find(r => r.id === editingJournalRecordId);
             if(oldRecord) {
-                // 還原舊記錄對帳戶餘額的影響
-                const oldFromAccount = accounts.find(acc => acc.id === oldRecord.fromAccountId);
-                const oldToAccount = accounts.find(acc => acc.id === oldRecord.toAccountId);
-                if(oldFromAccount && oldToAccount) {
-                    oldFromAccount.balance += oldRecord.amount;
-                    oldToAccount.balance -= oldRecord.amount;
-                }
-                
+                // 【關鍵修正】編輯時不需要還原舊記錄的影響，因為會統一重新計算
                 // 更新記錄
                 oldRecord.date = dateStr;
                 oldRecord.amount = amount;
@@ -10574,14 +10575,35 @@
             records.push(newRecord);
         }
         
-        // 應用新記錄對帳戶餘額的影響
-        fromAccount.balance -= amount;
-        toAccount.balance += amount;
-        
+        // 【關鍵修正】不手動更新餘額，而是先同步 journal，然後統一重新計算餘額
+        // 這樣可以確保本地和其他裝置的計算結果一致
         saveJournalRecords(records);
         
-        // 保存資料
-        saveData();
+        // 等待 journal 同步完成後，重新計算餘額並同步 accounts
+        (async () => {
+            try {
+                if (window.syncJournalToFirestore && window.firebaseUserLoggedIn) {
+                    // 等待 journal 同步完成
+                    await window.syncJournalToFirestore(records);
+                }
+                
+                // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
+                if (window.recalculateAccountBalancesFromJournal) {
+                    await window.recalculateAccountBalancesFromJournal(currentUserId, records, accounts);
+                } else {
+                    // 如果沒有重新計算函式，則手動更新並保存
+                    fromAccount.balance -= amount;
+                    toAccount.balance += amount;
+                    saveData();
+                }
+            } catch (err) {
+                console.error('[記帳保存] 同步或計算餘額時發生錯誤:', err);
+                // 如果出錯，至少手動更新餘額
+                fromAccount.balance -= amount;
+                toAccount.balance += amount;
+                saveData();
+            }
+        })();
         
         // 重置編輯ID
         editingJournalRecordId = null;
