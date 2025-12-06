@@ -12651,28 +12651,36 @@
                         
                         // 【關鍵修正】記帳資料更新後，需要重新計算帳戶餘額
                         // 因為記帳記錄會影響帳戶餘額（收入增加、支出減少、轉帳會轉移）
-                        if (firestoreJournal.length > 0) {
-                            console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
-                            if (window.recalculateAccountBalancesFromJournal) {
-                                // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
-                                const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
-                                // 重新讀取更新後的帳戶資料
-                                const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                // 更新 localAccounts 變數，以便後續使用
-                                if (recalculatedAccounts.length > 0) {
-                                    // 標記 accounts 也需要更新
-                                    hasChanges = true;
+                        // 使用 async/await 確保計算完成後再繼續
+                        (async () => {
+                            try {
+                                if (window.recalculateAccountBalancesFromJournal) {
+                                    // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
+                                    const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                    
+                                    if (updatedAccounts.length > 0) {
+                                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
+                                        // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
+                                        window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
+                                        
+                                        // 等待一下確保同步完成
+                                        await new Promise(resolve => setTimeout(resolve, 200));
+                                        
+                                        // 重新讀取更新後的帳戶資料，確保後續邏輯使用最新的資料
+                                        const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                        if (recalculatedAccounts.length > 0) {
+                                            // 標記 accounts 也需要更新（觸發 UI 刷新）
+                                            hasChanges = true;
+                                            console.log(`[同步更新] 帳戶餘額已重新計算並同步，觸發 UI 刷新`);
+                                        }
+                                    } else {
+                                        console.warn(`[同步更新] 沒有帳戶資料，跳過重新計算餘額`);
+                                    }
                                 }
+                            } catch (err) {
+                                console.error('[同步更新] 重新計算帳戶餘額時發生錯誤:', err);
                             }
-                        } else {
-                            // 如果記帳記錄被清空，也需要重新計算餘額（將餘額恢復到初始狀態）
-                            console.log(`[同步更新] 記帳資料已清空，重新計算帳戶餘額（恢復初始狀態）`);
-                            if (window.recalculateAccountBalancesFromJournal) {
-                                const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
-                            }
-                        }
+                        })();
                     }
                     
                     // Settings 同步邏輯
@@ -12696,42 +12704,90 @@
                     if (hasChanges && currentUserIdNow === userId) {
                         console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新，刷新介面`);
                         
-                        // 呼叫橋樑函式更新介面
-                        if (window.applyCloudUpdate && window.loadUserData) {
-                            const updatedData = window.loadUserData(currentUserIdNow);
-                            if (updatedData) {
-                                window.applyCloudUpdate(updatedData);
-                            }
-                        } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
-                            // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
-                            const userData = loadUserData(currentUserIdNow);
-                            if (userData) {
-                                accounts = userData.accounts;
-                                settings = userData.settings;
-                                
-                                // 同步 UI 狀態
-                                if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                                if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                                if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                                
-                                const ctt = document.getElementById('currencyToggleText');
-                                if (ctt) ctt.textContent = currentDisplayCurrency;
-                                
-                                if (typeof applyTheme === 'function') applyTheme();
-                                
-                                renderAssets();
-                                if (typeof updateChartData === 'function') updateChartData();
-                                if (typeof reorderPageItems === 'function') reorderPageItems(); 
-                                if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
-                                if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
-                                
-                                if (typeof renderCalendar === 'function') renderCalendar();
-                                if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
-                                if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                            }
-                        }
+                        // 檢查是否是記帳記錄更新（需要等待餘額計算完成）
+                        const isJournalUpdate = JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal);
                         
-                        setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                        if (isJournalUpdate) {
+                            // 記帳記錄更新：延遲刷新，確保餘額計算和同步完成
+                            setTimeout(() => {
+                                // 重新讀取最新的帳戶資料（因為餘額可能已經被重新計算）
+                                const finalAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                console.log(`[同步更新] 記帳更新後刷新 UI，帳戶數量: ${finalAccounts.length}`);
+                                
+                                // 呼叫橋樑函式更新介面
+                                if (window.applyCloudUpdate && window.loadUserData) {
+                                    const updatedData = window.loadUserData(currentUserIdNow);
+                                    if (updatedData) {
+                                        window.applyCloudUpdate(updatedData);
+                                    }
+                                } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                                    // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
+                                    const userData = loadUserData(currentUserIdNow);
+                                    if (userData) {
+                                        accounts = userData.accounts;
+                                        settings = userData.settings;
+                                        
+                                        // 同步 UI 狀態
+                                        if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                                        if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                                        if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
+                                        
+                                        const ctt = document.getElementById('currencyToggleText');
+                                        if (ctt) ctt.textContent = currentDisplayCurrency;
+                                        
+                                        if (typeof applyTheme === 'function') applyTheme();
+                                        
+                                        renderAssets();
+                                        if (typeof updateChartData === 'function') updateChartData();
+                                        if (typeof reorderPageItems === 'function') reorderPageItems(); 
+                                        if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
+                                        if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
+                                        
+                                        if (typeof renderCalendar === 'function') renderCalendar();
+                                        if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                                        if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                                    }
+                                }
+                                setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                            }, 500); // 等待餘額計算和同步完成
+                        } else {
+                            // 非記帳記錄更新，立即刷新
+                            // 呼叫橋樑函式更新介面
+                            if (window.applyCloudUpdate && window.loadUserData) {
+                                const updatedData = window.loadUserData(currentUserIdNow);
+                                if (updatedData) {
+                                    window.applyCloudUpdate(updatedData);
+                                }
+                            } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
+                                // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
+                                const userData = loadUserData(currentUserIdNow);
+                                if (userData) {
+                                    accounts = userData.accounts;
+                                    settings = userData.settings;
+                                    
+                                    // 同步 UI 狀態
+                                    if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                                    if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                                    if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
+                                    
+                                    const ctt = document.getElementById('currencyToggleText');
+                                    if (ctt) ctt.textContent = currentDisplayCurrency;
+                                    
+                                    if (typeof applyTheme === 'function') applyTheme();
+                                    
+                                    renderAssets();
+                                    if (typeof updateChartData === 'function') updateChartData();
+                                    if (typeof reorderPageItems === 'function') reorderPageItems(); 
+                                    if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
+                                    if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
+                                    
+                                    if (typeof renderCalendar === 'function') renderCalendar();
+                                    if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                                    if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                                }
+                            }
+                            setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                        }
                     } else if (hasChanges) {
                         // 其他使用者的資料更新，只更新 localStorage，不刷新 UI
                         console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新（背景同步）`);
