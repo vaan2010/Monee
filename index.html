@@ -12642,24 +12642,35 @@
                     }
                     
                     // Journal 同步邏輯
-                    if (firestoreJournal.length > 0 && JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有記帳記錄後）
+                    if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
                         hasChanges = true;
+                        console.log(`[同步更新] 使用者 ${userId} 的 journal 已更新 (${firestoreJournal.length} 筆)`);
                         
                         // 【關鍵修正】記帳資料更新後，需要重新計算帳戶餘額
                         // 因為記帳記錄會影響帳戶餘額（收入增加、支出減少、轉帳會轉移）
-                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
-                        if (window.recalculateAccountBalancesFromJournal) {
-                            // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
-                            const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                            window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
-                            // 重新讀取更新後的帳戶資料
-                            const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                            // 更新 localAccounts 變數，以便後續使用
-                            if (recalculatedAccounts.length > 0) {
-                                // 標記 accounts 也需要更新
-                                hasChanges = true;
+                        if (firestoreJournal.length > 0) {
+                            console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
+                            if (window.recalculateAccountBalancesFromJournal) {
+                                // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
+                                const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
+                                // 重新讀取更新後的帳戶資料
+                                const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                // 更新 localAccounts 變數，以便後續使用
+                                if (recalculatedAccounts.length > 0) {
+                                    // 標記 accounts 也需要更新
+                                    hasChanges = true;
+                                }
+                            }
+                        } else {
+                            // 如果記帳記錄被清空，也需要重新計算餘額（將餘額恢復到初始狀態）
+                            console.log(`[同步更新] 記帳資料已清空，重新計算帳戶餘額（恢復初始狀態）`);
+                            if (window.recalculateAccountBalancesFromJournal) {
+                                const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
                             }
                         }
                     }
@@ -12673,10 +12684,12 @@
                     }
                     
                     // FixedTransfers 同步邏輯
-                    if (firestoreFixedTransfers.length > 0 && JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
+                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有固定轉帳後）
+                    if (JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
                         hasChanges = true;
+                        console.log(`[同步更新] 使用者 ${userId} 的 fixedTransfers 已更新 (${firestoreFixedTransfers.length} 筆)`);
                     }
                     
                     // 如果有變更，且是當前使用者，則刷新介面
