@@ -1452,21 +1452,16 @@
     <!-- Fixed Transfer List Modal -->
     <div id="fixedTransferListModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferListModal' && closeFixedTransferListModal()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
-            <!-- 分頁選單 -->
-            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">支出</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">收入</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">轉帳</div>
-                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: #ffd60a; font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer; border: 2px solid #ffd60a;">固定轉帳</div>
-            </div>
-            <div style="padding: 20px; position: relative;">
-                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <!-- 頂部導航欄已移除 -->
+            
+            <div style="padding: 0 20px 20px 20px; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px; padding-top: 20px;">
                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定轉帳</div>
                 </div>
                 <div id="fixedTransferListContainer" style="max-height: 60vh; overflow-y: auto; padding-bottom: 80px;">
                     <!-- 固定轉帳列表將在這裡動態生成 -->
                 </div>
-                <button onclick="addNewFixedTransfer()" style="position: absolute; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
+                <button onclick="addNewFixedTransfer()" style="position: absolute; bottom: 20px; right: 20px; width: 48px; height: 48px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
@@ -1474,7 +1469,7 @@
     </div>
 
     <!-- Repeat Selector Modal -->
-    <div id="repeatSelectorModal" class="modal" style="z-index: 2006;" onclick="event.target.id === 'repeatSelectorModal' && closeRepeatSelector()">
+    <div id="repeatSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'repeatSelectorModal' && closeRepeatSelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇重複頻率</div>
@@ -1497,7 +1492,7 @@
     </div>
 
     <!-- Date Picker Modal -->
-    <div id="datePickerModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'datePickerModal' && closeDatePicker()">
+    <div id="datePickerModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'datePickerModal' && closeDatePicker()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 60vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="datePickerTitle">選擇日期</div>
@@ -1524,7 +1519,7 @@
     </div>
 
     <!-- Tag Color Selector Modal -->
-    <div id="tagColorSelectorModal" class="modal" style="z-index: 2006;" onclick="event.target.id === 'tagColorSelectorModal' && closeTagColorSelector()">
+    <div id="tagColorSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'tagColorSelectorModal' && closeTagColorSelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇標籤顏色</div>
@@ -1547,7 +1542,7 @@
     </div>
 
     <!-- Holiday Adjust Selector Modal -->
-    <div id="holidayAdjustSelectorModal" class="modal" style="z-index: 2006;" onclick="event.target.id === 'holidayAdjustSelectorModal' && closeHolidayAdjustSelector()">
+    <div id="holidayAdjustSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'holidayAdjustSelectorModal' && closeHolidayAdjustSelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇假日調整</div>
@@ -1584,7 +1579,7 @@
     </div>
 
     <!-- Account Selector Modal -->
-    <div id="accountSelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'accountSelectorModal' && closeAccountSelector()">
+    <div id="accountSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'accountSelectorModal' && closeAccountSelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="accountSelectorTitle">選擇帳戶</div>
@@ -1597,13 +1592,17 @@
 
     <!-- Income Modal (收入) -->
     <div id="incomeModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'incomeModal' && closeIncomeModal()">
+        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
+        <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+            <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
+            <span>固定轉帳</span>
+        </button>
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
             <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
                 <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-up);">收入</div>
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
             <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
                 <button class="btn-icon" onclick="closeIncomeModal()" style="color: #98989d; font-size: 17px;">取消</button>
@@ -1710,13 +1709,17 @@
 
     <!-- Expense Modal (支出) -->
     <div id="expenseModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'expenseModal' && closeExpenseModal()">
+        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
+        <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+            <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
+            <span>固定轉帳</span>
+        </button>
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
             <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
                 <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-down);">支出</div>
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
             <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
                 <button class="btn-icon" onclick="closeExpenseModal()" style="color: #98989d; font-size: 17px;">取消</button>
@@ -1823,13 +1826,17 @@
 
     <!-- Transfer Modal (轉帳) -->
     <div id="transferModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'transferModal' && closeTransferModal()">
+        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
+        <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+            <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
+            <span>固定轉帳</span>
+        </button>
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
             <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
                 <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
                 <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--text-primary);">轉帳</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
             <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
                 <button class="btn-icon" onclick="closeTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
@@ -1847,7 +1854,7 @@
                     <!-- 日期 -->
                     <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTransferDateSelector()">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-calendar" style="color: #8e8e93; font-size: 20px;"></i>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-calendar" style="color: #8e8e93; font-size: 20px;"></i></div>
                             <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">日期</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1859,7 +1866,7 @@
                     <!-- 標題 -->
                     <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-heading" style="color: #8e8e93; font-size: 20px;"></i>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: #8e8e93; font-size: 20px;"></i></div>
                             <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
                         </div>
                         <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
@@ -1868,7 +1875,7 @@
                     <!-- 從帳戶 -->
                     <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferFrom')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i></div>
                             <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">從帳戶</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1880,7 +1887,7 @@
                     <!-- 到帳戶 -->
                     <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferTo')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i></div>
                             <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">到帳戶</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1891,12 +1898,17 @@
 
                     <!-- 金額 -->
                     <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0;">
-                        <div style="color: #ffffff; font-size: 15px; margin-bottom: 8px;">金額</div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <span style="color: #8e8e93; font-size: 24px; font-weight: 500;">$</span>
-                            <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
-                                <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: #ffffff; padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
-                                <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 20px;"></i></button>
+                        <div style="display: flex; flex-direction: column; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: #8e8e93; font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 36px;">
+                                <span style="color: #8e8e93; font-size: 24px; font-weight: 500;">$</span>
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
+                                    <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: #ffffff; padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 20px;"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1920,21 +1932,15 @@
     <!-- Fixed Transfer Modal -->
     <div id="fixedTransferModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferModal' && closeFixedTransferModal()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
-            <!-- 分頁選單 -->
-            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
-                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--text-primary);">固定轉帳</div>
-            </div>
-            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+            <!-- 分頁選單已移除 -->
+            <div class="modal-header" style="position: sticky; top: 0; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
                 <button class="btn-icon" onclick="closeFixedTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
                 <button class="btn-icon" style="font-weight:bold; color: #ffd60a;" onclick="saveFixedTransfer()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                  <!-- 大標題區域 -->
-                 <div style="margin-bottom: 20px;">
+                 <div style="margin-bottom: 20px; padding-top: 10px;">
                     <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定轉帳</h1>
                 </div>
 
@@ -10013,6 +10019,11 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
+        // 重新顯示 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'flex';
+        }
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if(modalWrapper) {
@@ -10127,6 +10138,11 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
+        // 重新顯示 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'flex';
+        }
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if(modalWrapper) {
@@ -10419,6 +10435,11 @@
     function closeExpenseModal() {
         const modal = document.getElementById('expenseModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        // 立即隱藏 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'none';
+        }
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -10467,6 +10488,11 @@
     function closeIncomeModal() {
         const modal = document.getElementById('incomeModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        // 立即隱藏 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'none';
+        }
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -10620,6 +10646,11 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
+        // 重新顯示 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'flex';
+        }
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if(modalWrapper) {
@@ -10632,6 +10663,11 @@
     function closeTransferModal() {
         const modal = document.getElementById('transferModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        // 立即隱藏 FAB 按鈕
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) {
+            fabButton.style.display = 'none';
+        }
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -10658,15 +10694,29 @@
     
     // 從日記本模態框打開固定轉帳列表
     function openFixedTransferListFromJournal() {
-        // 不再關閉日曆模態框，因為現在直接從右上角+號打開
-        // 直接打開固定轉帳列表，而不是表單
-        closeExpenseModal();
-        closeIncomeModal();
-        closeTransferModal();
-        closeFixedTransferModal();
-        setTimeout(() => {
-            openFixedTransferList();
-        }, 100);
+        // 直接打開固定轉帳列表，不關閉當前模態框，讓過渡更順暢
+        const modal = document.getElementById('fixedTransferListModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        
+        // 渲染固定轉帳列表
+        renderFixedTransferList();
+        
+        // 直接顯示固定轉帳列表，不關閉其他模態框
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+        }
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.zIndex = '2010'; // 確保在最上層
+        
+        // 使用 requestAnimationFrame 確保動畫流暢
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if(modalWrapper) {
+                    modalWrapper.style.transform = 'translateY(0)';
+                }
+            }, 10);
+        });
     }
     
     // 類別選擇器
@@ -11463,14 +11513,13 @@
     
     // 新增固定轉帳（從列表頁面的+按鈕）
     function addNewFixedTransfer() {
+        // 直接打開固定轉帳表單，不關閉列表（讓表單覆蓋在列表上）
         const listModal = document.getElementById('fixedTransferListModal');
         if(listModal && listModal.style.display === 'block') {
             listModal.setAttribute('data-was-open', 'true');
         }
-        closeFixedTransferListModal();
-        setTimeout(() => {
-            openFixedTransferModal();
-        }, 300);
+        // 立即打開固定轉帳表單，不延遲
+        openFixedTransferModal();
     }
     
     // 當前編輯的固定轉帳ID（null表示新增模式）
@@ -11643,6 +11692,7 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
+        modal.style.zIndex = '2010'; // 確保表單顯示在列表之上
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if(modalWrapper) {
@@ -11857,15 +11907,11 @@
                 modalWrapper.style.transform = 'translateX(100%)';
                 editingFixedTransferId = null; // 重置編輯狀態
                 
-                // 如果列表模態框之前是打開的，重新打開它並更新列表
+                // 移除重新打開列表的邏輯，關閉後不再顯示固定轉帳列表
                 const listModal = document.getElementById('fixedTransferListModal');
-                if(listModal && listModal.getAttribute('data-was-open') === 'true') {
+                if(listModal) {
                     listModal.removeAttribute('data-was-open');
-                    // 先更新列表，再打開模態框
-                    renderFixedTransferList();
-                    openFixedTransferList();
-                } else {
-                    // 即使列表模態框沒有打開，也要更新列表（以防用戶之後打開）
+                    // 只更新列表數據，不打開列表模態框
                     renderFixedTransferList();
                 }
             }, 400);
@@ -12078,6 +12124,9 @@
         const title = document.getElementById('accountSelectorTitle');
         const list = document.getElementById('accountSelectorList');
         
+        // 確保模態框顯示在最上層
+        modal.style.zIndex = '2020';
+        
         // 設置標題
         if(title) {
             title.textContent = type === 'from' ? '選擇從帳戶' : '選擇到帳戶';
@@ -12157,19 +12206,18 @@
             }
         }
         
-        // 打開模態框
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
+        // 打開模態框 - 立即顯示
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            // 立即觸發動畫，不等待
+            requestAnimationFrame(() => {
                 if(modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
-            }, 10);
-        });
+            });
+        }
     }
     
     function closeAccountSelector() {
@@ -12294,18 +12342,19 @@
     function openRepeatSelector() {
         const modal = document.getElementById('repeatSelectorModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
+        // 確保模態框顯示在最上層
+        modal.style.zIndex = '2020';
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            // 立即觸發動畫，不等待
+            requestAnimationFrame(() => {
                 if(modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
-            }, 10);
-        });
+            });
+        }
     }
     
     function closeRepeatSelector() {
@@ -12373,13 +12422,14 @@
         // 生成年份、月份、日期選項
         renderDatePicker(initialDate);
         
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
+        // 確保模態框顯示在最上層
+        modal.style.zIndex = '2020';
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            // 立即觸發動畫，不等待
+            requestAnimationFrame(() => {
                 if(modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
@@ -12387,8 +12437,8 @@
                 scrollToSelectedDate(initialDate);
                 // 添加滾動監聽器
                 addDatePickerScrollListeners();
-            }, 10);
-        });
+            });
+        }
     }
     
     function addDatePickerScrollListeners() {
@@ -12628,18 +12678,19 @@
     function openHolidayAdjustSelector() {
         const modal = document.getElementById('holidayAdjustSelectorModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
+        // 確保模態框顯示在最上層
+        modal.style.zIndex = '2020';
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            // 立即觸發動畫，不等待
+            requestAnimationFrame(() => {
                 if(modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
-            }, 10);
-        });
+            });
+        }
     }
     
     function closeHolidayAdjustSelector() {
@@ -12673,18 +12724,19 @@
     function openTagColorSelector() {
         const modal = document.getElementById('tagColorSelectorModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
+        // 確保模態框顯示在最上層
+        modal.style.zIndex = '2020';
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            // 立即觸發動畫，不等待
+            requestAnimationFrame(() => {
                 if(modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
-            }, 10);
-        });
+            });
+        }
     }
     
     function closeTagColorSelector() {
