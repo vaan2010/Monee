@@ -9292,11 +9292,24 @@
         
         // 刪除記錄
         const filtered = records.filter(r => r.id !== recordId);
-        saveJournalRecords(filtered);
         
-        // 保存資料
-        saveData();
-        console.log('資料已保存');
+        // 先保存到 localStorage
+        clearJournalDatesCache();
+        localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(filtered));
+        const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
+        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        
+        // 【關鍵修正】從 localStorage 重新讀取當前使用者的 accounts，確保資料正確
+        const currentUserAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+        
+        // 一起同步 journal 和 accounts 到 Firestore（只更新 currentUserId）
+        if (window.syncJournalAndAccountsToFirestore && window.firebaseUserLoggedIn) {
+            window.syncJournalAndAccountsToFirestore(filtered, currentUserAccounts).catch(err => {
+                console.error('[刪除記帳同步] 同步失敗:', err);
+            });
+        }
+        
+        console.log('資料已保存並同步');
         
         // 重新渲染
         renderAssets();
