@@ -10357,18 +10357,10 @@
         // 應用新記錄對帳戶餘額的影響
         account.balance += amount;
         
-        // 先保存到 localStorage
-        clearJournalDatesCache();
-        localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
-        const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        saveJournalRecords(records);
         
-        // 一起同步 journal 和 accounts 到 Firestore（只更新 currentUserId）
-        if (window.syncJournalAndAccountsToFirestore && window.firebaseUserLoggedIn) {
-            window.syncJournalAndAccountsToFirestore(records, accounts).catch(err => {
-                console.error('[記帳同步] 同步失敗:', err);
-            });
-        }
+        // 保存資料
+        saveData();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -10471,18 +10463,10 @@
         // 正常更新餘額
         account.balance -= amount;
         
-        // 先保存到 localStorage
-        clearJournalDatesCache();
-        localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
-        const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        saveJournalRecords(records);
         
-        // 一起同步 journal 和 accounts 到 Firestore（只更新 currentUserId）
-        if (window.syncJournalAndAccountsToFirestore && window.firebaseUserLoggedIn) {
-            window.syncJournalAndAccountsToFirestore(records, accounts).catch(err => {
-                console.error('[記帳同步] 同步失敗:', err);
-            });
-        }
+        // 保存資料
+        saveData();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -10589,18 +10573,10 @@
         fromAccount.balance -= amount;
         toAccount.balance += amount;
         
-        // 先保存到 localStorage
-        clearJournalDatesCache();
-        localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
-        const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-        localStorage.setItem(userDataKey, JSON.stringify(accounts));
+        saveJournalRecords(records);
         
-        // 一起同步 journal 和 accounts 到 Firestore（只更新 currentUserId）
-        if (window.syncJournalAndAccountsToFirestore && window.firebaseUserLoggedIn) {
-            window.syncJournalAndAccountsToFirestore(records, accounts).catch(err => {
-                console.error('[記帳同步] 同步失敗:', err);
-            });
-        }
+        // 保存資料
+        saveData();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -13019,31 +12995,6 @@
             console.log(`fixedTransfers 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${transfers.length} 筆)`);
         } catch (err) {
             console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 一起同步 journal 和 accounts 到 Firestore（記帳後使用）
-    window.syncJournalAndAccountsToFirestore = async function(journalRecords, accountsData) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 journal 和 accounts');
-            return;
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                journal: journalRecords,
-                accounts: accountsData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`[記帳同步] journal 和 accounts 已一起同步到 Firestore (使用者: ${currentUserIdFromStorage}, journal: ${journalRecords.length} 筆, accounts: ${accountsData.length} 筆)`);
-        } catch (err) {
-            console.error('[記帳同步] 同步 journal 和 accounts 到 Firestore 失敗:', err);
         }
     };
     
