@@ -9086,14 +9086,48 @@
         
         console.log(`[重新計算餘額] 開始為使用者 ${userId} 重新計算帳戶餘額，記帳記錄數: ${journalRecords.length}`);
         
-        // 策略：先反向計算得到初始餘額，再正向計算得到最終餘額
-        // 1. 從當前餘額反向計算，得到初始餘額（未受記帳記錄影響的餘額）
+        // 【關鍵修正】策略改變：不反向計算，而是直接從記帳記錄計算最終餘額
+        // 問題：如果帳戶餘額已經被記帳記錄影響過，反向計算會得到錯誤的初始餘額
+        // 解決：使用 Firestore 同步的 accounts 作為基礎（如果有的話），或者從記帳記錄直接計算
+        
+        // 1. 先從 Firestore 獲取最新的 accounts 資料（如果有的話）
+        // 如果沒有，則使用傳入的 accounts 作為基礎
+        const STORAGE_KEY_DATA = 'my_assets_stable_data';
+        const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
+        const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+        
+        // 建立帳戶 ID 到帳戶的映射
+        const accountMap = {};
+        accounts.forEach(acc => {
+            accountMap[acc.id] = acc;
+        });
+        
+        // 2. 初始化最終餘額（使用帳戶的當前餘額作為基礎）
+        // 注意：這裡假設傳入的 accounts 是從 Firestore 同步的最新資料
+        const accountFinalBalances = {};
+        accounts.forEach(acc => {
+            // 使用帳戶的當前餘額作為初始值
+            accountFinalBalances[acc.id] = parseFloat(acc.balance) || 0;
+        });
+        
+        // 3. 按照時間順序排序記帳記錄
+        const sortedRecords = [...journalRecords].sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            if (dateA !== dateB) return dateA - dateB;
+            // 如果日期相同，按照創建時間排序
+            const createA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const createB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return createA - createB;
+        });
+        
+        // 4. 重新計算：先反向計算得到初始餘額，再正向計算得到最終餘額
+        // 反向計算：從當前餘額減去所有記帳記錄的影響，得到初始餘額
         const accountInitialBalances = {};
         accounts.forEach(acc => {
             let initialBalance = parseFloat(acc.balance) || 0;
             
-            // 反向計算：從當前餘額減去所有記帳記錄的影響
-            journalRecords.forEach(record => {
+            sortedRecords.forEach(record => {
                 const amount = parseFloat(record.amount) || 0;
                 
                 if (record.type === 'income') {
@@ -9118,26 +9152,10 @@
             });
             
             accountInitialBalances[acc.id] = initialBalance;
+            accountFinalBalances[acc.id] = initialBalance; // 從初始餘額開始正向計算
         });
         
-        // 2. 從初始餘額正向計算，得到最終餘額
-        const accountFinalBalances = {};
-        accounts.forEach(acc => {
-            accountFinalBalances[acc.id] = accountInitialBalances[acc.id] || 0;
-        });
-        
-        // 按照時間順序排序記帳記錄
-        const sortedRecords = [...journalRecords].sort((a, b) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b.date ? new Date(b.date).getTime() : 0;
-            if (dateA !== dateB) return dateA - dateB;
-            // 如果日期相同，按照創建時間排序
-            const createA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const createB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return createA - createB;
-        });
-        
-        // 逐一應用記帳記錄對帳戶餘額的影響
+        // 5. 正向計算：從初始餘額加上所有記帳記錄的影響，得到最終餘額
         sortedRecords.forEach(record => {
             const amount = parseFloat(record.amount) || 0;
             
@@ -9166,7 +9184,7 @@
             }
         });
         
-        // 更新帳戶餘額
+        // 6. 更新帳戶餘額
         let hasBalanceChanges = false;
         accounts.forEach(acc => {
             const newBalance = accountFinalBalances[acc.id];
@@ -9174,14 +9192,15 @@
             if (newBalance !== undefined && Math.abs(currentBalance - newBalance) > 0.01) {
                 acc.balance = newBalance;
                 hasBalanceChanges = true;
-                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): ${currentBalance} -> ${newBalance}`);
+                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): ${currentBalance} -> ${newBalance} (初始: ${accountInitialBalances[acc.id]})`);
+            } else if (newBalance !== undefined) {
+                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): 餘額無變化 (${currentBalance})`);
             }
         });
         
         if (hasBalanceChanges) {
             console.log(`[重新計算餘額] 帳戶餘額已更新，保存到 localStorage`);
             // 保存更新後的帳戶資料
-            const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
             localStorage.setItem(userDataKey, JSON.stringify(accounts));
             
             // 同步到 Firestore
@@ -12655,16 +12674,17 @@
                         (async () => {
                             try {
                                 if (window.recalculateAccountBalancesFromJournal) {
-                                    // 重新讀取最新的帳戶資料（因為可能已經被同步更新）
-                                    const updatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
+                                    // 重新讀取最新的帳戶資料（使用 Firestore 同步的 accounts，如果有的話）
+                                    // 優先使用 Firestore 的 accounts，因為它們是未受記帳記錄影響的原始資料
+                                    let accountsToUse = firestoreAccounts.length > 0 ? firestoreAccounts : JSON.parse(localStorage.getItem(userDataKey) || '[]');
                                     
-                                    if (updatedAccounts.length > 0) {
-                                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額`);
+                                    if (accountsToUse.length > 0) {
+                                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額 (使用 ${firestoreAccounts.length > 0 ? 'Firestore' : '本地'} 帳戶資料)`);
                                         // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
-                                        window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, updatedAccounts);
+                                        window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, accountsToUse);
                                         
                                         // 等待一下確保同步完成
-                                        await new Promise(resolve => setTimeout(resolve, 200));
+                                        await new Promise(resolve => setTimeout(resolve, 300));
                                         
                                         // 重新讀取更新後的帳戶資料，確保後續邏輯使用最新的資料
                                         const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
