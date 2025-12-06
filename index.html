@@ -4176,11 +4176,10 @@
                 resultsDiv.style.display = 'block';
             } else {
                 resultsDiv.innerHTML = matches.map(bank => {
+                    const displayText = bank.code ? `${bank.name} (${bank.code})` : bank.name;
                     return `<div class="bank-search-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color);" data-bank-name="${bank.name}" data-bank-code="${bank.code}">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="color: var(--text-primary); font-size: 16px; flex: 1;">${bank.name}</div>
-                            ${bank.code ? `<div style="color: var(--text-secondary); font-size: 14px; margin-left: 12px; font-weight: 500; min-width: 50px; text-align: right;">${bank.code}</div>` : ''}
-                        </div>
+                        <div style="color: var(--text-primary); font-size: 16px;">${bank.name}</div>
+                        ${bank.code ? `<div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">代碼: ${bank.code}</div>` : ''}
                     </div>`;
                 }).join('');
                 resultsDiv.style.display = 'block';
@@ -13734,27 +13733,9 @@
     }
     
     // ========== 日期記事功能 ==========
-    function formatDateKey(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-    
     function loadDateNotes() {
         const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
         return JSON.parse(localStorage.getItem(notesKey) || '{}');
-    }
-    
-    function getDateNote(date) {
-        const notes = loadDateNotes();
-        const dateStr = formatDateKey(date);
-        return notes[dateStr] || '';
-    }
-    
-    function hasDateNote(date) {
-        return getDateNote(date) !== '';
     }
     
     function saveDateNote(date, note) {
@@ -13768,9 +13749,26 @@
         }
         localStorage.setItem(notesKey, JSON.stringify(notes));
     }
+    
+    function getDateNote(date) {
+        const notes = loadDateNotes();
+        const dateStr = formatDateKey(date);
+        return notes[dateStr] || '';
+    }
+    
+    function formatDateKey(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    function hasDateNote(date) {
+        return getDateNote(date) !== '';
+    }
 </script>
 </body>
 </html>
-
 
 
