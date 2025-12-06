@@ -83,12 +83,12 @@
     
     <style>
         :root {
-            --bg-color: #000000; --card-bg: #1c1c1e; --text-primary: #ffffff; --text-secondary: #8e8e93;
+            --bg-color: #000000; --card-bg: #1c1c1e; --text-primary: #ffffff; --text-secondary: #8e8e93; --text-third: #57575e;
             --color-bank: #64d2ff; --color-stock: #bf5af2; --color-twstock: #0a84ff; --color-crypto: #ff9f0a; --color-debt: #ff453a;
             --color-up: #30d158; --color-down: #ff453a; --border-color: #2c2c2e; --active-bg: #3a3a3c;
         }
         :root[data-theme="light"] {
-            --bg-color: #ffffff; --card-bg: #f5f5f7; --text-primary: #000000; --text-secondary: #999999;
+            --bg-color: #ffffff; --card-bg: #f5f5f7; --text-primary: #000000; --text-secondary: #999999; --text-third: #c7c7cc;
             --color-bank: #007aff; --color-stock: #af52de; --color-twstock: #007aff; --color-crypto: #ff9500; --color-debt: #ff3b30;
             --color-up: #34c759; --color-down: #ff3b30; --border-color: #d1d1d6; --active-bg: #e5e5ea;
         }
@@ -1352,8 +1352,8 @@
                     <div class="form-row" id="rowBankTag" style="display:none;"><span class="form-label">標籤</span><select id="inpBankTag" class="form-input" onchange="handleBankTagChange()"><option value="現金">現金</option><option value="銀行">銀行</option><option value="信用卡">信用卡</option><option value="電子貨幣">電子貨幣</option><option value="簽帳金融卡">簽帳金融卡</option></select></div>
                     <div class="form-row" id="rowBankName" style="display:none;">
                         <span class="form-label">銀行</span>
-                        <div style="position: relative; width: 100%;">
-                            <input type="text" id="inpBankName" class="form-input" placeholder="請輸入銀行名稱或代碼搜尋" autocomplete="off" style="padding-right: 40px;">
+                        <div style="position: relative; flex: 1; min-width: 0;">
+                            <input type="text" id="inpBankName" class="form-input" placeholder="請輸入銀行名稱或代碼搜尋" autocomplete="off" style="text-align: right; padding-right: 40px; width: 100%; box-sizing: border-box;">
                             <div id="bankSearchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 10000; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
                         </div>
                     </div>
@@ -1373,79 +1373,58 @@
     </div>
 
     <!-- Calendar Journal Modal (新增支出/收入) -->
-    <!-- 計算機模態框 -->
-    <div id="calculatorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'calculatorModal' && closeCalculatorModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
-            <div style="padding: 20px;">
-                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">計算機</div>
-                <div id="calculatorDisplay" style="width: 100%; padding: 20px; background: var(--bg-color); border-radius: 12px; margin-bottom: 20px; text-align: right; font-size: 32px; font-weight: 600; color: var(--text-primary); min-height: 60px; box-sizing: border-box;">0</div>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-                    <button class="calc-btn" onclick="calculatorInput('C')" style="background: var(--bg-color); color: var(--text-primary);">C</button>
-                    <button class="calc-btn" onclick="calculatorInput('CE')" style="background: var(--bg-color); color: var(--text-primary);">CE</button>
-                    <button class="calc-btn" onclick="calculatorInput('backspace')" style="background: var(--bg-color); color: var(--text-primary);"><i class="fas fa-backspace"></i></button>
-                    <button class="calc-btn" onclick="calculatorInput('/')" style="background: var(--bg-color); color: var(--text-primary);">÷</button>
-                    <button class="calc-btn" onclick="calculatorInput('7')">7</button>
-                    <button class="calc-btn" onclick="calculatorInput('8')">8</button>
-                    <button class="calc-btn" onclick="calculatorInput('9')">9</button>
-                    <button class="calc-btn" onclick="calculatorInput('*')" style="background: var(--bg-color); color: var(--text-primary);">×</button>
-                    <button class="calc-btn" onclick="calculatorInput('4')">4</button>
-                    <button class="calc-btn" onclick="calculatorInput('5')">5</button>
-                    <button class="calc-btn" onclick="calculatorInput('6')">6</button>
-                    <button class="calc-btn" onclick="calculatorInput('-')" style="background: var(--bg-color); color: var(--text-primary);">−</button>
-                    <button class="calc-btn" onclick="calculatorInput('1')">1</button>
-                    <button class="calc-btn" onclick="calculatorInput('2')">2</button>
-                    <button class="calc-btn" onclick="calculatorInput('3')">3</button>
-                    <button class="calc-btn" onclick="calculatorInput('+')" style="background: var(--bg-color); color: var(--text-primary);">+</button>
-                    <button class="calc-btn" onclick="calculatorInput('0')" style="grid-column: span 2;">0</button>
-                    <button class="calc-btn" onclick="calculatorInput('.')">.</button>
-                    <button class="calc-btn" onclick="calculatorInput('=')" style="background: #0a84ff; color: white;">=</button>
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 12px;">
-                    <button onclick="confirmCalculator()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">確認</button>
-                    <button onclick="closeCalculatorModal()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <div id="calendarJournalModal" class="modal" style="z-index: 2003;" onclick="event.target.id === 'calendarJournalModal' && closeCalendarJournalModal()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0;">
+                <div class="modal-tab journal-tab active" onclick="switchJournalTab('expense')" id="journalTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">支出</div>
+                <div class="modal-tab journal-tab" onclick="switchJournalTab('income')" id="journalTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">收入</div>
+                <div class="modal-tab journal-tab" onclick="switchJournalTab('transfer')" id="journalTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">轉帳</div>
+                <div class="modal-tab journal-tab" onclick="switchJournalTab('fixed')" id="journalTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">固定轉帳</div>
+            </div>
             <div style="padding: 20px;">
-                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">記帳</div>
-                <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;" onclick="openNewExpense()">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-arrow-down" style="color: var(--color-down); font-size: 20px;"></i>
-                            <span style="color: var(--text-primary); font-size: 16px;">新增支出</span>
+                <div id="journalTabContentExpense" class="journal-tab-content active" style="display: block;">
+                    <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color);" onclick="closeCalendarJournalModal(); openNewExpense();">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-arrow-down" style="color: var(--color-down); font-size: 20px;"></i>
+                                <span style="color: var(--text-primary); font-size: 16px;">新增支出</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                         </div>
-                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
-                <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;" onclick="openNewIncome()">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-arrow-up" style="color: var(--color-up); font-size: 20px;"></i>
-                            <span style="color: var(--text-primary); font-size: 16px;">新增收入</span>
+                <div id="journalTabContentIncome" class="journal-tab-content" style="display: none;">
+                    <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color);" onclick="closeCalendarJournalModal(); openNewIncome();">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-arrow-up" style="color: var(--color-up); font-size: 20px;"></i>
+                                <span style="color: var(--text-primary); font-size: 16px;">新增收入</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                         </div>
-                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
-                <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;" onclick="openNewTransfer()">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-exchange-alt" style="color: var(--text-primary); font-size: 20px;"></i>
-                            <span style="color: var(--text-primary); font-size: 16px;">轉帳</span>
+                <div id="journalTabContentTransfer" class="journal-tab-content" style="display: none;">
+                    <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color);" onclick="closeCalendarJournalModal(); openNewTransfer();">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-exchange-alt" style="color: var(--text-primary); font-size: 20px;"></i>
+                                <span style="color: var(--text-primary); font-size: 16px;">轉帳</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                         </div>
-                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
-                <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color);" onclick="openFixedTransferListFromJournal()">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-calendar-check" style="color: var(--text-primary); font-size: 20px;"></i>
-                            <span style="color: var(--text-primary); font-size: 16px;">固定轉帳</span>
+                <div id="journalTabContentFixed" class="journal-tab-content" style="display: none;">
+                    <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color);" onclick="closeCalendarJournalModal(); openFixedTransferListFromJournal();">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <i class="fas fa-calendar-check" style="color: var(--text-primary); font-size: 20px;"></i>
+                                <span style="color: var(--text-primary); font-size: 16px;">固定轉帳</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                         </div>
-                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
                 </div>
             </div>
@@ -1473,14 +1452,23 @@
     <!-- Fixed Transfer List Modal -->
     <div id="fixedTransferListModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferListModal' && closeFixedTransferListModal()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
-            <div style="padding: 20px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <!-- 分頁選單 -->
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">轉帳</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: #ffd60a; font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer; border: 2px solid #ffd60a;">固定轉帳</div>
+            </div>
+            <div style="padding: 20px; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定轉帳</div>
-                    <button onclick="addNewFixedTransfer()" style="width: 40px; height: 40px; border-radius: 50%; background: var(--color-up); color: white; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">+</button>
                 </div>
-                <div id="fixedTransferListContainer" style="max-height: 60vh; overflow-y: auto;">
+                <div id="fixedTransferListContainer" style="max-height: 60vh; overflow-y: auto; padding-bottom: 80px;">
                     <!-- 固定轉帳列表將在這裡動態生成 -->
                 </div>
+                <button onclick="addNewFixedTransfer()" style="position: absolute; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -1588,7 +1576,7 @@
                     <textarea id="dateNoteInput" style="width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-primary); font-size: 16px; resize: vertical; box-sizing: border-box;" placeholder="輸入記事內容..."></textarea>
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <button onclick="saveDateNote()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
+                    <button onclick="saveDateNoteFromEditor()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
                     <button onclick="closeDateNoteEditor()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
                 </div>
             </div>
@@ -1609,65 +1597,111 @@
 
     <!-- Income Modal (收入) -->
     <div id="incomeModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'incomeModal' && closeIncomeModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
-                <button class="btn-icon" onclick="closeIncomeModal()">取消</button>
-                <span class="modal-title">新增收入</span>
-                <button class="btn-icon" style="font-weight:bold;" onclick="saveIncome()">儲存</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+            <!-- 分頁選單 -->
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-up);">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
-            <div style="padding: 20px;">
-                <div id="incomeDate" style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;"></div>
-                <div class="form-group">
-                    <div class="form-row" style="cursor: pointer;" onclick="openIncomeDateSelector()">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-calendar" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">日期</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="incomeDateDisplay" style="color: var(--text-primary);"></span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">標題</span>
-                        </div>
-                        <input type="text" id="incomeTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
-                    </div>
-                    <div class="form-row">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">金額</span>
-                        </div>
-                        <input type="text" id="incomeAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
-                    </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openCategorySelector('income')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-dollar-sign" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">類別</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="incomeCategory" style="color: var(--text-secondary);">選擇類別</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeIncomeModal()" style="color: #98989d; font-size: 17px;">取消</button>
+                <!-- 中間標題移除 -->
+                <button class="btn-icon" style="font-weight:bold; color: var(--color-up);" onclick="saveIncome()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 40px 20px;">
+                <!-- 大標題區域 -->
+                <div style="margin-bottom: 20px; padding-top: 10px;">
+                    <h1 style="font-size: 34px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">新增收入</h1>
+                    <div id="incomeDate" style="font-size: 15px; color: var(--text-secondary); font-weight: 400;"></div>
+                </div>
+
+                <!-- 表單群組容器 -->
+                <div class="form-group" style="background: #1c1c1e; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    
+                    <!-- 日期 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openIncomeDateSelector()">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-calendar-alt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">日期</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="incomeDateDisplay" style="color: var(--text-secondary); font-size: 17px;"></span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openJournalAccountSelector('income')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">帳戶</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="incomeAccount" style="color: var(--text-secondary);">選擇帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+
+                    <!-- 標題 -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
+                            </div>
+                            <input type="text" id="incomeTitle" class="form-input" placeholder="輸入標題" style="text-align: right; font-size: 17px; border: none; background: transparent; padding: 0; color: var(--text-primary); flex: 1; margin-left: 20px;">
                         </div>
                     </div>
-                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label">代墊</span>
-                        <label class="switch">
-                            <input type="checkbox" id="incomeIsAdvance">
-                            <span class="slider"></span>
-                        </label>
+
+                    <!-- 金額 -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                        <div style="display: flex; flex-direction: column; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 36px;">
+                                <span style="color: var(--text-secondary); font-size: 24px; font-weight: 500;">$</span>
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
+                                    <input type="text" id="incomeAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: var(--text-primary); padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('incomeAmount')" type="button" title="計算機" style="background: rgba(10, 132, 255, 0.15); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 18px;"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 類別 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openCategorySelector('income')">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-dollar-sign" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">類別</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="incomeCategory" style="color: var(--text-secondary); font-size: 17px;">選擇類別</span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 帳戶 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openJournalAccountSelector('income')">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">帳戶</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="incomeAccount" style="color: var(--text-secondary); font-size: 17px;">選擇帳戶</span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 代墊 -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: none; border-radius: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-receipt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">代墊</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="incomeIsAdvance">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1676,65 +1710,111 @@
 
     <!-- Expense Modal (支出) -->
     <div id="expenseModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'expenseModal' && closeExpenseModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
-                <button class="btn-icon" onclick="closeExpenseModal()">取消</button>
-                <span class="modal-title">新增支出</span>
-                <button class="btn-icon" style="font-weight:bold;" onclick="saveExpense()">儲存</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+            <!-- 分頁選單 -->
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-down);">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
-            <div style="padding: 20px;">
-                <div id="expenseDate" style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;"></div>
-                <div class="form-group">
-                    <div class="form-row" style="cursor: pointer;" onclick="openExpenseDateSelector()">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-calendar" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">日期</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="expenseDateDisplay" style="color: var(--text-primary);"></span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">標題</span>
-                        </div>
-                        <input type="text" id="expenseTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
-                    </div>
-                    <div class="form-row">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">金額</span>
-                        </div>
-                        <input type="text" id="expenseAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
-                    </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openCategorySelector('expense')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-utensils" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">類別</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="expenseCategory" style="color: var(--text-secondary);">選擇類別</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeExpenseModal()" style="color: #98989d; font-size: 17px;">取消</button>
+                <!-- 中間標題移除 -->
+                <button class="btn-icon" style="font-weight:bold; color: var(--color-down);" onclick="saveExpense()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 40px 20px;">
+                <!-- 大標題區域 -->
+                <div style="margin-bottom: 20px; padding-top: 10px;">
+                    <h1 style="font-size: 34px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">新增支出</h1>
+                    <div id="expenseDate" style="font-size: 15px; color: var(--text-secondary); font-weight: 400;"></div>
+                </div>
+
+                <!-- 表單群組容器 -->
+                <div class="form-group" style="background: #1c1c1e; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    
+                    <!-- 日期 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openExpenseDateSelector()">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-calendar-alt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">日期</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="expenseDateDisplay" style="color: var(--text-secondary); font-size: 17px;"></span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openJournalAccountSelector('expense')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">帳戶</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="expenseAccount" style="color: var(--text-secondary);">選擇帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+
+                    <!-- 標題 -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
+                            </div>
+                            <input type="text" id="expenseTitle" class="form-input" placeholder="輸入標題" style="text-align: right; font-size: 17px; border: none; background: transparent; padding: 0; color: var(--text-primary); flex: 1; margin-left: 20px;">
                         </div>
                     </div>
-                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label">代墊</span>
-                        <label class="switch">
-                            <input type="checkbox" id="expenseIsAdvance">
-                            <span class="slider"></span>
-                        </label>
+
+                    <!-- 金額 (高度較高，包含對齊優化) -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                        <div style="display: flex; flex-direction: column; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 36px;">
+                                <span style="color: var(--text-secondary); font-size: 24px; font-weight: 500;">$</span>
+                                <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
+                                    <input type="text" id="expenseAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: var(--text-primary); padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('expenseAmount')" type="button" title="計算機" style="background: rgba(10, 132, 255, 0.15); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 18px;"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 類別 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openCategorySelector('expense')">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-tag" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">類別</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="expenseCategory" style="color: var(--text-secondary); font-size: 17px;">選擇類別</span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 帳戶 -->
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openJournalAccountSelector('expense')">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">帳戶</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="expenseAccount" style="color: var(--text-secondary); font-size: 17px;">選擇帳戶</span>
+                                <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 代墊 (最後一項無底線) -->
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: none; border-radius: 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-receipt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">代墊</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="expenseIsAdvance">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1743,58 +1823,82 @@
 
     <!-- Transfer Modal (轉帳) -->
     <div id="transferModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'transferModal' && closeTransferModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
-                <button class="btn-icon" onclick="closeTransferModal()">取消</button>
-                <span class="modal-title">轉帳</span>
-                <button class="btn-icon" style="font-weight:bold;" onclick="saveTransfer()">儲存</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+            <!-- 分頁選單 -->
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--text-primary);">轉帳</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">固定轉帳</div>
             </div>
-            <div style="padding: 20px;">
-                <div id="transferDate" style="font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;"></div>
-                <div class="form-group">
-                    <div class="form-row" style="cursor: pointer;" onclick="openTransferDateSelector()">
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
+                <!-- 中間標題移除 -->
+                <button class="btn-icon" style="font-weight:bold; color: #0a84ff;" onclick="saveTransfer()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 20px 20px;">
+                <!-- 大標題區域 -->
+                <div style="margin-bottom: 20px;">
+                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">轉帳</h1>
+                    <div id="transferDate" style="font-size: 15px; color: #8e8e93; font-weight: normal;"></div>
+                </div>
+
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- 日期 -->
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTransferDateSelector()">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-calendar" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">日期</span>
+                            <i class="fas fa-calendar" style="color: #8e8e93; font-size: 20px;"></i>
+                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">日期</span>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="transferDateDisplay" style="color: var(--text-primary);"></span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="transferDateDisplay" style="color: #8e8e93; font-size: 17px;"></span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row">
+
+                    <!-- 標題 -->
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">標題</span>
+                            <i class="fas fa-heading" style="color: #8e8e93; font-size: 20px;"></i>
+                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
                         </div>
-                        <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right;">
+                        <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openJournalAccountSelector('transferFrom')">
+
+                    <!-- 從帳戶 -->
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferFrom')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">從帳戶</span>
+                            <i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i>
+                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">從帳戶</span>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="transferFromAccount" style="color: var(--text-secondary);">選擇轉出帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
-                        </div>
-                    </div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openJournalAccountSelector('transferTo')">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">到帳戶</span>
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span id="transferToAccount" style="color: var(--text-secondary);">選擇轉入帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="transferFromAccount" style="color: #8e8e93; font-size: 17px;">選擇轉出帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row">
+
+                    <!-- 到帳戶 -->
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferTo')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i>
-                            <span class="form-label">金額</span>
+                            <i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i>
+                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">到帳戶</span>
                         </div>
-                        <input type="text" id="transferAmount" class="form-input" placeholder="點擊使用計算機" style="text-align: right; cursor: pointer;" readonly>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="transferToAccount" style="color: #8e8e93; font-size: 17px;">選擇轉入帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+
+                    <!-- 金額 -->
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0;">
+                        <div style="color: #ffffff; font-size: 15px; margin-bottom: 8px;">金額</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="color: #8e8e93; font-size: 24px; font-weight: 500;">$</span>
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
+                                <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: #ffffff; padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
+                                <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 20px;"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1803,9 +1907,9 @@
 
     <!-- Category Selector Modal -->
     <div id="categorySelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'categorySelectorModal' && closeCategorySelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: #1c1c1e; position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
-                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
+                <div style="font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
                 <div id="categorySelectorList" style="max-height: 60vh; overflow-y: auto;">
                     <!-- 類別列表將在這裡動態生成 -->
                 </div>
@@ -1815,21 +1919,75 @@
 
     <!-- Fixed Transfer Modal -->
     <div id="fixedTransferModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferModal' && closeFixedTransferModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 10;">
-                <button class="btn-icon" onclick="closeFixedTransferModal()">取消</button>
-                <span class="modal-title">固定轉帳</span>
-                <button class="btn-icon" style="font-weight:bold;" onclick="saveFixedTransfer()">儲存</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+            <!-- 分頁選單 -->
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('fixed')" id="journalFormTabFixed" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--text-primary);">固定轉帳</div>
             </div>
-            <div style="padding: 20px;">
-                <div class="form-group">
-                    <div class="form-row"><span class="form-label">標題</span><input type="text" id="fixedTransferTitle" class="form-input" placeholder="例:交通卡充值"></div>
-                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;"><span class="form-label">使用帳戶全部金額</span><div style="display: flex; align-items: center; gap: 10px;"><span id="fixedTransferUseAccountBalanceLabel" style="color: var(--text-secondary); font-size: 14px;">關閉</span><label class="switch"><input type="checkbox" id="fixedTransferUseAccountBalance" onchange="updateFixedTransferAmountMode()"><span class="slider"></span></label></div></div>
-                    <div class="form-row" id="fixedTransferAccountBalanceSourceRow" style="display: none; cursor: pointer;" onclick="toggleFixedTransferAccountBalanceSource()"><span class="form-label">使用帳戶</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedTransferAccountBalanceSource" style="color: var(--text-secondary);">匯出方（從帳戶）</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
-                    <div class="form-row" id="fixedTransferAmountRow"><span class="form-label">金額</span><input type="number" id="fixedTransferAmount" class="form-input" placeholder="金額"></div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openAccountSelector('from')"><span class="form-label">從帳戶</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedTransferFromAccount" style="color: var(--text-secondary);">從帳戶</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openAccountSelector('to')"><span class="form-label">到帳戶</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedTransferToAccount" style="color: var(--text-secondary);">到帳戶</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
-                    <div class="form-row" style="cursor: pointer;" onclick="openTagColorSelector()"><span class="form-label">標籤</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><div style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-tag" id="fixedTransferTagIcon" style="color: var(--text-secondary);"></i><span id="fixedTransferTagColor" style="color: var(--text-secondary);">選擇顏色</span></div><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
+                <!-- 中間標題移除 -->
+                <button class="btn-icon" style="font-weight:bold; color: #ffd60a;" onclick="saveFixedTransfer()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 20px 20px;">
+                 <!-- 大標題區域 -->
+                 <div style="margin-bottom: 20px;">
+                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定轉帳</h1>
+                </div>
+
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedTransferTitle" class="form-input" placeholder="例:交通卡充值" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="fixedTransferUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <label class="switch">
+                                <input type="checkbox" id="fixedTransferUseAccountBalance" onchange="updateFixedTransferAmountMode()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-row" id="fixedTransferAccountBalanceSourceRow" style="display: none; cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; align-items: center; justify-content: space-between;" onclick="toggleFixedTransferAccountBalanceSource()">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="fixedTransferAccountBalanceSource" style="color: #8e8e93; font-size: 17px;">匯出方（從帳戶）</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="form-row" id="fixedTransferAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedTransferAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('from')">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">從帳戶</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="fixedTransferFromAccount" style="color: #8e8e93; font-size: 17px;">從帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('to')">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">到帳戶</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="fixedTransferToAccount" style="color: #8e8e93; font-size: 17px;">到帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTagColorSelector()">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-tag" id="fixedTransferTagIcon" style="color: #8e8e93;"></i>
+                                <span id="fixedTransferTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
+                            </div>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group" style="margin-top: 30px;">
                     <div class="form-row" style="cursor: pointer;" onclick="openRepeatSelector()"><span class="form-label">重複</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedTransferRepeat">每月</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
@@ -4176,10 +4334,11 @@
                 resultsDiv.style.display = 'block';
             } else {
                 resultsDiv.innerHTML = matches.map(bank => {
-                    const displayText = bank.code ? `${bank.name} (${bank.code})` : bank.name;
                     return `<div class="bank-search-item" style="padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-color);" data-bank-name="${bank.name}" data-bank-code="${bank.code}">
-                        <div style="color: var(--text-primary); font-size: 16px;">${bank.name}</div>
-                        ${bank.code ? `<div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">代碼: ${bank.code}</div>` : ''}
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="color: var(--text-primary); font-size: 16px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: 1.5;">${bank.name}</div>
+                            ${bank.code ? `<div style="color: var(--text-secondary); font-size: 14px; font-weight: 500; flex-shrink: 0; text-align: right; width: 60px; line-height: 1.5;">${bank.code}</div>` : ''}
+                        </div>
                     </div>`;
                 }).join('');
                 resultsDiv.style.display = 'block';
@@ -7958,6 +8117,231 @@
             }
         }
     }
+    
+    // ========== 日期記事功能（必須在 renderCalendar 之前定義）==========
+    function formatDateKey(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
+    function loadDateNotes() {
+        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
+        return JSON.parse(localStorage.getItem(notesKey) || '{}');
+    }
+    
+    function getDateNote(date) {
+        const notes = loadDateNotes();
+        const dateStr = formatDateKey(date);
+        return notes[dateStr] || '';
+    }
+    
+    function hasDateNote(date) {
+        return getDateNote(date) !== '';
+    }
+    
+    let currentNoteDate = null;
+    
+    function openDateNoteEditor(date) {
+        currentNoteDate = new Date(date);
+        currentNoteDate.setHours(0, 0, 0, 0);
+        
+        const modal = document.getElementById('dateNoteModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        const title = document.getElementById('dateNoteTitle');
+        const dateDisplay = document.getElementById('dateNoteDateDisplay');
+        const noteInput = document.getElementById('dateNoteInput');
+        
+        if(title) {
+            title.textContent = '記事';
+        }
+        
+        if(dateDisplay) {
+            const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            const dateStr = `${currentNoteDate.getFullYear()}年${currentNoteDate.getMonth() + 1}月${currentNoteDate.getDate()}日 ${weekdays[currentNoteDate.getDay()]}`;
+            dateDisplay.textContent = dateStr;
+        }
+        
+        if(noteInput) {
+            noteInput.value = getDateNote(currentNoteDate);
+        }
+        
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+        }
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                if(modalWrapper) {
+                    modalWrapper.style.transform = 'translateY(0)';
+                }
+                if(noteInput) {
+                    noteInput.focus();
+                }
+            }, 10);
+        });
+    }
+    
+    function closeDateNoteEditor() {
+        const modal = document.getElementById('dateNoteModal');
+        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) {
+            modalWrapper.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modalWrapper.style.transform = 'translateY(100%)';
+            }, 300);
+        } else {
+            modal.style.display = 'none';
+        }
+        currentNoteDate = null;
+    }
+    
+    function saveDateNoteFromEditor() {
+        if(!currentNoteDate) return;
+        
+        const noteInput = document.getElementById('dateNoteInput');
+        const note = noteInput ? noteInput.value.trim() : '';
+        
+        saveDateNote(currentNoteDate, note);
+        renderCalendar(); // 重新渲染日曆以顯示星號
+        closeDateNoteEditor();
+    }
+    
+    function saveDateNote(date, note) {
+        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
+        const notes = loadDateNotes();
+        const dateStr = formatDateKey(date);
+        if(note && note.trim()) {
+            notes[dateStr] = note.trim();
+        } else {
+            delete notes[dateStr];
+        }
+        localStorage.setItem(notesKey, JSON.stringify(notes));
+    }
+    
+    // ========== 記帳類型選擇器（必須在 openNewExpenseFromCalendar 之前定義）==========
+    function openJournalTypeSelector() {
+        // 直接打開支出表單，而不是顯示選擇器
+        openNewExpense();
+    }
+    
+    // 切換記帳表單分頁（在表單上方）
+    function switchJournalFormTab(tab) {
+        // 檢查是否已經在當前分頁
+        if (tab === 'expense' && currentJournalType === 'expense') return;
+        if (tab === 'income' && currentJournalType === 'income') return;
+        if (tab === 'transfer' && currentJournalType === 'transfer') return;
+        // 固定轉帳比較特殊，它可能沒有 currentJournalType 或者有單獨的狀態
+        const fixedTransferListModal = document.getElementById('fixedTransferListModal');
+        if (tab === 'fixed' && fixedTransferListModal && fixedTransferListModal.style.display === 'block') return;
+
+        // 直接打開對應的表單，不先隱藏舊的，避免露出底層
+        if(tab === 'expense') {
+            openNewExpense();
+        } else if(tab === 'income') {
+            openNewIncome();
+        } else if(tab === 'transfer') {
+            openNewTransfer();
+        } else if(tab === 'fixed') {
+            openFixedTransferListFromJournal();
+        }
+        
+        // 延遲隱藏其他模態框，讓新的模態框有時間覆蓋上來
+        // 同時更新分頁樣式
+        setTimeout(() => {
+            const allModals = ['expenseModal', 'incomeModal', 'transferModal', 'fixedTransferModal', 'fixedTransferListModal'];
+            
+            // 找出當前應該顯示的模態框 ID
+            let currentModalId = '';
+            if(tab === 'expense') currentModalId = 'expenseModal';
+            else if(tab === 'income') currentModalId = 'incomeModal';
+            else if(tab === 'transfer') currentModalId = 'transferModal';
+            else if(tab === 'fixed') currentModalId = 'fixedTransferListModal';
+
+            allModals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if(modal) {
+                    // 如果不是當前要顯示的模態框，則隱藏它
+                    if (modalId !== currentModalId) {
+                        modal.style.display = 'none';
+                        const modalWrapper = modal.querySelector('.modal-content-wrapper');
+                        if(modalWrapper) {
+                            // 重置位置，以免下次打開時動畫異常
+                            modalWrapper.style.transform = 'translateX(100%)';
+                        }
+                    }
+
+                    // 更新分頁樣式 (針對所有模態框，確保一致性)
+                    const tabs = modal.querySelectorAll('.journal-form-tab');
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.style.background = 'var(--border-color)';
+                        t.style.color = 'var(--text-secondary)';
+                        t.style.border = 'none';
+                    });
+                    
+                    // 設置當前分頁為 active
+                    tabs.forEach(t => {
+                        const text = t.textContent.trim();
+                        if ((tab === 'expense' && text === '支出') ||
+                            (tab === 'income' && text === '收入') ||
+                            (tab === 'transfer' && text === '轉帳') ||
+                            (tab === 'fixed' && text === '固定轉帳')) {
+                            
+                            t.classList.add('active');
+                            t.style.background = 'var(--card-bg)';
+                            
+                            if(tab === 'expense') {
+                                t.style.color = 'var(--color-down)'; // 紅色
+                                t.style.border = '2px solid var(--color-down)';
+                            } else if(tab === 'income') {
+                                t.style.color = 'var(--color-up)'; // 綠色
+                                t.style.border = '2px solid var(--color-up)';
+                            } else if(tab === 'transfer') {
+                                t.style.color = '#0a84ff'; // 藍色
+                                t.style.border = '2px solid #0a84ff';
+                            } else if(tab === 'fixed') {
+                                t.style.color = '#ffd60a'; // 黃色
+                                t.style.border = '2px solid #ffd60a';
+                            }
+                        }
+                    });
+                }
+            });
+        }, 50);
+    }
+    
+    // 切換記帳分頁
+    function switchJournalTab(tab) {
+        // 更新 tab 樣式
+        document.querySelectorAll('.journal-tab').forEach(t => {
+            t.classList.remove('active');
+            t.style.background = 'var(--border-color)';
+            t.style.color = 'var(--text-secondary)';
+        });
+        
+        const activeTab = document.getElementById(`journalTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+        if(activeTab) {
+            activeTab.classList.add('active');
+            activeTab.style.background = 'var(--card-bg)';
+            activeTab.style.color = 'var(--text-primary)';
+        }
+        
+        // 更新內容顯示
+        document.querySelectorAll('.journal-tab-content').forEach(c => {
+            c.style.display = 'none';
+        });
+        
+        const activeContent = document.getElementById(`journalTabContent${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+        if(activeContent) {
+            activeContent.style.display = 'block';
+        }
+    }
+    
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const monthYear = document.getElementById('calendarMonthYear');
@@ -8046,12 +8430,11 @@
                 // 如果兩者都有，保持固定轉帳的顏色標記
             }
             
-            // 檢查是否有記事，如果有則顯示星號
+            // 檢查是否有記事，如果有則顯示星號框住日期
             if(hasDateNote(date)) {
-                const starIcon = document.createElement('i');
-                starIcon.className = 'fas fa-star';
-                starIcon.style.cssText = 'position: absolute; top: 4px; right: 4px; color: #ffd700; font-size: 12px;';
-                dayBtn.appendChild(starIcon);
+                dayBtn.style.border = '2px solid #ffd700';
+                dayBtn.style.borderRadius = '8px';
+                dayBtn.style.boxSizing = 'border-box';
             }
             
             // 使用計時器區分單擊和雙擊
@@ -9608,6 +9991,22 @@
             }
         }
         
+        // 更新分頁樣式
+        const tabs = modal.querySelectorAll('.journal-form-tab');
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.style.background = 'var(--border-color)';
+            t.style.color = 'var(--text-secondary)';
+            t.style.border = 'none';
+        });
+        const incomeTab = document.getElementById('journalFormTabIncome');
+        if(incomeTab) {
+            incomeTab.classList.add('active');
+            incomeTab.style.background = 'var(--card-bg)';
+            incomeTab.style.color = 'var(--color-up)';
+            incomeTab.style.border = '2px solid var(--color-up)';
+        }
+        
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             modalWrapper.classList.remove('swiping');
@@ -9956,6 +10355,7 @@
     }
     
     // 從日曆頁面直接打開支出新增（使用當前日期或選中的日期）
+    // 注意：這個函數已被 openJournalTypeSelector 取代，但保留以向後兼容
     function openNewExpenseFromCalendar() {
         // 如果沒有選中日期，使用今天
         if(!selectedDate) {
@@ -9964,8 +10364,8 @@
             selectedDate = new Date(today);
             renderCalendar();
         }
-        // 直接打開支出新增
-        openNewExpense();
+        // 打開四個分頁的模態框
+        openJournalTypeSelector();
     }
     
     function closeCalendarJournalModal() {
@@ -9997,7 +10397,7 @@
     
     // 新增支出
     function openNewExpense() {
-        closeCalendarJournalModal();
+        // 不再關閉日曆模態框，因為現在直接從右上角+號打開
         editingJournalRecordId = null;
         currentJournalType = 'expense';
         // 使用選中的日期，如果沒有選中則使用今天
@@ -10045,7 +10445,7 @@
     
     // 新增收入
     function openNewIncome() {
-        closeCalendarJournalModal();
+        // 不再關閉日曆模態框，因為現在直接從右上角+號打開
         editingJournalRecordId = null;
         currentJournalType = 'income';
         // 使用選中的日期，如果沒有選中則使用今天
@@ -10093,7 +10493,7 @@
     
     // 新增轉帳
     function openNewTransfer() {
-        closeCalendarJournalModal();
+        // 不再關閉日曆模態框，因為現在直接從右上角+號打開
         editingJournalRecordId = null;
         currentJournalType = 'transfer';
         // 使用選中的日期，如果沒有選中則使用今天
@@ -10198,6 +10598,22 @@
             document.getElementById('transferToAccount').style.color = 'var(--text-secondary)';
         }
         
+        // 更新分頁樣式
+        const tabs = modal.querySelectorAll('.journal-form-tab');
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.style.background = 'var(--border-color)';
+            t.style.color = 'var(--text-secondary)';
+            t.style.border = 'none';
+        });
+        const transferTab = document.getElementById('journalFormTabTransfer');
+        if(transferTab) {
+            transferTab.classList.add('active');
+            transferTab.style.background = 'var(--card-bg)';
+            transferTab.style.color = '#0a84ff';
+            transferTab.style.border = '2px solid #0a84ff';
+        }
+        
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             modalWrapper.classList.remove('swiping');
@@ -10242,10 +10658,15 @@
     
     // 從日記本模態框打開固定轉帳列表
     function openFixedTransferListFromJournal() {
-        closeCalendarJournalModal();
+        // 不再關閉日曆模態框，因為現在直接從右上角+號打開
+        // 直接打開固定轉帳列表，而不是表單
+        closeExpenseModal();
+        closeIncomeModal();
+        closeTransferModal();
+        closeFixedTransferModal();
         setTimeout(() => {
             openFixedTransferList();
-        }, 300);
+        }, 100);
     }
     
     // 類別選擇器
@@ -10990,6 +11411,27 @@
             // 渲染固定轉帳列表
             renderFixedTransferList();
             
+            // 更新分頁樣式
+            const tabs = modal.querySelectorAll('.journal-form-tab');
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.style.background = 'var(--border-color)';
+                t.style.color = 'var(--text-secondary)';
+                t.style.border = 'none';
+            });
+            const fixedTab = document.getElementById('journalFormTabFixed'); // 注意：这里的ID需要在HTML中对应修改，或者使用querySelector
+            // 實際上 fixedTransferListModal 內的 ID 會重複，這裡需要使用 querySelector
+            // 更好的做法是给 fixedTransferListModal 內的 tab 唯一的 ID 或者使用 class 選擇器
+            const modalTabs = modal.querySelectorAll('.journal-form-tab');
+            modalTabs.forEach(t => {
+                if(t.textContent.trim() === '固定轉帳') {
+                    t.classList.add('active');
+                    t.style.background = 'var(--card-bg)';
+                    t.style.color = '#ffd60a';
+                    t.style.border = '2px solid #ffd60a';
+                }
+            });
+            
             if(modalWrapper) {
                 modalWrapper.style.transform = 'translateY(100%)';
             }
@@ -11178,6 +11620,22 @@
         }
         
         updateNextDates();
+        
+        // 更新分頁樣式
+        const tabs = modal.querySelectorAll('.journal-form-tab');
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.style.background = 'var(--border-color)';
+            t.style.color = 'var(--text-secondary)';
+            t.style.border = 'none';
+        });
+        const fixedTab = document.getElementById('journalFormTabFixed');
+        if(fixedTab) {
+            fixedTab.classList.add('active');
+            fixedTab.style.background = 'var(--card-bg)';
+            fixedTab.style.color = 'var(--text-primary)';
+            fixedTab.style.border = '2px solid var(--text-primary)';
+        }
         
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
@@ -13570,106 +14028,40 @@
         }
     }, 60 * 1000);
     
-    // ========== 計算機功能 ==========
-    let calculatorValue = '0';
-    let calculatorTargetInput = null;
-    
-    function openCalculatorModal(targetInputId) {
-        calculatorTargetInput = targetInputId;
-        calculatorValue = document.getElementById(targetInputId)?.value || '0';
-        if(calculatorValue === '') calculatorValue = '0';
-        updateCalculatorDisplay();
-        
-        const modal = document.getElementById('calculatorModal');
-        const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
+    // ========== 計算機功能（記帳用，統一使用錢包的計算機）==========
+    // 記帳的計算機直接使用錢包的計算機函數（openCalculator 和 closeCalculator）
+    window.openCalculatorModal = function(targetInputId) {
+        // 使用錢包的計算機
+        if (typeof openCalculator === 'function') {
+            openCalculator(targetInputId);
+        } else {
+            console.error('openCalculator function not found');
         }
-        modal.style.display = 'block';
-        modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if(modalWrapper) {
-                    modalWrapper.style.transform = 'translateY(0)';
-                }
-            }, 10);
-        });
+    };
+
+    function openCalculatorModal(targetInputId) {
+        // 使用錢包的計算機
+        openCalculator(targetInputId);
     }
     
     function closeCalculatorModal() {
-        const modal = document.getElementById('calculatorModal');
-        const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-            setTimeout(() => {
-                modal.style.display = 'none';
-                modalWrapper.style.transform = 'translateY(100%)';
-            }, 300);
-        } else {
-            modal.style.display = 'none';
-        }
-        calculatorTargetInput = null;
-    }
-    
-    function updateCalculatorDisplay() {
-        const display = document.getElementById('calculatorDisplay');
-        if(display) {
-            display.textContent = calculatorValue;
-        }
-    }
-    
-    function calculatorInput(input) {
-        if(input === 'C') {
-            calculatorValue = '0';
-        } else if(input === 'CE') {
-            calculatorValue = '0';
-        } else if(input === 'backspace') {
-            if(calculatorValue.length > 1) {
-                calculatorValue = calculatorValue.slice(0, -1);
-            } else {
-                calculatorValue = '0';
-            }
-        } else if(input === '=') {
-            try {
-                // 替換顯示符號為實際運算符號
-                let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-                const result = Function('"use strict"; return (' + expression + ')')();
-                calculatorValue = String(result);
-                if(calculatorValue.includes('.')) {
-                    calculatorValue = parseFloat(calculatorValue).toString();
-                }
-            } catch(e) {
-                calculatorValue = '0';
-            }
-        } else {
-            if(calculatorValue === '0' && input !== '.') {
-                calculatorValue = input;
-            } else {
-                // 替換顯示符號
-                if(input === '*') input = '×';
-                if(input === '/') input = '÷';
-                if(input === '-') input = '−';
-                calculatorValue += input;
-            }
-        }
-        updateCalculatorDisplay();
+        // 使用錢包的計算機關閉函數
+        closeCalculator();
     }
     
     function confirmCalculator() {
-        if(calculatorTargetInput) {
-            const targetInput = document.getElementById(calculatorTargetInput);
-            if(targetInput) {
-                // 計算最終結果
-                try {
-                    let expression = calculatorValue.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-                    const result = Function('"use strict"; return (' + expression + ')')();
-                    targetInput.value = parseFloat(result).toString();
-                } catch(e) {
-                    targetInput.value = calculatorValue;
-                }
-            }
-        }
-        closeCalculatorModal();
+        // 使用錢包的計算機確認函數
+        closeCalculator();
+    }
+    
+    function calculatorInput(input) {
+        // 使用錢包的計算機輸入函數
+        calcInput(input);
+    }
+    
+    function updateCalculatorDisplay() {
+        // 使用錢包的計算機顯示更新函數
+        updateCalcDisplay();
     }
     
     // ========== 修改記帳金額輸入為計算機 ==========
@@ -13681,94 +14073,15 @@
             const expenseAmount = document.getElementById('expenseAmount');
             const transferAmount = document.getElementById('transferAmount');
             
-            if(incomeAmount) {
-                incomeAmount.addEventListener('focus', function() {
-                    this.blur();
-                    openCalculatorModal('incomeAmount');
-                });
-            }
-            if(expenseAmount) {
-                expenseAmount.addEventListener('focus', function() {
-                    this.blur();
-                    openCalculatorModal('expenseAmount');
-                });
-            }
-            if(transferAmount) {
-                transferAmount.addEventListener('focus', function() {
-                    this.blur();
-                    openCalculatorModal('transferAmount');
-                });
-            }
+            // 金額輸入欄位現在使用按鈕打開計算機，不需要 focus 事件監聽器
         }, 100);
     });
     
     // ========== 修改右上+號為四個分頁 ==========
-    function openNewExpenseFromCalendar() {
-        // 如果沒有選中日期，使用今天
-        if(!selectedDate) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            selectedDate = new Date(today);
-            renderCalendar();
-        }
-        // 打開四個分頁的模態框
-        openJournalTypeSelector();
-    }
-    
-    function openJournalTypeSelector() {
-        const modal = document.getElementById('calendarJournalModal');
-        const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
-            modalWrapper.style.transform = 'translateY(100%)';
-        }
-        modal.style.display = 'block';
-        modal.style.background = 'rgba(0,0,0,0.5)';
-        requestAnimationFrame(() => {
-            setTimeout(() => {
-                if(modalWrapper) {
-                    modalWrapper.style.transform = 'translateY(0)';
-                }
-            }, 10);
-        });
-    }
-    
-    // ========== 日期記事功能 ==========
-    function loadDateNotes() {
-        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
-        return JSON.parse(localStorage.getItem(notesKey) || '{}');
-    }
-    
-    function saveDateNote(date, note) {
-        const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
-        const notes = loadDateNotes();
-        const dateStr = formatDateKey(date);
-        if(note && note.trim()) {
-            notes[dateStr] = note.trim();
-        } else {
-            delete notes[dateStr];
-        }
-        localStorage.setItem(notesKey, JSON.stringify(notes));
-    }
-    
-    function getDateNote(date) {
-        const notes = loadDateNotes();
-        const dateStr = formatDateKey(date);
-        return notes[dateStr] || '';
-    }
-    
-    function formatDateKey(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-    
-    function hasDateNote(date) {
-        return getDateNote(date) !== '';
-    }
+    // 注意：openNewExpenseFromCalendar 和 openJournalTypeSelector 已在前面定義
 </script>
 </body>
 </html>
+
 
 
