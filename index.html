@@ -13656,21 +13656,29 @@
             return;
         }
         
-        // 【關鍵修正】防止空資料覆蓋有資料的情況
-        // 如果本地資料是空的，先檢查 Firestore 是否有資料
+        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
+        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
         if (accountsData.length === 0) {
             try {
-                const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                const userDataSnap = await getDoc(userDataRef);
-                if (userDataSnap.exists()) {
-                    const firestoreData = userDataSnap.data();
-                    const firestoreAccounts = firestoreData.accounts || [];
-                    // 如果 Firestore 有資料，且本地是空的，不推送（避免覆蓋）
-                    if (firestoreAccounts.length > 0) {
-                        console.log(`[同步保護] 本地 accounts 為空，但 Firestore 已有 ${firestoreAccounts.length} 筆資料，跳過推送以避免覆蓋`);
-                        return;
+                const STORAGE_KEY_DATA = 'my_assets_stable_data';
+                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
+                const hasLocalHistory = localStorage.getItem(userDataKey) !== null; // 檢查是否有歷史記錄
+                
+                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
+                if (!hasLocalHistory) {
+                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+                    const userDataSnap = await getDoc(userDataRef);
+                    if (userDataSnap.exists()) {
+                        const firestoreData = userDataSnap.data();
+                        const firestoreAccounts = firestoreData.accounts || [];
+                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
+                        if (firestoreAccounts.length > 0) {
+                            console.log(`[同步保護] 本地 accounts 為空且無歷史記錄，但 Firestore 已有 ${firestoreAccounts.length} 筆資料，跳過推送以避免覆蓋`);
+                            return;
+                        }
                     }
                 }
+                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
             } catch (err) {
                 console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
                 // 如果檢查失敗，繼續推送（避免阻塞正常流程）
@@ -13703,21 +13711,29 @@
             return;
         }
         
-        // 【關鍵修正】防止空資料覆蓋有資料的情況
-        // 如果本地資料是空的，先檢查 Firestore 是否有資料
+        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
+        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
         if (records.length === 0) {
             try {
-                const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                const userDataSnap = await getDoc(userDataRef);
-                if (userDataSnap.exists()) {
-                    const firestoreData = userDataSnap.data();
-                    const firestoreJournal = firestoreData.journal || [];
-                    // 如果 Firestore 有資料，且本地是空的，不推送（避免覆蓋）
-                    if (firestoreJournal.length > 0) {
-                        console.log(`[同步保護] 本地 journal 為空，但 Firestore 已有 ${firestoreJournal.length} 筆資料，跳過推送以避免覆蓋`);
-                        return;
+                const STORAGE_KEY_JOURNAL = 'my_assets_journal';
+                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
+                const hasLocalHistory = localStorage.getItem(userJournalKey) !== null; // 檢查是否有歷史記錄
+                
+                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
+                if (!hasLocalHistory) {
+                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+                    const userDataSnap = await getDoc(userDataRef);
+                    if (userDataSnap.exists()) {
+                        const firestoreData = userDataSnap.data();
+                        const firestoreJournal = firestoreData.journal || [];
+                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
+                        if (firestoreJournal.length > 0) {
+                            console.log(`[同步保護] 本地 journal 為空且無歷史記錄，但 Firestore 已有 ${firestoreJournal.length} 筆資料，跳過推送以避免覆蓋`);
+                            return;
+                        }
                     }
                 }
+                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
             } catch (err) {
                 console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
                 // 如果檢查失敗，繼續推送（避免阻塞正常流程）
@@ -13772,21 +13788,29 @@
             return;
         }
         
-        // 【關鍵修正】防止空資料覆蓋有資料的情況
-        // 如果本地資料是空的，先檢查 Firestore 是否有資料
+        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
+        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
         if (transfers.length === 0) {
             try {
-                const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                const userDataSnap = await getDoc(userDataRef);
-                if (userDataSnap.exists()) {
-                    const firestoreData = userDataSnap.data();
-                    const firestoreFixedTransfers = firestoreData.fixedTransfers || [];
-                    // 如果 Firestore 有資料，且本地是空的，不推送（避免覆蓋）
-                    if (firestoreFixedTransfers.length > 0) {
-                        console.log(`[同步保護] 本地 fixedTransfers 為空，但 Firestore 已有 ${firestoreFixedTransfers.length} 筆資料，跳過推送以避免覆蓋`);
-                        return;
+                const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
+                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserIdFromStorage}`;
+                const hasLocalHistory = localStorage.getItem(userFixedTransfersKey) !== null; // 檢查是否有歷史記錄
+                
+                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
+                if (!hasLocalHistory) {
+                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+                    const userDataSnap = await getDoc(userDataRef);
+                    if (userDataSnap.exists()) {
+                        const firestoreData = userDataSnap.data();
+                        const firestoreFixedTransfers = firestoreData.fixedTransfers || [];
+                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
+                        if (firestoreFixedTransfers.length > 0) {
+                            console.log(`[同步保護] 本地 fixedTransfers 為空且無歷史記錄，但 Firestore 已有 ${firestoreFixedTransfers.length} 筆資料，跳過推送以避免覆蓋`);
+                            return;
+                        }
                     }
                 }
+                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
             } catch (err) {
                 console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
                 // 如果檢查失敗，繼續推送（避免阻塞正常流程）
@@ -13829,22 +13853,34 @@
             accountsData = currentUserAccountsFromStorage;
         }
         
-        // 【關鍵修正】防止空資料覆蓋有資料的情況
-        // 如果本地資料是空的，先檢查 Firestore 是否有資料
+        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
+        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
         if (accountsData.length === 0 && journalRecords.length === 0) {
             try {
-                const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                const userDataSnap = await getDoc(userDataRef);
-                if (userDataSnap.exists()) {
-                    const firestoreData = userDataSnap.data();
-                    const firestoreAccounts = firestoreData.accounts || [];
-                    const firestoreJournal = firestoreData.journal || [];
-                    // 如果 Firestore 有資料，且本地是空的，不推送（避免覆蓋）
-                    if (firestoreAccounts.length > 0 || firestoreJournal.length > 0) {
-                        console.log(`[同步保護] 本地 accounts 和 journal 為空，但 Firestore 已有資料 (accounts: ${firestoreAccounts.length}, journal: ${firestoreJournal.length})，跳過推送以避免覆蓋`);
-                        return;
+                const STORAGE_KEY_DATA = 'my_assets_stable_data';
+                const STORAGE_KEY_JOURNAL = 'my_assets_journal';
+                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
+                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
+                const hasAccountsHistory = localStorage.getItem(userDataKey) !== null;
+                const hasJournalHistory = localStorage.getItem(userJournalKey) !== null;
+                const hasLocalHistory = hasAccountsHistory || hasJournalHistory; // 任一有歷史記錄即可
+                
+                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
+                if (!hasLocalHistory) {
+                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+                    const userDataSnap = await getDoc(userDataRef);
+                    if (userDataSnap.exists()) {
+                        const firestoreData = userDataSnap.data();
+                        const firestoreAccounts = firestoreData.accounts || [];
+                        const firestoreJournal = firestoreData.journal || [];
+                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
+                        if (firestoreAccounts.length > 0 || firestoreJournal.length > 0) {
+                            console.log(`[同步保護] 本地 accounts 和 journal 為空且無歷史記錄，但 Firestore 已有資料 (accounts: ${firestoreAccounts.length}, journal: ${firestoreJournal.length})，跳過推送以避免覆蓋`);
+                            return;
+                        }
                     }
                 }
+                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
             } catch (err) {
                 console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
                 // 如果檢查失敗，繼續推送（避免阻塞正常流程）
