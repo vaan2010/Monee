@@ -9073,7 +9073,7 @@
     
     // 根據記帳記錄重新計算帳戶餘額
     // 這個函式會在記帳記錄從 Firestore 同步後被調用
-    function recalculateAccountBalancesFromJournal(userId, journalRecords, accounts) {
+    async function recalculateAccountBalancesFromJournal(userId, journalRecords, accounts) {
         if (!accounts || !Array.isArray(accounts)) {
             console.warn('[重新計算餘額] 沒有帳戶資料');
             return;
@@ -9203,9 +9203,14 @@
             // 保存更新後的帳戶資料
             localStorage.setItem(userDataKey, JSON.stringify(accounts));
             
-            // 同步到 Firestore
+            // 同步到 Firestore（使用 await 確保同步完成）
             if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
-                window.syncAccountsToFirestore(accounts);
+                try {
+                    await window.syncAccountsToFirestore(accounts);
+                    console.log(`[重新計算餘額] 帳戶餘額已同步到 Firestore`);
+                } catch (err) {
+                    console.error(`[重新計算餘額] 同步到 Firestore 失敗:`, err);
+                }
             }
         } else {
             console.log(`[重新計算餘額] 帳戶餘額無變化`);
@@ -12680,11 +12685,11 @@
                                     
                                     if (accountsToUse.length > 0) {
                                         console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額 (使用 ${firestoreAccounts.length > 0 ? 'Firestore' : '本地'} 帳戶資料)`);
-                                        // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
-                                        window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, accountsToUse);
+                                        // 重新計算帳戶餘額（這個函式會自動同步到 Firestore，使用 await 確保完成）
+                                        await window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, accountsToUse);
                                         
-                                        // 等待一下確保同步完成
-                                        await new Promise(resolve => setTimeout(resolve, 300));
+                                        // 等待一下確保 Firestore 同步完成並傳播到其他裝置
+                                        await new Promise(resolve => setTimeout(resolve, 500));
                                         
                                         // 重新讀取更新後的帳戶資料，確保後續邏輯使用最新的資料
                                         const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
