@@ -12458,14 +12458,26 @@
             
             // 1. 定位當前使用者的雲端文件
             // users/{uid}/appUsers/{currentUserId} -> 實現不同使用者資料獨立
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+            const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+            const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!currentUserIdFromStorage) {
+                console.warn('[同步] 沒有 currentUserId，無法載入資料');
+                return;
+            }
+            
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
             const userDataSnap = await getDoc(userDataRef);
             
             // 準備本地儲存的 Key
-            const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
-            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserId}`;
-            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
-            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserId}`;
+            const STORAGE_KEY_DATA = 'my_assets_stable_data';
+            const STORAGE_KEY_JOURNAL = 'my_assets_journal';
+            const STORAGE_KEY_SETTINGS = 'my_assets_stable_settings';
+            const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
+            
+            const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
+            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
+            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserIdFromStorage}`;
+            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserIdFromStorage}`;
             
             // 讀取本地現有資料 (用於判斷是否需要初始化上傳)
             const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
@@ -12474,7 +12486,7 @@
             const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
             
             if (userDataSnap.exists()) {
-                console.log(`[同步] 強制同步使用者 ${currentUserId} 資料`);
+                console.log(`[同步] 強制同步使用者 ${currentUserIdFromStorage} 資料`);
                 const userData = userDataSnap.data();
                 
                 // 【關鍵修正】不檢查 length，直接覆蓋 (即使是空陣列)
@@ -12499,6 +12511,7 @@
             }
             
             // 3. 同步全域使用者列表 (Users List)
+            const STORAGE_KEY_USERS = 'my_assets_users';
             const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
             const usersSnap = await getDoc(usersRef);
             const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
@@ -12544,7 +12557,6 @@
             
             // 確保記憶體變數是最新的
             if (typeof loadUserData === 'function') {
-                const currentUserIdFromStorage = localStorage.getItem('my_assets_current_user');
                 const userData = loadUserData(currentUserIdFromStorage);
                 if (userData) {
                     accounts = userData.accounts;
@@ -12621,10 +12633,12 @@
                     let hasChanges = false;
                     
                     // Accounts 同步邏輯
-                    if (firestoreAccounts.length > 0 && JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有資產後）
+                    if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                         hasChanges = true;
+                        console.log(`[同步更新] 使用者 ${userId} 的 accounts 已更新 (${firestoreAccounts.length} 筆)`);
                     }
                     
                     // Journal 同步邏輯
@@ -12799,16 +12813,25 @@
     
     // 同步 accounts 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncAccountsToFirestore = async function(accountsData) {
-        if (!currentFirebaseUser || !currentUserId) return;
+        if (!currentFirebaseUser) return;
+        
+        // 從 localStorage 讀取 currentUserId（因為模組作用域無法直接訪問主腳本的全域變數）
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) {
+            console.warn('[同步] 沒有 currentUserId，無法同步 accounts');
+            return;
+        }
+        
         // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
         
         try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
             await setDoc(userDataRef, {
                 accounts: accountsData,
                 updatedAt: Timestamp.now()
             }, { merge: true });
-            console.log('accounts 已同步到 Firestore');
+            console.log(`accounts 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${accountsData.length} 筆)`);
         } catch (err) {
             console.error('同步 accounts 到 Firestore 失敗:', err);
         }
@@ -12816,15 +12839,23 @@
     
     // 同步 journal 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncJournalToFirestore = async function(records) {
-        if (!currentFirebaseUser || !currentUserId) return;
+        if (!currentFirebaseUser) return;
+        
+        // 從 localStorage 讀取 currentUserId
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) {
+            console.warn('[同步] 沒有 currentUserId，無法同步 journal');
+            return;
+        }
         
         try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
             await setDoc(userDataRef, {
                 journal: records,
                 updatedAt: Timestamp.now()
             }, { merge: true });
-            console.log('journal 已同步到 Firestore');
+            console.log(`journal 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${records.length} 筆)`);
         } catch (err) {
             console.error('同步 journal 到 Firestore 失敗:', err);
         }
@@ -12832,15 +12863,23 @@
     
     // 同步 settings 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncSettingsToFirestore = async function(settingsData) {
-        if (!currentFirebaseUser || !currentUserId) return;
+        if (!currentFirebaseUser) return;
+        
+        // 從 localStorage 讀取 currentUserId
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) {
+            console.warn('[同步] 沒有 currentUserId，無法同步 settings');
+            return;
+        }
         
         try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
             await setDoc(userDataRef, {
                 settings: settingsData,
                 updatedAt: Timestamp.now()
             }, { merge: true });
-            console.log('settings 已同步到 Firestore');
+            console.log(`settings 已同步到 Firestore (使用者: ${currentUserIdFromStorage})`);
         } catch (err) {
             console.error('同步 settings 到 Firestore 失敗:', err);
         }
@@ -12848,15 +12887,23 @@
     
     // 同步 fixedTransfers 到 Firestore（使用 currentUserId 區分不同應用內使用者）
     window.syncFixedTransfersToFirestore = async function(transfers) {
-        if (!currentFirebaseUser || !currentUserId) return;
+        if (!currentFirebaseUser) return;
+        
+        // 從 localStorage 讀取 currentUserId
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) {
+            console.warn('[同步] 沒有 currentUserId，無法同步 fixedTransfers');
+            return;
+        }
         
         try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserId);
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
             await setDoc(userDataRef, {
                 fixedTransfers: transfers,
                 updatedAt: Timestamp.now()
             }, { merge: true });
-            console.log('fixedTransfers 已同步到 Firestore');
+            console.log(`fixedTransfers 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${transfers.length} 筆)`);
         } catch (err) {
             console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
         }
