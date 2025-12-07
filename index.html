@@ -13222,38 +13222,22 @@
     let isSyncingFromFirestore = false; // 防止同步循環
 
     // 監聽登入狀態
-    let isInitialAuthCheck = true; // 標記是否為初始認證檢查（頁面載入時）
-    
     onAuthStateChanged(auth, (user) => {
         currentFirebaseUser = user;
         if (user) {
             window.firebaseUserLoggedIn = true;
             // 觸發自訂事件通知主程式
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
-            
             // 登入後從 Firestore 載入資料（先載入，再啟動監聽，避免監聽器立即觸發）
             loadDataFromFirestore().then(() => {
                 // 載入完成後再啟動 Firestore 同步監聽
                 startFirestoreSync();
-                
-                // 如果不是初始認證檢查（即真正的登入操作），則重新整理頁面
-                if (!isInitialAuthCheck) {
-                    // 延遲一小段時間後重新整理，確保所有資料已寫入 localStorage
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
-                }
             });
-            
-            // 標記初始檢查已完成
-            isInitialAuthCheck = false;
         } else {
             window.firebaseUserLoggedIn = false;
             // 停止 Firestore 同步監聽
             stopFirestoreSync();
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: null } }));
-            // 登出時也標記初始檢查已完成
-            isInitialAuthCheck = false;
         }
     });
     
