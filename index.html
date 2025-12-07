@@ -13248,28 +13248,44 @@
             const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
             const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
             
+            // 檢查本地是否為空（沒有歷史記錄）
+            const isLocalEmpty = localAccounts.length === 0 && localJournal.length === 0 && localFixedTransfers.length === 0 && Object.keys(localSettings).length === 0;
+            
             if (userDataSnap.exists()) {
-                console.log(`[同步] 強制同步使用者 ${currentUserIdFromStorage} 資料`);
                 const userData = userDataSnap.data();
+                const firestoreAccounts = userData.accounts || [];
+                const firestoreJournal = userData.journal || [];
+                const firestoreFixedTransfers = userData.fixedTransfers || [];
+                const firestoreSettings = userData.settings || {};
+                const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0 || Object.keys(firestoreSettings).length > 0;
                 
-                // 【關鍵修正】不檢查 length，直接覆蓋 (即使是空陣列)
-                localStorage.setItem(userDataKey, JSON.stringify(userData.accounts || []));
-                localStorage.setItem(userJournalKey, JSON.stringify(userData.journal || []));
-                localStorage.setItem(userFixedTransfersKey, JSON.stringify(userData.fixedTransfers || []));
+                // 【關鍵修正】如果本地為空且 Firestore 有資料，強制同步
+                if (isLocalEmpty && hasFirestoreData) {
+                    console.log(`[同步] 本地為空，自動從 Firestore 同步使用者 ${currentUserIdFromStorage} 的資料`);
+                } else {
+                    console.log(`[同步] 強制同步使用者 ${currentUserIdFromStorage} 資料`);
+                }
                 
-                if (userData.settings) {
-                    const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                    const merged = { ...localSettings, ...userData.settings };
+                // 直接覆蓋本地資料（以 Firestore 為主）
+                localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
+                localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
+                localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
+                
+                if (firestoreSettings && Object.keys(firestoreSettings).length > 0) {
+                    const merged = { ...localSettings, ...firestoreSettings };
                     localStorage.setItem(userSettingsKey, JSON.stringify(merged));
                 }
                 
+                // 觸發資料載入事件，更新 UI
                 window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
                 
             } else {
-                // 雲端無資料 -> 上傳本地
-                const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                if (localAccounts.length > 0) {
+                // 雲端無資料 -> 如果本地有資料，上傳本地
+                if (!isLocalEmpty) {
+                    console.log(`[同步] 雲端無資料，上傳本地資料到 Firestore`);
                     if (window.syncAllDataToFirestore) await window.syncAllDataToFirestore();
+                } else {
+                    console.log(`[同步] 本地和雲端都為空，無需同步`);
                 }
             }
             
@@ -13318,12 +13334,28 @@
                 await window.syncCurrentUserToFirestore(localCurrentUser);
             }
             
-            // 確保記憶體變數是最新的
+            // 確保記憶體變數是最新的，並刷新 UI
             if (typeof loadUserData === 'function') {
                 const userData = loadUserData(currentUserIdFromStorage);
                 if (userData) {
+                    const previousAccountsLength = accounts.length;
+                    const previousSettingsKeys = Object.keys(settings).length;
+                    
                     accounts = userData.accounts;
                     settings = userData.settings;
+                    
+                    // 如果本地原本為空，且從 Firestore 載入了資料，刷新 UI
+                    // 或者如果資料有變化（從 Firestore 同步後），也刷新 UI
+                    const hasNewData = (isLocalEmpty && (accounts.length > 0 || Object.keys(settings).length > 0)) ||
+                                      (accounts.length !== previousAccountsLength || Object.keys(settings).length !== previousSettingsKeys);
+                    
+                    if (hasNewData) {
+                        console.log(`[同步] 從 Firestore 載入資料後，刷新 UI (本地原本為空: ${isLocalEmpty})`);
+                        if (typeof renderAssets === 'function') renderAssets();
+                        if (typeof updateChartData === 'function') updateChartData();
+                        if (typeof renderCalendar === 'function') renderCalendar();
+                        if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                    }
                 }
             }
             
