@@ -13218,10 +13218,25 @@
             window.firebaseUserLoggedIn = true;
             // 觸發自訂事件通知主程式
             window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
+            
+            // 檢測是否為新裝置（第一次登入）
+            const DEVICE_INIT_KEY = 'monee_device_initialized';
+            const isNewDevice = !localStorage.getItem(DEVICE_INIT_KEY);
+            
             // 登入後從 Firestore 載入資料（先載入，再啟動監聽，避免監聽器立即觸發）
-            loadDataFromFirestore().then(() => {
+            loadDataFromFirestore(isNewDevice).then((shouldReload) => {
                 // 載入完成後再啟動 Firestore 同步監聽
                 startFirestoreSync();
+                
+                // 如果是新裝置且從雲端載入了資料，則重新整理頁面
+                if (shouldReload && isNewDevice) {
+                    // 標記裝置已初始化，避免再次重新整理
+                    localStorage.setItem(DEVICE_INIT_KEY, 'true');
+                    // 延遲一小段時間後重新整理，確保所有資料已寫入 localStorage
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                }
             });
         } else {
             window.firebaseUserLoggedIn = false;
@@ -13232,8 +13247,8 @@
     });
     
     // 從 Firestore 載入資料 (自動同步版)
-    async function loadDataFromFirestore() {
-        if (!currentFirebaseUser) return;
+    async function loadDataFromFirestore(isNewDevice = false) {
+        if (!currentFirebaseUser) return false;
         
         // 【防護機制】如果正在切換使用者，延遲載入
         if (isUserSwitching) {
@@ -13255,9 +13270,11 @@
             // 如果仍然在切換，直接返回
             if (isUserSwitching) {
                 console.warn('[同步] 使用者切換時間過長，取消載入');
-                return;
+                return false;
             }
         }
+        
+        let shouldReload = false; // 是否需要重新整理頁面
         
         try {
             isSyncingFromFirestore = true;
@@ -13268,7 +13285,7 @@
             const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
             if (!currentUserIdFromStorage) {
                 console.warn('[同步] 沒有 currentUserId，無法載入資料');
-                return;
+                return false;
             }
             
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
@@ -13305,6 +13322,10 @@
                 // 【關鍵修正】如果本地為空且 Firestore 有資料，強制同步
                 if (isLocalEmpty && hasFirestoreData) {
                     console.log(`[同步] 本地為空，自動從 Firestore 同步使用者 ${currentUserIdFromStorage} 的資料`);
+                    // 如果是新裝置且從雲端載入了資料，標記需要重新整理
+                    if (isNewDevice) {
+                        shouldReload = true;
+                    }
                 } else {
                     console.log(`[同步] 強制同步使用者 ${currentUserIdFromStorage} 資料`);
                 }
@@ -13409,6 +13430,8 @@
         } finally {
             isSyncingFromFirestore = false;
         }
+        
+        return shouldReload;
     }
     
     // 啟動 Firestore 同步監聽 (修正版：監聽所有使用者)
