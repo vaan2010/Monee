@@ -9618,17 +9618,12 @@
         }
     }
     
-    // 載入記帳記錄
+            // 載入記帳記錄
     function loadJournalRecords() {
         try {
             const data = localStorage.getItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`);
             const records = data ? JSON.parse(data) : [];
-            // 調試信息
-            if(records.length > 0) {
-                console.log('載入記帳記錄成功，總數:', records.length, '使用者ID:', currentUserId, '前3筆:', records.slice(0, 3));
-            } else {
-                console.log('沒有記帳記錄，使用者ID:', currentUserId, 'localStorage key:', `${STORAGE_KEY_JOURNAL}_${currentUserId}`);
-            }
+            // 減少 debug 輸出，只在開發時需要
             return records;
         } catch(e) {
             console.error('載入記帳記錄失敗:', e);
@@ -9651,6 +9646,12 @@
     // 根據記帳記錄重新計算帳戶餘額
     // 這個函式會在記帳記錄從 Firestore 同步後被調用
     function recalculateAccountBalancesFromJournal(userId, journalRecords, accounts) {
+        // 【防護機制】如果正在切換使用者，直接返回，避免資料寫入錯誤的使用者
+        if (isUserSwitching) {
+            console.warn(`[重新計算餘額] 正在切換使用者，跳過餘額重新計算 (使用者 ${userId})`);
+            return;
+        }
+        
         if (!accounts || !Array.isArray(accounts)) {
             console.warn('[重新計算餘額] 沒有帳戶資料');
             return;
@@ -9661,7 +9662,13 @@
             return;
         }
         
-        console.log(`[重新計算餘額] 開始為使用者 ${userId} 重新計算帳戶餘額，記帳記錄數: ${journalRecords.length}`);
+        // 確認當前 localStorage 中的使用者 ID 與傳入的 userId 一致，避免資料污染
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (currentUserIdFromStorage && String(currentUserIdFromStorage) !== String(userId)) {
+            console.warn(`[重新計算餘額] 使用者 ID 不一致 (傳入: ${userId}, 當前: ${currentUserIdFromStorage})，跳過重新計算`);
+            return;
+        }
         
         // 【關鍵修正】策略改變：不反向計算，而是直接從記帳記錄計算最終餘額
         // 問題：如果帳戶餘額已經被記帳記錄影響過，反向計算會得到錯誤的初始餘額
@@ -9761,7 +9768,12 @@
             }
         });
         
-        // 6. 更新帳戶餘額
+        // 6. 更新帳戶餘額（再次檢查是否正在切換使用者）
+        if (isUserSwitching) {
+            console.warn(`[重新計算餘額] 計算過程中偵測到使用者切換，取消寫入 (使用者 ${userId})`);
+            return;
+        }
+        
         let hasBalanceChanges = false;
         accounts.forEach(acc => {
             const newBalance = accountFinalBalances[acc.id];
@@ -9769,23 +9781,30 @@
             if (newBalance !== undefined && Math.abs(currentBalance - newBalance) > 0.01) {
                 acc.balance = newBalance;
                 hasBalanceChanges = true;
-                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): ${currentBalance} -> ${newBalance} (初始: ${accountInitialBalances[acc.id]})`);
-            } else if (newBalance !== undefined) {
-                console.log(`[重新計算餘額] 帳戶 ${acc.name} (${acc.id}): 餘額無變化 (${currentBalance})`);
+                // 減少 debug 輸出，只在有變化時輸出
             }
         });
         
         if (hasBalanceChanges) {
-            console.log(`[重新計算餘額] 帳戶餘額已更新，保存到 localStorage`);
+            // 最後一次檢查：確保在寫入前使用者沒有切換
+            const finalCheckUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (finalCheckUserId && String(finalCheckUserId) !== String(userId)) {
+                console.warn(`[重新計算餘額] 寫入前使用者 ID 已變更，取消寫入 (原本: ${userId}, 現在: ${finalCheckUserId})`);
+                return;
+            }
+            
+            if (isUserSwitching) {
+                console.warn(`[重新計算餘額] 寫入前偵測到使用者切換，取消寫入 (使用者 ${userId})`);
+                return;
+            }
+            
             // 保存更新後的帳戶資料
             localStorage.setItem(userDataKey, JSON.stringify(accounts));
             
             // 同步到 Firestore
-            if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
+            if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn && !isUserSwitching) {
                 window.syncAccountsToFirestore(accounts);
             }
-        } else {
-            console.log(`[重新計算餘額] 帳戶餘額無變化`);
         }
     }
     
@@ -13216,6 +13235,30 @@
     async function loadDataFromFirestore() {
         if (!currentFirebaseUser) return;
         
+        // 【防護機制】如果正在切換使用者，延遲載入
+        if (isUserSwitching) {
+            console.warn('[同步] 正在切換使用者，延遲載入 Firestore 資料');
+            // 等待使用者切換完成後再載入
+            await new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (!isUserSwitching) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+                // 最多等待 5 秒
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    resolve();
+                }, 5000);
+            });
+            // 如果仍然在切換，直接返回
+            if (isUserSwitching) {
+                console.warn('[同步] 使用者切換時間過長，取消載入');
+                return;
+            }
+        }
+        
         try {
             isSyncingFromFirestore = true;
             
@@ -13394,11 +13437,21 @@
         accountsUnsubscribe = onSnapshot(appUsersCollectionRef, (snapshot) => {
             if (isSyncingFromFirestore) return;
             
+            // 【防護機制】如果正在切換使用者，忽略所有同步更新
+            if (isUserSwitching) {
+                return;
+            }
+            
             const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
             const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
             
             // 處理每個使用者的資料變化
             snapshot.docChanges().forEach((change) => {
+                // 【防護機制】在處理每個變更時再次檢查，避免處理過程中使用者切換
+                if (isUserSwitching) {
+                    return;
+                }
+                
                 const userId = change.doc.id; // 這是使用者的 ID
                 const snap = change.doc;
                 
@@ -13430,24 +13483,37 @@
                     // Accounts 同步邏輯
                     // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有資產後）
                     if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
+                        // 【防護機制】再次檢查使用者是否切換
+                        if (isUserSwitching) {
+                            return;
+                        }
+                        
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
                         hasChanges = true;
-                        console.log(`[同步更新] 使用者 ${userId} 的 accounts 已更新 (${firestoreAccounts.length} 筆)`);
                     }
                     
                     // Journal 同步邏輯
                     // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有記帳記錄後）
                     if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
+                        // 【防護機制】再次檢查使用者是否切換
+                        if (isUserSwitching) {
+                            return;
+                        }
+                        
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
                         hasChanges = true;
-                        console.log(`[同步更新] 使用者 ${userId} 的 journal 已更新 (${firestoreJournal.length} 筆)`);
                         
                         // 【關鍵修正】記帳資料更新後，需要重新計算帳戶餘額
                         // 因為記帳記錄會影響帳戶餘額（收入增加、支出減少、轉帳會轉移）
                         // 使用 async/await 確保計算完成後再繼續
                         (async () => {
+                            // 【防護機制】檢查是否正在切換使用者
+                            if (isUserSwitching) {
+                                return;
+                            }
+                            
                             try {
                                 if (window.recalculateAccountBalancesFromJournal) {
                                     // 重新讀取最新的帳戶資料（使用 Firestore 同步的 accounts，如果有的話）
@@ -13455,22 +13521,27 @@
                                     let accountsToUse = firestoreAccounts.length > 0 ? firestoreAccounts : JSON.parse(localStorage.getItem(userDataKey) || '[]');
                                     
                                     if (accountsToUse.length > 0) {
-                                        console.log(`[同步更新] 記帳資料已更新，重新計算帳戶餘額 (使用 ${firestoreAccounts.length > 0 ? 'Firestore' : '本地'} 帳戶資料)`);
+                                        // 再次檢查使用者是否切換
+                                        if (isUserSwitching) {
+                                            return;
+                                        }
+                                        
                                         // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
                                         window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, accountsToUse);
                                         
-                                        // 等待一下確保同步完成
-                                        await new Promise(resolve => setTimeout(resolve, 300));
+                                        // 等待一下確保同步完成（但減少等待時間，避免延長同步過程）
+                                        await new Promise(resolve => setTimeout(resolve, 100));
                                         
                                         // 重新讀取更新後的帳戶資料，確保後續邏輯使用最新的資料
+                                        if (isUserSwitching) {
+                                            return;
+                                        }
+                                        
                                         const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                                         if (recalculatedAccounts.length > 0) {
                                             // 標記 accounts 也需要更新（觸發 UI 刷新）
                                             hasChanges = true;
-                                            console.log(`[同步更新] 帳戶餘額已重新計算並同步，觸發 UI 刷新`);
                                         }
-                                    } else {
-                                        console.warn(`[同步更新] 沒有帳戶資料，跳過重新計算餘額`);
                                     }
                                 }
                             } catch (err) {
@@ -13482,6 +13553,11 @@
                     // Settings 同步邏輯
                     const mergedSettings = { ...currentSettings, ...firestoreSettings };
                     if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
+                        // 【防護機制】再次檢查使用者是否切換
+                        if (isUserSwitching) {
+                            return;
+                        }
+                        
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
                         hasChanges = true;
@@ -13490,15 +13566,22 @@
                     // FixedTransfers 同步邏輯
                     // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有固定轉帳後）
                     if (JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
+                        // 【防護機制】再次檢查使用者是否切換
+                        if (isUserSwitching) {
+                            return;
+                        }
+                        
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
                         hasChanges = true;
-                        console.log(`[同步更新] 使用者 ${userId} 的 fixedTransfers 已更新 (${firestoreFixedTransfers.length} 筆)`);
                     }
                     
                     // 如果有變更，且是當前使用者，則刷新介面
                     if (hasChanges && currentUserIdNow === userId) {
-                        console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新，刷新介面`);
+                        // 【防護機制】再次檢查使用者是否切換，避免刷新錯誤使用者的介面
+                        if (isUserSwitching) {
+                            return;
+                        }
                         
                         // 檢查是否是記帳記錄更新（需要等待餘額計算完成）
                         const isJournalUpdate = JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal);
@@ -13506,9 +13589,21 @@
                         if (isJournalUpdate) {
                             // 記帳記錄更新：延遲刷新，確保餘額計算和同步完成
                             setTimeout(() => {
+                                // 【防護機制】檢查使用者是否在延遲期間切換
+                                if (isUserSwitching) {
+                                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                                    return;
+                                }
+                                
+                                // 確認當前使用者仍然是原本的使用者
+                                const currentUserIdCheck = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                                if (currentUserIdCheck !== currentUserIdNow) {
+                                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
+                                    return;
+                                }
+                                
                                 // 重新讀取最新的帳戶資料（因為餘額可能已經被重新計算）
                                 const finalAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                console.log(`[同步更新] 記帳更新後刷新 UI，帳戶數量: ${finalAccounts.length}`);
                                 
                                 // 呼叫橋樑函式更新介面
                                 if (window.applyCloudUpdate && window.loadUserData) {
@@ -13545,7 +13640,7 @@
                                     }
                                 }
                                 setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                            }, 500); // 等待餘額計算和同步完成
+                            }, 300); // 減少等待時間，從 500ms 降到 300ms
                         } else {
                             // 非記帳記錄更新，立即刷新
                             // 呼叫橋樑函式更新介面
@@ -13586,7 +13681,6 @@
                         }
                     } else if (hasChanges) {
                         // 其他使用者的資料更新，只更新 localStorage，不刷新 UI
-                        console.log(`[同步更新] 收到使用者 ${userId} 的雲端更新（背景同步）`);
                         setTimeout(() => { isSyncingFromFirestore = false; }, 100);
                     }
                 }
@@ -13603,6 +13697,12 @@
         const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
         usersUnsubscribe = onSnapshot(usersRef, (snap) => {
             if (isSyncingFromFirestore) return;
+            
+            // 【防護機制】如果正在切換使用者，忽略同步更新
+            if (isUserSwitching) {
+                return;
+            }
+            
             if (snap.exists()) {
                 const firestoreUsers = snap.data().users || [];
                 const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
@@ -13621,13 +13721,23 @@
         const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
         currentUserUnsubscribe = onSnapshot(currentUserRef, (snap) => {
             if (isSyncingFromFirestore) return;
+            
+            // 【防護機制】如果正在切換使用者，忽略同步更新（避免衝突）
+            if (isUserSwitching) {
+                return;
+            }
+            
             if (snap.exists()) {
                 const firestoreCurrentUser = snap.data().currentUserId;
                 const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
                 
                 // 只有當雲端有變，且跟本地不同時才切換
                 if (firestoreCurrentUser && firestoreCurrentUser !== localCurrentUser) {
-                    console.log('雲端 currentUserId 變更，同步切換');
+                    // 再次檢查是否正在切換（避免競態條件）
+                    if (isUserSwitching) {
+                        return;
+                    }
+                    
                     isSyncingFromFirestore = true;
                     localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
                     if (typeof window !== 'undefined') window.currentUserId = firestoreCurrentUser;
