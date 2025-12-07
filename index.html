@@ -4721,8 +4721,50 @@
             if (userData) {
                 accounts = userData.accounts;
                 settings = userData.settings;
+                
+                // 同步 UI 狀態（從 settings 讀取）
+                if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
+                
+                // 更新幣別顯示
+                const ctt = document.getElementById('currencyToggleText');
+                if (ctt) ctt.textContent = currentDisplayCurrency;
+                
+                // 更新主題
+                if (typeof applyTheme === 'function') applyTheme();
+                
+                // 更新使用者頭像
+                if (typeof updateUserAvatar === 'function') updateUserAvatar();
+                
+                // 刷新資產列表
                 renderAssets();
-                updateChartData();
+                
+                // 更新圖表
+                if (typeof updateChartData === 'function') updateChartData();
+                
+                // 更新分頁順序
+                if (typeof reorderPageItems === 'function') reorderPageItems();
+                
+                // 更新分頁指示器
+                if (typeof renderPageIndicator === 'function') renderPageIndicator();
+                
+                // 更新分頁顯示設定
+                if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings();
+                
+                // 更新日曆
+                if (typeof renderCalendar === 'function') renderCalendar();
+                
+                // 更新固定轉帳列表
+                if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                
+                // 如果當前正在顯示記帳分頁，更新記帳詳情
+                if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
+                    showFixedTransferDetailsForDate(selectedDate);
+                }
+                
+                // 清除記帳日期快取
+                if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
             }
         }
     });
@@ -8228,6 +8270,7 @@
     }
     
     function saveDateNote(date, note) {
+        if (isUserSwitching) return; // 鎖定攔截
         const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
         const notes = loadDateNotes();
         const dateStr = formatDateKey(date);
@@ -8237,6 +8280,11 @@
             delete notes[dateStr];
         }
         localStorage.setItem(notesKey, JSON.stringify(notes));
+        
+        // 同步到 Firestore
+        if (window.syncDateNotesToFirestore && window.firebaseUserLoggedIn) {
+            window.syncDateNotesToFirestore(notes);
+        }
     }
     
     // ========== 記帳類型選擇器（必須在 openNewExpenseFromCalendar 之前定義）==========
@@ -13289,28 +13337,41 @@
             const STORAGE_KEY_JOURNAL = 'my_assets_journal';
             const STORAGE_KEY_SETTINGS = 'my_assets_stable_settings';
             const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
+            const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes';
             
             const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
             const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
             const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserIdFromStorage}`;
             const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserIdFromStorage}`;
+            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserIdFromStorage}`;
             
             // 讀取本地現有資料 (用於判斷是否需要初始化上傳)
             const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
             const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
             const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
             const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+            const localDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             
             // 檢查本地是否為空（沒有歷史記錄）
-            const isLocalEmpty = localAccounts.length === 0 && localJournal.length === 0 && localFixedTransfers.length === 0 && Object.keys(localSettings).length === 0;
+            const isLocalEmpty = localAccounts.length === 0 && localJournal.length === 0 && localFixedTransfers.length === 0 && Object.keys(localSettings).length === 0 && Object.keys(localDateNotes).length === 0;
+            
+            // 保存 Firestore 資料變數，以便後續 UI 更新時使用
+            let firestoreAccounts = [];
+            let firestoreJournal = [];
+            let firestoreFixedTransfers = [];
+            let firestoreSettings = {};
+            let firestoreDateNotes = {};
+            let hasFirestoreDataLoaded = false;
             
             if (userDataSnap.exists()) {
                 const userData = userDataSnap.data();
-                const firestoreAccounts = userData.accounts || [];
-                const firestoreJournal = userData.journal || [];
-                const firestoreFixedTransfers = userData.fixedTransfers || [];
-                const firestoreSettings = userData.settings || {};
-                const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0 || Object.keys(firestoreSettings).length > 0;
+                firestoreAccounts = userData.accounts || [];
+                firestoreJournal = userData.journal || [];
+                firestoreFixedTransfers = userData.fixedTransfers || [];
+                firestoreSettings = userData.settings || {};
+                firestoreDateNotes = userData.dateNotes || {};
+                const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0 || Object.keys(firestoreSettings).length > 0 || Object.keys(firestoreDateNotes).length > 0;
+                hasFirestoreDataLoaded = true;
                 
                 // 【關鍵修正】如果本地為空且 Firestore 有資料，強制同步
                 if (isLocalEmpty && hasFirestoreData) {
@@ -13327,6 +13388,11 @@
                 if (firestoreSettings && Object.keys(firestoreSettings).length > 0) {
                     const merged = { ...localSettings, ...firestoreSettings };
                     localStorage.setItem(userSettingsKey, JSON.stringify(merged));
+                }
+                
+                // 同步日期記事（無論是否為空都同步，以 Firestore 為主）
+                if (firestoreDateNotes !== undefined) {
+                    localStorage.setItem(userDateNotesKey, JSON.stringify(firestoreDateNotes));
                 }
                 
                 // 觸發資料載入事件，更新 UI
@@ -13397,17 +13463,66 @@
                     accounts = userData.accounts;
                     settings = userData.settings;
                     
-                    // 如果本地原本為空，且從 Firestore 載入了資料，刷新 UI
-                    // 或者如果資料有變化（從 Firestore 同步後），也刷新 UI
+                    // 同步 UI 狀態（從 settings 讀取）
+                    if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
+                    if (settings.pageOrder) pageOrder = settings.pageOrder; 
+                    if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
+                    
+                    // 更新幣別顯示
+                    const ctt = document.getElementById('currencyToggleText');
+                    if (ctt) ctt.textContent = currentDisplayCurrency;
+                    
+                    // 更新主題
+                    if (typeof applyTheme === 'function') applyTheme();
+                    
+                    // 檢查是否需要更新 UI：
+                    // 1. 本地原本為空，且從 Firestore 載入了資料
+                    // 2. 或者資料有變化（從 Firestore 同步後）
+                    // 3. 或者從 Firestore 載入了資料（確保清空瀏覽器後登入也能更新 UI）
+                    // 檢查是否有新資料或資料變化
                     const hasNewData = (isLocalEmpty && (accounts.length > 0 || Object.keys(settings).length > 0)) ||
                                       (accounts.length !== previousAccountsLength || Object.keys(settings).length !== previousSettingsKeys);
                     
-                    if (hasNewData) {
-                        console.log(`[同步] 從 Firestore 載入資料後，刷新 UI (本地原本為空: ${isLocalEmpty})`);
-                        if (typeof renderAssets === 'function') renderAssets();
-                        if (typeof updateChartData === 'function') updateChartData();
-                        if (typeof renderCalendar === 'function') renderCalendar();
-                        if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                    // 如果從 Firestore 載入了資料，或者本地原本為空但現在有資料，都應該更新 UI
+                    // 特別是在清空瀏覽器後登入時，確保 UI 會更新
+                    // 簡化條件：只要從 Firestore 載入了資料，或者有資料變化，就更新 UI
+                    if (hasNewData || hasFirestoreDataLoaded) {
+                        console.log(`[同步] 從 Firestore 載入資料後，刷新 UI (本地原本為空: ${isLocalEmpty}, 從 Firestore 載入: ${hasFirestoreDataLoaded})`);
+                        
+                        // 使用 setTimeout 確保所有資料都已寫入 localStorage 後再更新 UI
+                        setTimeout(() => {
+                            // 更新使用者頭像
+                            if (typeof updateUserAvatar === 'function') updateUserAvatar();
+                            
+                            // 刷新資產列表
+                            if (typeof renderAssets === 'function') renderAssets();
+                            
+                            // 更新圖表
+                            if (typeof updateChartData === 'function') updateChartData();
+                            
+                            // 更新分頁順序
+                            if (typeof reorderPageItems === 'function') reorderPageItems();
+                            
+                            // 更新分頁指示器
+                            if (typeof renderPageIndicator === 'function') renderPageIndicator();
+                            
+                            // 更新分頁顯示設定
+                            if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings();
+                            
+                            // 更新日曆
+                            if (typeof renderCalendar === 'function') renderCalendar();
+                            
+                            // 更新固定轉帳列表
+                            if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
+                            
+                            // 如果當前正在顯示記帳分頁，更新記帳詳情
+                            if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
+                                showFixedTransferDetailsForDate(selectedDate);
+                            }
+                            
+                            // 清除記帳日期快取
+                            if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
+                        }, 100); // 延遲 100ms 確保資料已寫入
                     }
                 }
             }
@@ -13476,17 +13591,20 @@
                     const firestoreJournal = userData.journal || [];
                     const firestoreSettings = userData.settings || {};
                     const firestoreFixedTransfers = userData.fixedTransfers || [];
+                    const firestoreDateNotes = userData.dateNotes || {};
                     
                     // 使用變化的使用者 ID 來產生 Key
                     const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
                     const userJournalKey = `${STORAGE_KEY_JOURNAL}_${userId}`;
                     const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${userId}`;
                     const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`;
+                    const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${userId}`;
                     
                     const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                     const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
                     const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
                     const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+                    const localDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
                     
                     let hasChanges = false;
                     
@@ -13584,6 +13702,24 @@
                         isSyncingFromFirestore = true;
                         localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
                         hasChanges = true;
+                    }
+                    
+                    // DateNotes 同步邏輯
+                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空物件的情況，例如刪除所有日期記事後）
+                    if (JSON.stringify(firestoreDateNotes) !== JSON.stringify(localDateNotes)) {
+                        // 【防護機制】再次檢查使用者是否切換
+                        if (isUserSwitching) {
+                            return;
+                        }
+                        
+                        isSyncingFromFirestore = true;
+                        localStorage.setItem(userDateNotesKey, JSON.stringify(firestoreDateNotes));
+                        hasChanges = true;
+                        
+                        // 如果當前正在顯示記帳分頁，更新日曆顯示
+                        if (currentUserIdNow === userId && typeof renderCalendar === 'function') {
+                            renderCalendar();
+                        }
                     }
                     
                     // 如果有變更，且是當前使用者，則刷新介面
@@ -13981,6 +14117,30 @@
         }
     };
     
+    // 同步日期記事到 Firestore
+    window.syncDateNotesToFirestore = async function(dateNotes) {
+        if (!currentFirebaseUser) return;
+        
+        // 從 localStorage 讀取 currentUserId
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) {
+            console.warn('[同步] 沒有 currentUserId，無法同步 dateNotes');
+            return;
+        }
+        
+        try {
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+            await setDoc(userDataRef, {
+                dateNotes: dateNotes,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+            console.log(`dateNotes 已同步到 Firestore (使用者: ${currentUserIdFromStorage})`);
+        } catch (err) {
+            console.error('同步 dateNotes 到 Firestore 失敗:', err);
+        }
+    };
+    
     // 一起同步 journal 和 accounts 到 Firestore（記帳後使用）
     window.syncJournalAndAccountsToFirestore = async function(journalRecords, accountsData) {
         if (!currentFirebaseUser) return;
@@ -14109,6 +14269,11 @@
                 }
             }
             
+            // 讀取日期記事
+            const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes';
+            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${targetUserId}`;
+            const dateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
+            
             // 一次性同步所有資料
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", targetUserId);
             await setDoc(userDataRef, {
@@ -14116,6 +14281,7 @@
                 journal: journal,
                 settings: settings,
                 fixedTransfers: fixedTransfers,
+                dateNotes: dateNotes,
                 updatedAt: Timestamp.now()
             }, { merge: true });
             
