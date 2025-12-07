@@ -4537,16 +4537,19 @@
             const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${user.id}`;
             const userJournalKey = `${STORAGE_KEY_JOURNAL}_${user.id}`;
             const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${user.id}`;
+            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
             const userAccounts = JSON.parse(localStorage.getItem(userDataKey)) || [];
             const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
             const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
             const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
+            const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
                 settings: userSettings,
                 journal: userJournal,
-                fixedTransfers: userFixedTransfers
+                fixedTransfers: userFixedTransfers,
+                dateNotes: userDateNotes
             };
         });
         
@@ -4835,12 +4838,15 @@
             const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
             const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
             const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
+            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
+            const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
                 settings: userSettings,
                 journal: userJournal,
-                fixedTransfers: userFixedTransfers
+                fixedTransfers: userFixedTransfers,
+                dateNotes: userDateNotes
             };
         });
         
@@ -4927,6 +4933,10 @@
                             // 修正：確保即使是 undefined 也要存成空陣列，避免讀取錯誤
                             localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
                             localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
+                            // 匯入日期記事
+                            if (userData.dateNotes !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_DATE_NOTES}_${userId}`, JSON.stringify(userData.dateNotes || {}));
+                            }
                         });
 
                     } else if (d.data && d.settings) {
@@ -14180,16 +14190,19 @@
                     const userSettingsKey = `my_assets_stable_settings_${user.id}`;
                     const userJournalKey = `my_assets_journal_${user.id}`;
                     const userFixedTransfersKey = `my_assets_fixed_transfers_${user.id}`;
+                    const userDateNotesKey = `my_assets_date_notes_${user.id}`;
                     const userAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                     const userSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
                     const userJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
                     const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
+                    const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
                     allUsersData[user.id] = {
                         user: user,
                         data: userAccounts,
                         settings: userSettings,
                         journal: userJournal,
-                        fixedTransfers: userFixedTransfers
+                        fixedTransfers: userFixedTransfers,
+                        dateNotes: userDateNotes
                     };
                 });
 
@@ -14337,6 +14350,9 @@
                     }
                     if (userData.fixedTransfers !== undefined) {
                         localStorage.setItem(`my_assets_fixed_transfers_${userId}`, JSON.stringify(userData.fixedTransfers || []));
+                    }
+                    if (userData.dateNotes !== undefined) {
+                        localStorage.setItem(`my_assets_date_notes_${userId}`, JSON.stringify(userData.dateNotes || {}));
                     }
                 });
                 alert('還原成功！頁面將重新載入。');
