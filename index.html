@@ -12957,6 +12957,9 @@
             return false;
         }
         
+        // 檢查是否涉及信用卡
+        const isCreditCardTransfer = toAccount && toAccount.bankTag === '信用卡';
+        
         // 使用固定金額（不再自動計算）
         const transferAmount = transfer.amount || 0;
             
