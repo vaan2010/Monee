@@ -13289,6 +13289,57 @@
         }
     });
     
+    // 先從雲端決定真正的 currentUserId，確保跨裝置用同一組 appUsers（以 Google UID 為主）
+    async function resolveCurrentUserFromFirestore() {
+        const STORAGE_KEY_USERS = 'my_assets_users';
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
+        const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
+        
+        // 取雲端 users 清單
+        let resolvedUsers = users;
+        try {
+            const usersSnap = await getDoc(usersRef);
+            if (usersSnap.exists()) {
+                const firestoreUsers = usersSnap.data().users || [];
+                if (firestoreUsers.length > 0) {
+                    resolvedUsers = firestoreUsers;
+                    users = firestoreUsers;
+                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
+                }
+            }
+        } catch (err) {
+            console.error('[同步] 取得 users 列表失敗', err);
+        }
+        
+        // 取雲端 currentUser
+        let resolvedCurrentUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || currentUserId || null;
+        try {
+            const currentUserSnap = await getDoc(currentUserRef);
+            if (currentUserSnap.exists()) {
+                const firestoreCurrentUser = currentUserSnap.data().currentUserId;
+                if (firestoreCurrentUser) {
+                    resolvedCurrentUserId = firestoreCurrentUser;
+                }
+            }
+        } catch (err) {
+            console.error('[同步] 取得 currentUser 失敗', err);
+        }
+        
+        // 若仍無，改用雲端使用者列表的第一筆
+        if (!resolvedCurrentUserId && resolvedUsers && resolvedUsers.length > 0) {
+            resolvedCurrentUserId = resolvedUsers[0].id;
+        }
+        
+        // 寫回本地/記憶體，確保後續使用同一個 ID
+        if (resolvedCurrentUserId) {
+            currentUserId = resolvedCurrentUserId;
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, resolvedCurrentUserId);
+        }
+        
+        return resolvedCurrentUserId;
+    }
+    
     // 從 Firestore 載入資料 (自動同步版)
     async function loadDataFromFirestore() {
         if (!currentFirebaseUser) return;
@@ -13320,16 +13371,15 @@
         try {
             isSyncingFromFirestore = true;
             
-            // 1. 定位當前使用者的雲端文件
-            // users/{uid}/appUsers/{currentUserId} -> 實現不同使用者資料獨立
+            // 1. 先用 Google 帳號決定共用的 appUsers，再取 currentUserId（子帳）做分流
             const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-            const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            if (!currentUserIdFromStorage) {
-                console.warn('[同步] 沒有 currentUserId，無法載入資料');
+            const resolvedCurrentUserId = await resolveCurrentUserFromFirestore();
+            if (!resolvedCurrentUserId) {
+                console.warn('[同步] 無法決定 currentUserId，停止載入');
                 return;
             }
             
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", resolvedCurrentUserId);
             const userDataSnap = await getDoc(userDataRef);
             
             // 準備本地儲存的 Key
@@ -13339,11 +13389,11 @@
             const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
             const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes';
             
-            const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
-            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
-            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserIdFromStorage}`;
-            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserIdFromStorage}`;
-            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserIdFromStorage}`;
+            const userDataKey = `${STORAGE_KEY_DATA}_${resolvedCurrentUserId}`;
+            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${resolvedCurrentUserId}`;
+            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${resolvedCurrentUserId}`;
+            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${resolvedCurrentUserId}`;
+            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${resolvedCurrentUserId}`;
             
             // 讀取本地現有資料 (用於判斷是否需要初始化上傳)
             const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
@@ -13375,9 +13425,9 @@
                 
                 // 【關鍵修正】如果本地為空且 Firestore 有資料，強制同步
                 if (isLocalEmpty && hasFirestoreData) {
-                    console.log(`[同步] 本地為空，自動從 Firestore 同步使用者 ${currentUserIdFromStorage} 的資料`);
+                    console.log(`[同步] 本地為空，自動從 Firestore 同步使用者 ${resolvedCurrentUserId} 的資料`);
                 } else {
-                    console.log(`[同步] 強制同步使用者 ${currentUserIdFromStorage} 資料`);
+                    console.log(`[同步] 強制同步使用者 ${resolvedCurrentUserId} 資料`);
                 }
                 
                 // 直接覆蓋本地資料（以 Firestore 為主）
@@ -13455,7 +13505,7 @@
             
             // 確保記憶體變數是最新的，並刷新 UI
             if (typeof loadUserData === 'function') {
-                const userData = loadUserData(currentUserIdFromStorage);
+                const userData = loadUserData(resolvedCurrentUserId);
                 if (userData) {
                     const previousAccountsLength = accounts.length;
                     const previousSettingsKeys = Object.keys(settings).length;
@@ -14606,6 +14656,5 @@
 </script>
 </body>
 </html>
-
 
 
