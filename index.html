@@ -7923,7 +7923,7 @@
         
         await updateRates(); 
         if(settings.apiKey||settings.fugleKey) fetchPrices();
-        setInterval(() => { refreshAllData(false); }, 60000);
+        setInterval(() => { refreshAllData(false); }, 5000);
         
         // 註冊 Service Worker（支援背景執行）
         if('serviceWorker' in navigator) {
