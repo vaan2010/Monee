@@ -8928,6 +8928,7 @@
     
     // 初始化月份圓餅圖滑動手勢
     let monthlyChartTouchStartX = null;
+    let monthlyChartTouchStartY = null;
     let monthlyChartIsSwiping = false;
     let monthlyChartCurrentTransform = 0;
     
@@ -8940,12 +8941,13 @@
         swiper.removeEventListener('touchend', handleMonthlyChartTouchEnd);
         
         swiper.addEventListener('touchstart', handleMonthlyChartTouchStart, { passive: true });
-        swiper.addEventListener('touchmove', handleMonthlyChartTouchMove, { passive: true });
+        swiper.addEventListener('touchmove', handleMonthlyChartTouchMove, { passive: false });
         swiper.addEventListener('touchend', handleMonthlyChartTouchEnd, { passive: true });
     }
     
     function handleMonthlyChartTouchStart(e) {
         monthlyChartTouchStartX = e.touches[0].clientX;
+        monthlyChartTouchStartY = e.touches[0].clientY;
         monthlyChartIsSwiping = false;
         const container = document.getElementById('monthlyChartPageContainer');
         if(container) {
@@ -8956,13 +8958,19 @@
     }
     
     function handleMonthlyChartTouchMove(e) {
-        if(!monthlyChartTouchStartX) return;
+        if(!monthlyChartTouchStartX || monthlyChartTouchStartY === null) return;
         
         const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
         const diffX = monthlyChartTouchStartX - currentX;
+        const diffY = monthlyChartTouchStartY - currentY;
         const absDiffX = Math.abs(diffX);
+        const absDiffY = Math.abs(diffY);
         
-        if(absDiffX > 10) {
+        if(absDiffY > absDiffX) return;
+        if(absDiffX > 5) e.preventDefault();
+        
+        if(absDiffX > 5) {
             monthlyChartIsSwiping = true;
             const container = document.getElementById('monthlyChartPageContainer');
             const swiper = document.getElementById('monthlyChartSwiper');
@@ -8982,18 +8990,24 @@
     }
     
     function handleMonthlyChartTouchEnd(e) {
-        if(!monthlyChartTouchStartX || !monthlyChartIsSwiping) {
+        if(!monthlyChartTouchStartX || monthlyChartTouchStartY === null || !monthlyChartIsSwiping) {
             monthlyChartTouchStartX = null;
+            monthlyChartTouchStartY = null;
             return;
         }
         
         const currentX = e.changedTouches[0].clientX;
+        const currentY = e.changedTouches[0].clientY;
         const diffX = monthlyChartTouchStartX - currentX;
+        const diffY = monthlyChartTouchStartY - currentY;
+        monthlyChartTouchStartX = null;
+        monthlyChartTouchStartY = null;
+        if(Math.abs(diffY) > Math.abs(diffX)) return;
         const swiper = document.getElementById('monthlyChartSwiper');
         const container = document.getElementById('monthlyChartPageContainer');
         
         if(swiper && container) {
-            const threshold = swiper.offsetWidth * 0.3;
+            const threshold = swiper.offsetWidth * 0.15;
             
             if(Math.abs(diffX) > threshold) {
                 if(diffX > 0 && currentMonthlyChartIndex < 1) {
@@ -9008,7 +9022,6 @@
             switchMonthlyChartPage(currentMonthlyChartIndex);
         }
         
-        monthlyChartTouchStartX = null;
         monthlyChartIsSwiping = false;
     }
     
@@ -9571,7 +9584,7 @@
         
         // 添加新的事件監聽器
         swiper.addEventListener('touchstart', handleJournalTouchStart, { passive: true });
-        swiper.addEventListener('touchmove', handleJournalTouchMove, { passive: true });
+        swiper.addEventListener('touchmove', handleJournalTouchMove, { passive: false });
         swiper.addEventListener('touchend', handleJournalTouchEnd, { passive: true });
     }
     
@@ -9593,10 +9606,10 @@
         const absDiffX = Math.abs(diffX);
         const absDiffY = Math.abs(diffY);
         
-        // 如果垂直滑動距離大於水平滑動距離，不處理（允許垂直滾動）
         if(absDiffY > absDiffX) return;
+        if(absDiffX > 5) e.preventDefault();
         
-        if(absDiffX > 10) {
+        if(absDiffX > 5) {
             journalIsSwiping = true;
             const container = document.getElementById('journalPageContainer');
             if(container) {
@@ -9651,7 +9664,7 @@
     }
     
     function handleJournalSwipe() {
-        const swipeThreshold = 50;
+        const swipeThreshold = 25;
         const diffX = journalTouchStartX - journalTouchEndX;
         const diffY = journalTouchStartY - journalTouchEndY;
         const absDiffX = Math.abs(diffX);
