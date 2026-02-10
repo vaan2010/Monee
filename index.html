@@ -942,14 +942,15 @@
         .calc-btn:active { transform: scale(0.95); }
         
         /* Calculator Styles */
-        .calc-key { background: var(--border-color); border: none; color: var(--text-primary); font-size: 24px; font-weight: 400; cursor: pointer; padding: 20px; border-radius: 12px; transition: all 0.15s; user-select: none; touch-action: manipulation; }
-        .calc-key:active { background: var(--card-bg); transform: scale(0.95); }
+        .calc-key { background: var(--border-color); border: none; color: var(--text-primary); font-size: 24px; font-weight: 400; cursor: pointer; padding: 20px; border-radius: 12px; transition: transform 0.05s, background 0.05s; user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .calc-key:hover { background: var(--card-bg); }
+        .calc-key:active, .calc-key.pressed { background: var(--card-bg); transform: scale(0.95); }
         .calc-key-function { background: var(--card-bg); color: #0a84ff; font-size: 18px; }
+        .calc-key-function:active, .calc-key-function.pressed { background: var(--active-bg); }
         .calc-key-operator { background: #0a84ff; color: #fff; font-size: 24px; font-weight: 500; }
-        .calc-key-operator:active { background: #0970d6; }
+        .calc-key-operator:active, .calc-key-operator.pressed { background: #0970d6; }
         .calc-key-equals { background: #0a84ff; color: #fff; font-size: 24px; font-weight: 500; }
-        .calc-key-equals:active { background: #0970d6; }
+        .calc-key-equals:active, .calc-key-equals.pressed { background: #0970d6; }
         .delete-btn-area { margin-top: 30px; padding: 0 16px; padding-bottom: 50px; }
         .btn-delete { width: 100%; background: var(--card-bg); color: var(--color-debt); border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 500; }
         .hint-text { color: var(--text-secondary); font-size: 12px; margin-top: 8px; padding: 0 20px; opacity: 0.7; }
@@ -2023,30 +2024,30 @@
                     <div id="calcDisplay" style="color: var(--text-primary); font-size: 36px; font-weight: 300; text-align: right; word-break: break-all; width: 100%; font-family: 'SF Mono', 'Monaco', monospace;">0</div>
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-                    <button class="calc-key calc-key-function" onclick="calcInput('C')">C</button>
-                    <button class="calc-key calc-key-function" onclick="calcInput('CE')">CE</button>
-                    <button class="calc-key calc-key-function" onclick="calcInput('backspace')">⌫</button>
-                    <button class="calc-key calc-key-operator" onclick="calcInput('/')">÷</button>
+                    <button type="button" class="calc-key calc-key-function" onpointerdown="handleCalcKey(event,'C')">C</button>
+                    <button type="button" class="calc-key calc-key-function" onpointerdown="handleCalcKey(event,'CE')">CE</button>
+                    <button type="button" class="calc-key calc-key-function" onpointerdown="handleCalcKey(event,'backspace')">⌫</button>
+                    <button type="button" class="calc-key calc-key-operator" onpointerdown="handleCalcKey(event,'/')">÷</button>
                     
-                    <button class="calc-key" onclick="calcInput('7')">7</button>
-                    <button class="calc-key" onclick="calcInput('8')">8</button>
-                    <button class="calc-key" onclick="calcInput('9')">9</button>
-                    <button class="calc-key calc-key-operator" onclick="calcInput('*')">×</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'7')">7</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'8')">8</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'9')">9</button>
+                    <button type="button" class="calc-key calc-key-operator" onpointerdown="handleCalcKey(event,'*')">×</button>
                     
-                    <button class="calc-key" onclick="calcInput('4')">4</button>
-                    <button class="calc-key" onclick="calcInput('5')">5</button>
-                    <button class="calc-key" onclick="calcInput('6')">6</button>
-                    <button class="calc-key calc-key-operator" onclick="calcInput('-')">−</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'4')">4</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'5')">5</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'6')">6</button>
+                    <button type="button" class="calc-key calc-key-operator" onpointerdown="handleCalcKey(event,'-')">−</button>
                     
-                    <button class="calc-key" onclick="calcInput('1')">1</button>
-                    <button class="calc-key" onclick="calcInput('2')">2</button>
-                    <button class="calc-key" onclick="calcInput('3')">3</button>
-                    <button class="calc-key calc-key-operator" onclick="calcInput('+')">+</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'1')">1</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'2')">2</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'3')">3</button>
+                    <button type="button" class="calc-key calc-key-operator" onpointerdown="handleCalcKey(event,'+')">+</button>
                     
-                    <button class="calc-key" onclick="calcInput('±')">±</button>
-                    <button class="calc-key" onclick="calcInput('0')">0</button>
-                    <button class="calc-key" onclick="calcInput('.')">.</button>
-                    <button class="calc-key calc-key-equals" onclick="calcInput('=')">=</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'±')">±</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'0')">0</button>
+                    <button type="button" class="calc-key" onpointerdown="handleCalcKey(event,'.')">.</button>
+                    <button type="button" class="calc-key calc-key-equals" onpointerdown="handleCalcKey(event,'=')">=</button>
                 </div>
             </div>
         </div>
@@ -4092,6 +4093,17 @@
         }
     }
     
+    function handleCalcKey(e, value) {
+        e.preventDefault();
+        e.stopPropagation();
+        calcInput(value);
+        const btn = e.currentTarget;
+        btn.classList.add('pressed');
+        const rm = function(){ btn.classList.remove('pressed'); btn.removeEventListener('pointerup',rm); btn.removeEventListener('pointerleave',rm); btn.removeEventListener('pointercancel',rm); };
+        btn.addEventListener('pointerup', rm);
+        btn.addEventListener('pointerleave', rm);
+        btn.addEventListener('pointercancel', rm);
+    }
     function calcInput(value) {
         switch(value) {
             case 'C': // Clear All
