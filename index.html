@@ -684,10 +684,12 @@
             }
         }
 
-        /* Page Swiper */
-        .page-swiper { position: relative; width: 100%; overflow: hidden; touch-action: pan-y; }
+        /* Page Swiper — 方案C：position 疊加架構 */
+        /* overflow-x: clip 裁切水平溢出（隱藏其他頁面），overflow-y: visible 允許垂直滾動 */
+        /* clip 不會觸發 visible→auto 的自動轉換（hidden 會），所以這組合可以正常運作 */
+        .page-swiper { position: relative; width: 100%; overflow-x: clip; overflow-y: visible; touch-action: pan-y; }
         @media (max-width: 767px) {
-            .list-section.page-swiper { overflow: visible; touch-action: auto; }
+            .list-section.page-swiper { touch-action: auto; }
         }
         /* 收入支出細項清單：最多顯示5行，超過則清單內滾動 */
         .chart-detail-list {
@@ -711,9 +713,14 @@
         #monthlyChartSwiper .page-item::-webkit-scrollbar {
             display: none; /* Chrome/Safari 隱藏捲軸 */
         }
-        .page-container { display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
-        .page-container.swiping { transition: none; } /* 滑動過程中禁用過渡，實現實時跟隨 */
-        .page-item { min-width: 100%; max-width: 100%; flex-shrink: 0; overflow: hidden; }
+        /* 容器：不再用 flex row，改為 position relative 讓子頁面疊加 */
+        .page-container { position: relative; width: 100%; }
+        /* 頁面預設：絕對定位，不可見，高度為0（徹底不佔垂直空間） */
+        .page-item { position: absolute; top: 0; left: 0; width: 100%; height: 0; visibility: hidden; pointer-events: none; overflow: hidden; box-sizing: border-box; }
+        /* 當前頁面：相對定位，可見，自動高度（決定容器高度）*/
+        .page-item.page-active { position: relative; height: auto; visibility: visible; pointer-events: auto; }
+        /* 滑動動畫中的相鄰頁面：可見，高度撐滿容器（不超過當前頁面高度） */
+        .page-item.page-swipe-visible { visibility: visible; pointer-events: auto; height: 100%; overflow: hidden; }
         .page-indicator { 
             display: flex; 
             justify-content: center;
@@ -1195,7 +1202,7 @@
                         <i class="fas fa-chevron-right"></i>
                     </button>
                     <div class="page-container" id="pageContainer">
-                        <div class="page-item" data-page="0">
+                        <div class="page-item page-active" data-page="0">
                             <div id="assetsContainer"></div>
                             <div class="debt-container" id="debtContainer0" style="margin-top: 20px;"></div>
                             <div style="height: 60px;" class="mobile-spacer"></div>
@@ -2865,12 +2872,8 @@
                         renderAssets();
                         updateChartData();
                         
-                        // 確保當前分頁的位置正確
-                        const pageContainer = document.getElementById('pageContainer');
-                        if(pageContainer) {
-                            const finalIndex = domIndex >= 0 ? domIndex : getDisplayIndex(currentPage);
-                            pageContainer.style.transform = `translateX(-${finalIndex * 100}%)`;
-                        }
+                        // 方案C：更新當前頁面顯示
+                        updateActivePageClass();
                         
                         // 更新導航箭頭狀態
                         updatePageNavArrows();
@@ -6898,14 +6901,10 @@
         }
 
         // 重新排列 page-item 的 DOM 順序，使其與 pageOrder 一致
-        const domIndex = reorderPageItems();
+        reorderPageItems();
         
-        const container = document.getElementById('pageContainer');
-        if(container) {
-            // 重新排列後，直接使用 DOM 索引（因為 DOM 已經按照順序排列了）
-            const finalIndex = domIndex >= 0 ? domIndex : getDisplayIndex(pageIndex);
-            container.style.transform = `translateX(-${finalIndex * 100}%)`;
-        }
+        // 方案C：直接切換 active class（不再用 translateX）
+        updateActivePageClass();
         
         // 更新分頁指示器（使用 data-page 屬性匹配，而不是 DOM 索引）
         document.querySelectorAll('.page-tab').forEach((tab) => {
@@ -6994,6 +6993,27 @@
         renderAssets();
     }
     
+    // === 方案C：position 疊加頁面管理 ===
+    let _isSwipeAnimating = false; // 滑動動畫進行中
+    
+    // 更新當前頁面的 active class（只有 active 頁面佔空間，其他絕對定位不佔空間）
+    function updateActivePageClass() {
+        const container = document.getElementById('pageContainer');
+        if(!container) return;
+        container.querySelectorAll('.page-item').forEach(item => {
+            const pageIdx = parseInt(item.getAttribute('data-page'));
+            const isActive = pageIdx === currentPage;
+            item.classList.toggle('page-active', isActive);
+            item.classList.remove('page-swipe-visible');
+            // 清除任何殘留的動畫 inline style
+            item.style.transform = '';
+            item.style.transition = '';
+        });
+        // 清除容器的明確高度（不再需要，active 頁面的 position:relative 自動決定高度）
+        container.style.height = '';
+        container.style.minHeight = '';
+    }
+    
     // 切換到上一頁
     function switchToPrevPage() {
         const orderedPages = getOrderedPages();
@@ -7037,242 +7057,151 @@
     }
     
     let isSwiping = false;
-    let currentTransform = 0;
-    let swipeStartIndex = 0;
     let isSorting = false; // 追蹤是否正在拖動排序
+    let _swipeTargetPage = null;  // 滑動目標頁面 index
+    let _swipeDirection = 0;      // 1=下一頁(向左滑), -1=上一頁(向右滑)
+    
+    // 共用的滑動邏輯：touchstart
+    function _onSwipeTouchStart(e) {
+        if(isSorting || _isSwipeAnimating) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isSwiping = false;
+        _swipeTargetPage = null;
+        _swipeDirection = 0;
+    }
+    
+    // 共用的滑動邏輯：touchmove
+    function _onSwipeTouchMove(e, swiperWidth) {
+        if(isSorting || _isSwipeAnimating) return;
+        if(!touchStartX || !touchStartY) return;
+        
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const diffX = touchStartX - currentX; // positive = 向左滑(下一頁)
+        const diffY = touchStartY - currentY;
+        
+        if(Math.abs(diffY) > Math.abs(diffX)) return; // 垂直滑動，忽略
+        
+        if(Math.abs(diffX) > 10) {
+            const container = document.getElementById('pageContainer');
+            if(!container) return;
+            
+            // 第一次進入滑動：決定方向並準備目標頁面
+            if(!isSwiping) {
+                isSwiping = true;
+                const orderedPages = getOrderedPages();
+                const curIdx = orderedPages.indexOf(currentPage);
+                
+                if(diffX > 0 && curIdx < orderedPages.length - 1) {
+                    _swipeDirection = 1; // 下一頁
+                    _swipeTargetPage = orderedPages[curIdx + 1];
+                } else if(diffX < 0 && curIdx > 0) {
+                    _swipeDirection = -1; // 上一頁
+                    _swipeTargetPage = orderedPages[curIdx - 1];
+                }
+                
+                if(_swipeTargetPage !== null) {
+                    const targetItem = container.querySelector(`.page-item[data-page="${_swipeTargetPage}"]`);
+                    const currentItem = container.querySelector(`.page-item[data-page="${currentPage}"]`);
+                    if(targetItem) {
+                        targetItem.classList.add('page-swipe-visible');
+                        targetItem.style.transition = 'none';
+                        targetItem.style.transform = _swipeDirection > 0 ? 'translateX(100%)' : 'translateX(-100%)';
+                    }
+                    if(currentItem) {
+                        currentItem.style.transition = 'none';
+                    }
+                    // 保持容器最小高度（防止動畫期間高度跳動）
+                    container.style.minHeight = container.offsetHeight + 'px';
+                }
+            }
+            
+            // 移動兩個頁面跟隨手指
+            if(_swipeTargetPage !== null) {
+                const swipePercent = (diffX / swiperWidth) * 100;
+                const currentItem = container.querySelector(`.page-item[data-page="${currentPage}"]`);
+                const targetItem = container.querySelector(`.page-item[data-page="${_swipeTargetPage}"]`);
+                
+                if(currentItem) {
+                    currentItem.style.transform = `translateX(${-swipePercent}%)`;
+                }
+                if(targetItem) {
+                    const base = _swipeDirection > 0 ? 100 : -100;
+                    targetItem.style.transform = `translateX(${base - swipePercent}%)`;
+                }
+            }
+        }
+    }
+    
+    // 共用的滑動邏輯：touchend
+    function _onSwipeTouchEnd(e) {
+        if(isSorting) { touchStartX = 0; touchStartY = 0; return; }
+        
+        const endX = e.changedTouches[0].clientX;
+        const diffX = touchStartX - endX;
+        const swipeThreshold = 50;
+        const container = document.getElementById('pageContainer');
+        
+        if(isSwiping && _swipeTargetPage !== null && container) {
+            const currentItem = container.querySelector(`.page-item[data-page="${currentPage}"]`);
+            const targetItem = container.querySelector(`.page-item[data-page="${_swipeTargetPage}"]`);
+            const transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            
+            const isSuccessful = Math.abs(diffX) > swipeThreshold &&
+                ((_swipeDirection > 0 && diffX > 0) || (_swipeDirection < 0 && diffX < 0));
+            
+            if(isSuccessful) {
+                // 成功滑動：完成動畫 → 切換頁面
+                _isSwipeAnimating = true;
+                if(currentItem) { currentItem.style.transition = transition; currentItem.style.transform = _swipeDirection > 0 ? 'translateX(-100%)' : 'translateX(100%)'; }
+                if(targetItem) { targetItem.style.transition = transition; targetItem.style.transform = 'translateX(0)'; }
+                
+                const targetPage = _swipeTargetPage;
+                setTimeout(() => {
+                    // 清除動畫 inline style
+                    if(currentItem) { currentItem.style.transition = ''; currentItem.style.transform = ''; }
+                    if(targetItem) { targetItem.style.transition = ''; targetItem.style.transform = ''; targetItem.classList.remove('page-swipe-visible'); }
+                    container.style.minHeight = '';
+                    _isSwipeAnimating = false;
+                    // 正式切換頁面（更新 state + 重新渲染）
+                    switchToPage(targetPage);
+                }, 310);
+            } else {
+                // 滑動不夠：回彈
+                if(currentItem) { currentItem.style.transition = transition; currentItem.style.transform = 'translateX(0)'; }
+                if(targetItem) { targetItem.style.transition = transition; targetItem.style.transform = _swipeDirection > 0 ? 'translateX(100%)' : 'translateX(-100%)'; }
+                
+                setTimeout(() => {
+                    if(currentItem) { currentItem.style.transition = ''; currentItem.style.transform = ''; }
+                    if(targetItem) { targetItem.style.transition = ''; targetItem.style.transform = ''; targetItem.classList.remove('page-swipe-visible'); }
+                    container.style.minHeight = '';
+                }, 310);
+            }
+        }
+        
+        isSwiping = false;
+        _swipeTargetPage = null;
+        _swipeDirection = 0;
+        touchStartX = 0;
+        touchStartY = 0;
+    }
     
     function initSwiper() {
         const swiper = document.getElementById('pageSwiper');
         if(!swiper) return;
-        const container = document.getElementById('pageContainer');
-        if(!container) return;
         
-        swiper.addEventListener('touchstart', (e) => {
-            // 如果正在拖動排序，不處理滑動
-            if(isSorting) return;
-            
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            isSwiping = false;
-            
-            // 獲取當前 transform 值
-            const orderedPages = getOrderedPages();
-            swipeStartIndex = orderedPages.indexOf(currentPage);
-            if(swipeStartIndex >= 0) {
-                currentTransform = -swipeStartIndex * 100;
-            }
-        }, { passive: true });
+        // 資產列表區域滑動
+        swiper.addEventListener('touchstart', _onSwipeTouchStart, { passive: true });
+        swiper.addEventListener('touchmove', (e) => _onSwipeTouchMove(e, swiper.offsetWidth), { passive: true });
+        swiper.addEventListener('touchend', _onSwipeTouchEnd, { passive: true });
         
-        swiper.addEventListener('touchmove', (e) => {
-            // 如果正在拖動排序，不處理滑動
-            if(isSorting) return;
-            
-            if(!touchStartX || !touchStartY) return;
-            
-            const currentX = e.touches[0].clientX;
-            const currentY = e.touches[0].clientY;
-            const diffX = touchStartX - currentX;
-            const diffY = touchStartY - currentY;
-            const absDiffX = Math.abs(diffX);
-            const absDiffY = Math.abs(diffY);
-            
-            // 如果垂直滑動距離大於水平滑動距離，不處理
-            if(absDiffY > absDiffX) return;
-            
-            // 如果水平滑動距離足夠大，標記為滑動中
-            if(absDiffX > 10) {
-                isSwiping = true;
-                container.classList.add('swiping');
-                
-                // 計算滑動百分比
-                // diffX = touchStartX - currentX
-                // 手指向左滑動（顯示下一個頁面）：diffX > 0，應該增加負值（向右移動）
-                // 手指向右滑動（顯示上一個頁面）：diffX < 0，應該減少負值（向左移動）
-                const swipePercent = -(diffX / swiper.offsetWidth) * 100;
-                const orderedPages = getOrderedPages();
-                const minIndex = 0;
-                const maxIndex = orderedPages.length - 1;
-                
-                // 計算新的 transform 值，限制範圍
-                // currentTransform 是負數，向左滑動時應該變得更負（向右移動顯示下一個）
-                let newTransform = currentTransform + swipePercent;
-                const minTransform = -maxIndex * 100;
-                const maxTransform = 0;
-                
-                // 檢查是否在邊界
-                const isAtLeftBoundary = swipeStartIndex <= 0 && diffX < 0; // 總覽頁面向右滑動
-                const isAtRightBoundary = swipeStartIndex >= maxIndex && diffX > 0; // 最後一頁向左滑動
-                
-                // 在邊界時禁用動畫（不允許滑動）
-                if(isAtLeftBoundary || isAtRightBoundary) {
-                    return; // 不更新 transform，保持原位置
-                }
-                
-                // 添加阻力效果（在接近邊界時）
-                if(newTransform > maxTransform) {
-                    newTransform = maxTransform + (newTransform - maxTransform) * 0.3;
-                } else if(newTransform < minTransform) {
-                    newTransform = minTransform + (newTransform - minTransform) * 0.3;
-                }
-                
-                container.style.transform = `translateX(${newTransform}%)`;
-            }
-        }, { passive: true });
-        
-        swiper.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].clientX;
-            touchEndY = e.changedTouches[0].clientY;
-            
-            if(isSwiping) {
-                container.classList.remove('swiping');
-            handleSwipe();
-            } else {
-                handleSwipe();
-            }
-            
-            isSwiping = false;
-            // 重置變量
-            touchStartX = 0;
-            touchStartY = 0;
-        }, { passive: true });
-        
-        // 為圖表區域也添加滑動手勢支持
+        // 圖表區域也支援滑動
         const chartSection = document.querySelector('.chart-section');
         if(chartSection) {
-            chartSection.addEventListener('touchstart', (e) => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-                isSwiping = false;
-            }, { passive: true });
-            
-            chartSection.addEventListener('touchmove', (e) => {
-                if(!touchStartX || !touchStartY) return;
-                
-                const currentX = e.touches[0].clientX;
-                const currentY = e.touches[0].clientY;
-                const diffX = touchStartX - currentX;
-                const diffY = touchStartY - currentY;
-                const absDiffX = Math.abs(diffX);
-                const absDiffY = Math.abs(diffY);
-                
-                if(absDiffY > absDiffX) return;
-                
-                if(absDiffX > 10) {
-                    isSwiping = true;
-                    const container = document.getElementById('pageContainer');
-                    if(container) {
-                        container.classList.add('swiping');
-                        // 修正方向：手指向左滑動時顯示下一個頁面（向右移動）
-                        const swipePercent = -(diffX / chartSection.offsetWidth) * 100;
-                        const orderedPages = getOrderedPages();
-                        const swipeStartIndex = orderedPages.indexOf(currentPage);
-                        if(swipeStartIndex >= 0) {
-                            const maxIndex = orderedPages.length - 1;
-                            
-                            // 檢查是否在邊界
-                            const isAtLeftBoundary = swipeStartIndex <= 0 && diffX < 0; // 總覽頁面向右滑動
-                            const isAtRightBoundary = swipeStartIndex >= maxIndex && diffX > 0; // 最後一頁向左滑動
-                            
-                            // 在邊界時禁用動畫（不允許滑動）
-                            if(isAtLeftBoundary || isAtRightBoundary) {
-                                return; // 不更新 transform，保持原位置
-                            }
-                            
-                            let newTransform = -swipeStartIndex * 100 + swipePercent;
-                            const minTransform = -maxIndex * 100;
-                            const maxTransform = 0;
-                            
-                            // 添加阻力效果（在接近邊界時）
-                            if(newTransform > maxTransform) {
-                                newTransform = maxTransform + (newTransform - maxTransform) * 0.3;
-                            } else if(newTransform < minTransform) {
-                                newTransform = minTransform + (newTransform - minTransform) * 0.3;
-                            }
-                            
-                            container.style.transform = `translateX(${newTransform}%)`;
-                        }
-                    }
-                }
-            }, { passive: true });
-            
-            chartSection.addEventListener('touchend', (e) => {
-                // 如果正在拖動排序，不處理滑動
-                if(isSorting) {
-                    touchStartX = null;
-                    touchStartY = null;
-                    return;
-                }
-                
-                touchEndX = e.changedTouches[0].clientX;
-                touchEndY = e.changedTouches[0].clientY;
-                const container = document.getElementById('pageContainer');
-                if(container && isSwiping) {
-                    container.classList.remove('swiping');
-                }
-                if(isSwiping) {
-                handleSwipe();
-                }
-                isSwiping = false;
-            }, { passive: true });
-        }
-    }
-    
-    function handleSwipe() {
-        const swipeThreshold = 50;
-        const diffX = touchStartX - touchEndX;
-        const diffY = touchStartY - touchEndY;
-        const orderedPages = getOrderedPages();
-        const currentIndex = orderedPages.indexOf(currentPage);
-        const maxIndex = orderedPages.length - 1;
-        
-        // 計算水平和垂直滑動的絕對值
-        const absDiffX = Math.abs(diffX);
-        const absDiffY = Math.abs(diffY);
-        
-        // 如果垂直滑動距離大於水平滑動距離，則不觸發分頁切換（鎖住左右滑動）
-        if(absDiffY > absDiffX) {
-            // 回彈到原位置
-            if(isSwiping) {
-                const container = document.getElementById('pageContainer');
-                if(container) {
-                    container.style.transform = `translateX(-${currentIndex * 100}%)`;
-                }
-            }
-            return;
-        }
-        
-        // 檢查是否在邊界
-        const isAtLeftBoundary = currentIndex <= 0 && diffX < 0; // 總覽頁面向右滑動
-        const isAtRightBoundary = currentIndex >= maxIndex && diffX > 0; // 最後一頁向左滑動
-        
-        // 在邊界時回彈到原位置，不觸發切換
-        if(isAtLeftBoundary || isAtRightBoundary) {
-            const container = document.getElementById('pageContainer');
-            if(container) {
-                container.style.transform = `translateX(-${currentIndex * 100}%)`;
-            }
-            return;
-        }
-        
-        // 只有當水平滑動距離足夠大時才觸發分頁切換
-        if(absDiffX > swipeThreshold) {
-            if(diffX > 0) {
-                // 手指向左滑動（touchStartX > touchEndX），顯示下一個分頁
-                if(currentIndex < maxIndex) {
-                    switchToPage(orderedPages[currentIndex + 1]);
-                }
-            } else {
-                // 手指向右滑動（touchStartX < touchEndX），顯示上一個分頁
-                if(currentIndex > 0) {
-                    switchToPage(orderedPages[currentIndex - 1]);
-                }
-            }
-        } else if(isSwiping) {
-            // 滑動距離不夠，回彈到原位置
-            const container = document.getElementById('pageContainer');
-            if(container) {
-                container.style.transform = `translateX(-${currentIndex * 100}%)`;
-            }
+            chartSection.addEventListener('touchstart', _onSwipeTouchStart, { passive: true });
+            chartSection.addEventListener('touchmove', (e) => _onSwipeTouchMove(e, chartSection.offsetWidth), { passive: true });
+            chartSection.addEventListener('touchend', _onSwipeTouchEnd, { passive: true });
         }
     }
     
@@ -7527,12 +7456,8 @@
                                 renderPageIndicator();
                                 renderPageVisibilitySettings();
                                 
-                                // 確保當前分頁的位置正確
-                                const container = document.getElementById('pageContainer');
-                                if(container) {
-                                    const finalIndex = domIndex >= 0 ? domIndex : getDisplayIndex(currentPage);
-                                    container.style.transform = `translateX(-${finalIndex * 100}%)`;
-                                }
+                                // 方案C：更新當前頁面顯示
+                                updateActivePageClass();
                             }
                         }));
                     }
@@ -7818,6 +7743,9 @@
         
         // 更新圖表
         updateChartData();
+        
+        // 更新當前頁面顯示（方案C：position 疊加）
+        updateActivePageClass();
     }
     
     function renderDebt(containerId = null) {
@@ -8232,12 +8160,8 @@
                 switchToPage(orderedPages[0]);
             }
         } else {
-            // 確保當前分頁的位置正確
-            const container = document.getElementById('pageContainer');
-            if(container) {
-                const finalIndex = domIndex >= 0 ? domIndex : getDisplayIndex(currentPage);
-                container.style.transform = `translateX(-${finalIndex * 100}%)`;
-            }
+            // 方案C：更新當前頁面顯示
+            updateActivePageClass();
         }
         
         // 載入完成，等待 Monee 字樣動畫完成後再隱藏載入遮罩
