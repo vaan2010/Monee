@@ -689,17 +689,22 @@
         @media (max-width: 767px) {
             .list-section.page-swiper { overflow: visible; touch-action: auto; }
         }
+        /* 收入支出細項清單：超過可用高度則滾動 */
+        .chart-detail-list {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
         /* 月圖表滾動容器特殊處理 */
         #monthlyChartSwiper {
             overflow-y: auto !important;
             overflow-x: hidden !important;
-            max-height: calc(100vh - 300px);
+            max-height: calc(100vh - 130px);
             touch-action: pan-y pan-x !important;
             -webkit-overflow-scrolling: touch;
         }
         @media (max-width: 767px) {
             #monthlyChartSwiper {
-                max-height: calc(100vh - 250px);
+                max-height: calc(100vh - 100px);
             }
         }
         .page-container { display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
@@ -9069,6 +9074,8 @@
             emptyDiv.style.cssText = 'text-align: center; padding: 50px; color: var(--text-secondary);';
             emptyDiv.textContent = '該月份沒有' + (type === 'expense' ? '支出' : '收入') + '記錄';
             chartContainer.appendChild(emptyDiv);
+            // 清空對應的詳細列表
+            renderMonthlyChartList(type, [], chartId);
             return;
         }
         
@@ -9458,29 +9465,15 @@
             document.addEventListener('click', window.pieChartGlobalClickHandler);
         }
         
-        // 動態設置列表高度：根據項目數量自動調整，只有超過視窗高度時才啟用滾動
+        // 動態計算列表最大高度：最多5行或螢幕剩餘空間（取較小值）
         setTimeout(() => {
-            const pageItem = listContainer.closest('.page-item');
-            if(pageItem) {
-                const listRect = listContainer.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                
-                // 計算可用高度（視窗高度 - 列表頂部到視窗頂部的距離 - 底部導航欄高度 - 安全邊距）
-                const bottomNavHeight = 80; // 底部導航欄高度
-                const safeMargin = 20; // 安全邊距
-                const availableHeight = viewportHeight - listRect.top - bottomNavHeight - safeMargin;
-                
-                // 如果列表內容高度超過可用高度，設置 max-height 並啟用滾動
-                if(listContainer.scrollHeight > availableHeight) {
-                    listContainer.style.maxHeight = `${availableHeight}px`;
-                    listContainer.style.overflowY = 'auto';
-                } else {
-                    // 否則移除 max-height，讓列表自然展開
-                    listContainer.style.maxHeight = 'none';
-                    listContainer.style.overflowY = 'visible';
-                }
-            }
-        }, 100);
+            const listRect = listContainer.getBoundingClientRect();
+            const bottomReserved = 100; // 底部導航(60) + 卡片底部padding(20) + 圓角安全邊距(20)
+            const availableHeight = window.innerHeight - listRect.top - bottomReserved;
+            const fiveRowsHeight = 255; // 5行的高度
+            const maxH = Math.max(Math.min(fiveRowsHeight, availableHeight), 80); // 至少顯示1-2行
+            listContainer.style.maxHeight = maxH + 'px';
+        }, 50);
     }
     
     // 高亮圓餅圖的指定區塊，其他區塊變暗，並在中心顯示信息
@@ -9549,7 +9542,7 @@
                 chartContainer.appendChild(textContainer);
             }
             
-            // 設定容器樣式和文字內容
+            // 設定容器樣式和文字內容（不限制寬度，讓文字完整顯示）
             textContainer.style.cssText = `
                 position: absolute;
                 top: 50%;
@@ -9562,14 +9555,12 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                width: ${maxTextWidth}px;
-                max-width: ${maxTextWidth}px;
-                box-sizing: border-box;
+                white-space: nowrap;
             `;
             textContainer.innerHTML = `
-                <div style="font-size: 16px; font-weight: 600; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${name}</div>
-                <div style="font-size: 20px; font-weight: 700; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">$${amount}</div>
-                <div style="font-size: 14px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${percentage}%</div>
+                <div style="font-size: 16px; font-weight: 600; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap;">${name}</div>
+                <div style="font-size: 20px; font-weight: 700; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap;">$${amount}</div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--text-secondary); white-space: nowrap;">${percentage}%</div>
             `;
         } else {
             // 如果找不到對應的類別，隱藏文字
