@@ -8847,9 +8847,15 @@
             resetPieChartHighlight('monthlyIncomeAdvanceChart');
             
             renderCalendar();
-            // 如果有選中日期，顯示詳情
+            // 如果有選中日期，顯示詳情；否則自動選中今天
             if(selectedDate) {
                 showFixedTransferDetailsForDate(selectedDate);
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                selectedDate = new Date(today);
+                renderCalendar();
+                showFixedTransferDetailsForDate(today);
             }
         }
     }
@@ -15299,5 +15305,4 @@
 </script>
 </body>
 </html>
-
 
