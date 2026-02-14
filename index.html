@@ -467,52 +467,61 @@
         .tt-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .chart-back-btn { position: absolute; top: 10px; left: 20px; z-index: 201; background: rgba(44, 44, 46, 0.9); color: #0a84ff; border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: none; backdrop-filter: blur(10px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-        .group-header { padding: 15px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); background-color: var(--bg-color); display: flex; justify-content: space-between; text-transform: uppercase; }
-        .group-total { color: var(--text-primary); font-weight: 600; display: block;} .group-pnl { font-size: 11px; display: block; margin-top: 2px; text-align: right;}
+        .group-header { padding: 15px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); background-color: var(--bg-color); display: flex; justify-content: space-between; text-transform: uppercase; min-width: 0; gap: 8px; }
+        .group-header > span:first-child { flex-shrink: 0; }
+        .group-total-block { min-width: 0; text-align: right; flex-shrink: 1; overflow: hidden; }
+        .group-total { color: var(--text-primary); font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .group-pnl { font-size: 11px; display: block; margin-top: 2px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-container { background-color: var(--card-bg); border-radius: 12px; margin: 0 16px 10px 16px; overflow: hidden; }
-        .list-item { display: flex; align-items: flex-start; padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; background: var(--card-bg); min-width: 0; position: relative; }
+        .list-item { display: flex; align-items: flex-start; padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; background: var(--card-bg); min-width: 0; position: relative; overflow: hidden; }
         /* 總覽頁面：讓標題和金額對齊 */
         #group-overview .list-item { align-items: center; }
         .list-item:last-child { border-bottom: none; } .list-item:active { background-color: var(--active-bg); }
-        .list-item:has(.item-name-row) { padding-top: 40px; }
         /* 負債項目不可拖動 */
         #group-debt .list-item { cursor: pointer !important; }
         #group-debt .list-item.sortable-chosen { cursor: pointer !important; }
-        .list-item:has(.item-name-row) .item-icon { align-self: flex-start; margin-top: 0; }
         .item-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; flex-shrink: 0; align-self: flex-start; margin-top: 0; overflow: hidden; }
         .item-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
         .icon-bank { color: var(--color-bank); background: rgba(100, 210, 255, 0.15); } .icon-crypto { color: var(--color-crypto); background: rgba(255, 159, 10, 0.15); } .icon-stock { color: var(--color-stock); background: rgba(191, 90, 242, 0.15); } .icon-twstock { color: var(--color-twstock); background: rgba(10, 132, 255, 0.15); } .icon-debt { color: var(--color-debt); background: rgba(255, 69, 58, 0.15); }
-        .item-content { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; }
-        .item-name-row { display: flex; align-items: center; margin-bottom: 0; position: absolute; left: 0; right: 0; padding-left: 67px; padding-right: 50px; top: 12px; z-index: 1; }
-        .item-name-row .item-name { font-size: 19px; font-weight: 500; line-height: 1.3; flex: 1; }
-        .item-name-row .item-eye-wrapper { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .item-content { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+        
+        /* ===== 美股/台股/加密貨幣：純 Flex 佈局（無絕對定位）===== */
+        /* 名稱行：正常 flex 流 */
+        .item-name-row { display: flex; align-items: center; margin-bottom: 4px; position: relative; width: 100%; z-index: 1; }
+        .item-name-row .item-name { font-size: 19px; font-weight: 500; line-height: 1.3; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-name-row .item-eye-wrapper { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 8px; }
         .item-name-row .item-eye-btn { margin: 0; }
         .item-name-row .item-balance-below-eye { font-size: 12px; color: var(--text-secondary); opacity: 0.7; white-space: nowrap; }
-        .item-symbol-row { font-size: 13px; color: var(--text-secondary); opacity: 0.7; margin-top: 0; margin-bottom: 0; padding-left: 67px; padding-right: 16px; position: absolute; top: 38px; left: 0; right: 0; z-index: 1; display: flex; flex-direction: column; gap: 0; }
+        /* 股票類項目：金額放在名稱行右側 */
+        .item-name-row > .amount-val { flex-shrink: 0; margin-left: auto; margin-bottom: 0; text-align: right; }
+        .item-hidden .item-name-row > .amount-val.item-numbers { margin-left: auto !important; }
+        
+        /* 代號+價格行：正常 flex 流 */
+        .item-symbol-row { font-size: 13px; color: var(--text-secondary); opacity: 0.7; margin-top: 0; margin-bottom: 0; position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0; width: 100%; }
         .item-symbol-row .symbol-text-row { min-height: 18px; display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .item-symbol-row .symbol-text { font-size: 13px; color: var(--text-secondary); opacity: 0.7; display: inline-block; }
         .item-symbol-row .symbol-balance { font-size: 13px; color: var(--text-secondary); opacity: 0.7; margin-left: auto; }
-        .item-symbol-row .symbol-spacer { height: 3px; visibility: hidden; }
-        /* 美股：增加 symbol-spacer 的高度，增加垂直間距 */
-        #group-stock .item-symbol-row .symbol-spacer { height: 6px; }
-        /* 台股：比照美股，增加 symbol-spacer 的高度 */
-        #group-twstock .item-symbol-row .symbol-spacer { height: 6px; }
-        /* 美股：確保右側空白行與左側 symbol-spacer 對齊 */
-        #group-stock .item-amount .amount-spacer { min-height: 6px; height: 6px; line-height: 6px; }
-        /* 台股：比照美股，確保右側空白行與左側 symbol-spacer 對齊 */
-        #group-twstock .item-amount .amount-spacer { min-height: 6px; height: 6px; line-height: 6px; }
-        /* 加密貨幣：比照美股，確保右側空白行與左側 symbol-spacer 對齊 */
-        #group-crypto .item-amount .amount-spacer { min-height: 6px; height: 6px; line-height: 6px; }
+        /* 隱藏對齊用 spacer，改用 margin 控制間距 */
+        .item-symbol-row .symbol-spacer { display: none; }
+        .item-symbol-row .item-row-compact:first-of-type { margin-top: 4px; }
         .item-symbol-row > div { min-height: 18px; display: flex; align-items: center; }
-        .list-item:has(.item-name-row) { padding-top: 50px; padding-bottom: 20px; }
-        /* 美股：增加更多垂直空間，避免內容溢出 */
-        #group-stock .list-item:has(.item-name-row) { padding-top: 50px; padding-bottom: 30px; min-height: 140px; }
-        /* 台股：比照美股，增加更多垂直空間，避免內容溢出 */
-        #group-twstock .list-item:has(.item-name-row) { padding-top: 50px; padding-bottom: 30px; min-height: 140px; }
-        .list-item:has(.item-name-row) .item-icon { position: absolute; left: 16px; top: 20px; z-index: 2; display: flex; align-items: center; justify-content: center; }
+        
+        /* 股票類項目：正常 padding，無需為絕對定位留空間 */
+        .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; }
+        .list-item:has(.item-name-row) .item-icon { align-self: flex-start; margin-top: 2px; }
+        #group-stock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
+        #group-twstock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
+        
+        /* 隱藏對齊用 spacer */
+        .list-item:has(.item-name-row) .item-amount-name-row { display: none !important; }
+        .list-item:has(.item-name-row) .amount-spacer { display: none !important; }
+        
+        /* 美股/台股/加密貨幣：增加行間距 */
+        #group-stock .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
+        #group-twstock .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
+        #group-crypto .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
+        
         .item-detail-row { display: flex; flex-direction: column; margin-top: 3px; gap: 0; }
         .item-detail-row > div { min-height: 18px; display: flex; align-items: center; }
-        .list-item:has(.item-name-row) .item-amount-name-row { height: 0; margin-bottom: 0; }
         .item-amount-name-row { height: 19px; margin-bottom: 3px; flex-shrink: 0; }
         .item-name { font-size: 19px; font-weight: 500; margin-bottom: 3px; line-height: 1.3; }
         .item-name .symbol-small { font-size: 13px; font-weight: 400; opacity: 0.7; margin-left: 6px; }
@@ -558,11 +567,11 @@
         .item-row-compact .price-label { margin-right: 4px; }
         .item-row-compact > span:last-child { margin-left: auto; }
         .price-label { font-size: 11px; color: var(--text-secondary); opacity: 0.7; margin-right: 4px; flex-shrink: 0; }
-        .item-amount-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 0; margin-left: 8px; flex-shrink: 0; }
+        .item-amount-wrapper { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin-left: 8px; flex-shrink: 0; min-width: 0; overflow: hidden; }
         .item-amount-name-row { height: 19px; margin-bottom: 3px; }
-        .item-amount { text-align: right; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; gap: 0; align-items: flex-end; }
-        .item-amount > div { min-height: 18px; display: flex; align-items: center; justify-content: flex-end; width: 100%; }
-        .amount-val-wrapper { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+        .item-amount { text-align: right; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; gap: 0; align-items: stretch; width: 100%; overflow: hidden; }
+        .item-amount > div { min-height: 18px; display: flex; align-items: center; justify-content: flex-end; width: 100%; overflow: hidden; }
+        .amount-val-wrapper { display: flex; align-items: center; justify-content: flex-end; gap: 8px; overflow: hidden; min-width: 0; }
         /* 總覽和錢包分頁：讓眼睛按鈕對齊到金額中線 */
         #group-overview .amount-val-wrapper, #group-bank .amount-val-wrapper { align-items: center; }
         #group-overview .item-eye-btn, #group-bank .item-eye-btn { 
@@ -582,6 +591,9 @@
             margin-bottom: 3px; 
             white-space: nowrap; 
             position: relative;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
         /* 當數字隱藏時，讓 **** 的寬度與按鈕對齊 */
         .item-hidden .amount-val-wrapper {
@@ -594,26 +606,18 @@
         /* 總覽頁面：讓金額和標題對齊 */
         #group-overview .list-item { align-items: baseline; }
         #group-overview .item-content { display: flex; flex-direction: column; justify-content: flex-start; }
-        #group-overview .item-amount-wrapper { align-items: flex-start; }
+        #group-overview .item-amount-wrapper { align-items: stretch; }
         #group-overview .amount-val-wrapper { align-items: baseline; }
         #group-overview .amount-val { font-size: 19px; line-height: 1.3; margin-bottom: 3px; }
         /* 錢包分頁：讓金額和標題對齊 */
         #group-bank .list-item { align-items: baseline; }
         #group-bank .item-content { display: flex; flex-direction: column; justify-content: flex-start; }
-        #group-bank .item-amount-wrapper { align-items: flex-start; }
+        #group-bank .item-amount-wrapper { align-items: stretch; }
         #group-bank .amount-val-wrapper { align-items: baseline; }
         #group-bank .amount-val { font-size: 19px; line-height: 1.3; margin-bottom: 3px; }
-        .amount-pnl { font-size: 11px; margin-top: 0; margin-bottom: 1px; font-weight: 500; line-height: 1.3; white-space: nowrap; text-align: right; }
-        /* 美股：增加行間距 */
-        #group-stock .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
-        /* 台股：比照美股，增加行間距 */
-        #group-twstock .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
-        /* 加密貨幣：比照美股，增加行間距 */
-        #group-crypto .item-row-compact { margin-bottom: 4px; line-height: 1.4; }
+        .amount-pnl { font-size: 11px; margin-top: 0; margin-bottom: 1px; font-weight: 500; line-height: 1.3; white-space: nowrap; text-align: right; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         
-        .amount-spacer { font-size: 13px; line-height: 1.35; color: transparent; margin: 0; padding: 0; min-height: 1.35em; display: block; }
-        .amount-spacer::before { content: '\00a0'; }
-        .amount-spacer { font-size: 13px; line-height: 1.35; visibility: hidden; height: 0; }
+        .amount-spacer { font-size: 13px; line-height: 1.35; visibility: hidden; height: 0; margin: 0; padding: 0; }
         .amount-green { color: var(--color-up); } .amount-red { color: var(--color-down); } .sub-green { color: var(--color-up); } .sub-red { color: var(--color-down); }
         .drag-handle { display: none; color: #666; font-size: 20px; padding-left: 15px; cursor: grab; }
         /* 排序模式下，整個卡片可以拖動 */
@@ -700,7 +704,7 @@
         }
         .page-container { display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
         .page-container.swiping { transition: none; } /* 滑動過程中禁用過渡，實現實時跟隨 */
-        .page-item { min-width: 100%; flex-shrink: 0; }
+        .page-item { min-width: 100%; max-width: 100%; flex-shrink: 0; overflow: hidden; }
         .page-indicator { 
             display: flex; 
             justify-content: center;
@@ -737,6 +741,32 @@
             .page-indicator {
                 justify-content: flex-start;
             }
+        }
+        
+        /* 窄螢幕：資產列表金額自適應 */
+        /* 窄螢幕：資產列表自適應 */
+        @media (max-width: 420px) {
+            .amount-val { font-size: 16px !important; }
+            .amount-pnl { font-size: 10px; }
+            #group-overview .amount-val { font-size: 17px !important; }
+            #group-bank .amount-val { font-size: 17px !important; }
+            .item-row-compact { font-size: 10px; gap: 3px; }
+            .price-label { font-size: 10px; }
+            .list-item { padding: 12px 12px; }
+            .item-icon { width: 36px; height: 36px; margin-right: 10px; font-size: 16px; }
+        }
+        @media (max-width: 360px) {
+            .amount-val { font-size: 14px !important; }
+            .amount-pnl { font-size: 9px; }
+            #group-overview .amount-val { font-size: 15px !important; }
+            #group-bank .amount-val { font-size: 15px !important; }
+            .item-name { font-size: 16px; }
+            .item-name-row .item-name { font-size: 16px; }
+            .item-row-compact { font-size: 9px; }
+            .price-label { font-size: 9px; }
+            .item-icon { width: 32px; height: 32px; margin-right: 8px; font-size: 14px; }
+            .list-container { margin: 0 10px 10px 10px; }
+            .group-header { padding: 15px 14px 8px 14px; }
         }
         .page-indicator::-webkit-scrollbar {
             display: none !important; /* Chrome, Safari, Opera */
@@ -7546,6 +7576,7 @@
                 groupPnL += pnl;
                 
                 let htmlContent = '';
+                let color = (acc.type === 'bank' && acc.bankTag === '信用卡') ? 'amount-red' : 'amount-green';
                 if(acc.isAuto) {
                     let sym = acc.symbol.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT','');
                     // 台股和美股/加密貨幣都統一格式，不使用前綴
@@ -7672,7 +7703,7 @@
                             // 其他類型：股數放在眼睛按鈕下方
                             balanceDisplay = `<div class="item-balance-below-eye">${acc.balance || 'N/A'}</div>`;
                         }
-                        htmlContent = `<div class="item-name-row"><div class="item-name">${displayName}</div><div class="item-eye-wrapper"><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIconTemp}"></i></button>${balanceDisplay}</div></div>${symbolRow}`;
+                        htmlContent = `<div class="item-name-row"><div class="item-name">${displayName}</div><div class="item-eye-wrapper"><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIconTemp}"></i></button>${balanceDisplay}</div><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div></div>${symbolRow}`;
                     } else {
                         // 其他分類保持原來的佈局
                         htmlContent = `<div class="item-name">${displayName}</div>${line1}${line2}`;
@@ -7683,8 +7714,6 @@
                      htmlContent = `<div class="item-name">${acc.name}</div><div class="item-row">${tagHTML}</div>`;
                  }
                 
-                // 如果是信用卡類型，使用紅色；否則使用綠色
-                let color = (acc.type === 'bank' && acc.bankTag === '信用卡') ? 'amount-red' : 'amount-green';
                 let hdl = isEditMode ? `<div class="drag-handle"><i class="fas fa-bars"></i></div>` : '';
                 let clk = isEditMode ? '' : `onclick="openDetailView(${acc.id})"`;
                 let dailyPnL = acc.isAuto ? calculateDailyPnL(acc) : 0;
@@ -7743,17 +7772,9 @@
                 } else {
                     iconHtml = `<div class="item-icon ${g.s}"><i class="fas ${g.i}"></i></div>`;
                 }
-                 // 美股、台股、加密貨幣使用新佈局：第一行只顯示公司名稱，金額從第二行開始
+                 // 美股、台股、加密貨幣使用新佈局：金額已內嵌在 item-name-row 中，不需要 item-amount-wrapper
                  if(acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto') {
-                     // 檢查是否為 USDT/USDC 穩定幣
-                     let sym = acc.symbol.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT','');
-                     let isStableCoin = (sym === 'USDT' || sym === 'USDC');
-                     // 美股、台股、加密貨幣：現值金額往下移一行（對齊代碼+股數）
-                     // USDT/USDC 特別處理：不顯示當日和成本行，所以只需要一個空白行，不需要兩個 spacer
-                     let nameRowHeight = (acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto') ? '19px' : '0';
-                     let pnlSpacer = isStableCoin ? '' : ((acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto') ? '<div class="amount-spacer"></div><div class="amount-spacer"></div>' : '');
-                     // 美股、台股、加密貨幣：現值金額放在第二行（對齊代碼+股數），需要 item-amount-name-row
-                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount-name-row" style="height: ${nameRowHeight}; margin-bottom: ${nameRowHeight === '19px' ? '3px' : '0'};"></div><div class="item-amount"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div>${pnlSpacer}${pnlHtml}</div></div>${hdl}</div>`;
+                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div>${hdl}</div>`;
                 } else {
                     // 其他分類（錢包等）：眼睛按鈕放在金額右邊
                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div>${hdl}</div>`;
