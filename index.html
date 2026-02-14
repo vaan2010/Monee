@@ -689,23 +689,27 @@
         @media (max-width: 767px) {
             .list-section.page-swiper { overflow: visible; touch-action: auto; }
         }
-        /* 收入支出細項清單：超過可用高度則滾動 */
+        /* 收入支出細項清單：最多顯示5行，超過則清單內滾動 */
         .chart-detail-list {
+            max-height: 255px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-        /* 月圖表滾動容器特殊處理 */
+        /* 月圖表 swiper：不做垂直滾動 */
         #monthlyChartSwiper {
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            touch-action: pan-y pan-x !important;
+        }
+        /* 月圖表卡片：可垂直滾動，動態 max-height 由 JS 設定 */
+        #monthlyChartSwiper .page-item {
             overflow-y: auto !important;
             overflow-x: hidden !important;
-            max-height: calc(100vh - 130px);
-            touch-action: pan-y pan-x !important;
             -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox 隱藏捲軸 */
         }
-        @media (max-width: 767px) {
-            #monthlyChartSwiper {
-                max-height: calc(100vh - 100px);
-            }
+        #monthlyChartSwiper .page-item::-webkit-scrollbar {
+            display: none; /* Chrome/Safari 隱藏捲軸 */
         }
         .page-container { display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform; }
         .page-container.swiping { transition: none; } /* 滑動過程中禁用過渡，實現實時跟隨 */
@@ -9012,6 +9016,17 @@
         // 確保切換到當前顯示的圖表
         switchMonthlyChartPage(currentMonthlyChartIndex);
         
+        // 動態設定卡片（page-item）的 max-height，根據螢幕長短調整
+        setTimeout(() => {
+            const pageItems = document.querySelectorAll('#monthlyChartSwiper .page-item');
+            pageItems.forEach(item => {
+                const itemRect = item.getBoundingClientRect();
+                const bottomNavHeight = 70;
+                const availableHeight = window.innerHeight - itemRect.top - bottomNavHeight;
+                item.style.maxHeight = Math.max(availableHeight, 200) + 'px';
+            });
+        }, 60);
+        
         // 監聽視窗大小改變，自動重新調整圓餅圖
         if(!window.monthlyChartResizeHandler) {
             let resizeTimeout;
@@ -9202,7 +9217,13 @@
                 spacing: responsiveConfig.spacing,
                 margin: responsiveConfig.margin,
                 plotBackgroundColor: 'transparent',
-                plotBorderWidth: 0
+                plotBorderWidth: 0,
+                events: {
+                    click: function() {
+                        // 點擊圖表背景（非色塊）時重置高亮
+                        resetPieChartHighlight(chartId);
+                    }
+                }
             },
             title: { text: '' },
             credits: { enabled: false },
@@ -9230,8 +9251,8 @@
                     point: {
                         events: {
                             click: function() {
-                                // 禁用點擊事件
-                                return false;
+                                // 點擊色塊時顯示該分類的資訊
+                                highlightPieChartSlice(chartId, this.name);
                             }
                         },
                         states: {
@@ -9451,10 +9472,13 @@
         listContainer._resetHandler = resetHandler;
         listContainer.addEventListener('click', resetHandler);
         
-        // 全局點擊監聽器：點擊列表項以外的任何地方都重置高亮
-        // 因為列表項的 click 有 stopPropagation()，所以只要事件冒泡到 document，就代表不是點在列表項上
+        // 全局點擊監聯器：點擊列表項和圖表以外的任何地方才重置高亮
         if(!window.pieChartGlobalClickHandler) {
             window.pieChartGlobalClickHandler = function(e) {
+                // 如果點在圓餅圖的 SVG 區域內（如色塊），不重置
+                const clickedChart = e.target.closest('.highcharts-container');
+                if(clickedChart) return;
+                // 列表項的 click 有 stopPropagation()，不會觸發到這裡
                 resetPieChartHighlight('monthlyExpenseTotalChart');
                 resetPieChartHighlight('monthlyExpenseChart');
                 resetPieChartHighlight('monthlyExpenseAdvanceChart');
@@ -9465,15 +9489,7 @@
             document.addEventListener('click', window.pieChartGlobalClickHandler);
         }
         
-        // 動態計算列表最大高度：最多5行或螢幕剩餘空間（取較小值）
-        setTimeout(() => {
-            const listRect = listContainer.getBoundingClientRect();
-            const bottomReserved = 100; // 底部導航(60) + 卡片底部padding(20) + 圓角安全邊距(20)
-            const availableHeight = window.innerHeight - listRect.top - bottomReserved;
-            const fiveRowsHeight = 255; // 5行的高度
-            const maxH = Math.max(Math.min(fiveRowsHeight, availableHeight), 80); // 至少顯示1-2行
-            listContainer.style.maxHeight = maxH + 'px';
-        }, 50);
+        // 列表高度由 CSS .chart-detail-list 控制（固定最多5行，超過則清單內獨立滾動）
     }
     
     // 高亮圓餅圖的指定區塊，其他區塊變暗，並在中心顯示信息
