@@ -636,8 +636,8 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
+            background: transparent !important;
+            backdrop-filter: none !important;
             border: 1px solid var(--border-color);
             color: var(--text-primary);
             font-size: 14px;
@@ -655,7 +655,8 @@
         }
         .currency-toggle-btn:hover {
             transform: scale(1.05);
-            background: var(--active-bg);
+            background: rgba(58, 58, 60, 0.3) !important;
+            backdrop-filter: none !important;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
         .currency-toggle-btn:active {
@@ -979,12 +980,31 @@
         .tx-header-row { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
         .tx-badge { background: #64d2ff; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .tx-date { color: var(--text-secondary); font-size: 13px; }
+        .tx-delete-btn { background: transparent; border: none; color: #ff453a; font-size: 16px; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: all 0.2s; }
+        .tx-delete-btn:hover { background: rgba(255, 69, 58, 0.1); }
+        .tx-delete-btn:active { transform: scale(0.95); }
         .tx-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 15px; }
         .tx-label { color: var(--text-secondary); }
         .tx-val { color: var(--text-primary); font-weight: 500; }
         .tx-val.val-green { color: var(--color-up) !important; }
         .tx-val.val-red { color: var(--color-down) !important; }
         .tx-pnl { font-weight: bold; font-size: 14px; }
+        
+        /* 圖表詳細列表樣式 - 動態高度 */
+        .chart-detail-list {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .chart-detail-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chart-detail-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chart-detail-list::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
         .tx-no-data { text-align: center; color: var(--text-secondary); padding: 30px 0; font-size: 14px; }
     </style>
 </head>
@@ -1089,7 +1109,6 @@
                     <button class="btn-icon sidebar-toggle-btn-navbar" id="sidebarToggleBtnNavbar" onclick="toggleSidebarCollapse()" title="展開選單"><i class="fas fa-bars"></i></button>
                     <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()"><i class="fas fa-sort-amount-down"></i></button>
                     <button class="btn-icon" id="addBtn" onclick="openModal()"><i class="fas fa-plus"></i></button>
-                    <button class="btn-icon" id="calendarChartBtn" onclick="toggleJournalChartView()" style="display: none;"><i class="fas fa-chart-pie"></i></button>
                     <button class="btn-icon" id="calendarSettingsBtn" onclick="openNewExpenseFromCalendar()" style="display: none;"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
@@ -1177,6 +1196,10 @@
                         </div>
                         <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
                     </div>
+                    <!-- 懸浮在右下角的切換按鈕（與台幣轉美元按鈕相同位置和樣式） -->
+                    <button id="calendarChartBtn" class="currency-toggle-btn" onclick="toggleJournalChartView()" style="display: none;" title="切換顯示模式">
+                        <i class="fas fa-chart-pie"></i>
+                    </button>
                     <div id="calendarTodayDate" style="display: none;"></div>
                     <div class="calendar-weekdays">
                         <div class="calendar-weekday">週日</div>
@@ -1194,44 +1217,66 @@
                     <div class="list-section page-swiper" id="monthlyChartSwiper" style="position: relative; width: 100%;">
                         <div class="page-container" id="monthlyChartPageContainer" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); width: 200%;">
                             <!-- 支出圓餅圖 -->
-                            <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: visible; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;" id="monthlyExpenseChartPage">
-                                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); text-align: center;">支出</div>
+                            <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyExpenseChartPage">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">支出</div>
+                                    <button id="expenseChartToggleBtn" onclick="toggleExpenseChartView()" style="background: var(--active-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" title="切換顯示模式" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--active-bg)'">
+                                        <span id="expenseChartToggleText">總支出</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                    </button>
+                                </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
-                                    <div>
+                                    <!-- 總支出 -->
+                                    <div id="expenseTotalView" style="display: block;">
                                         <div id="monthlyExpenseTotal" style="font-size: 16px; font-weight: 600; color: var(--color-down); text-align: center; margin-bottom: 10px;">總支出：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">原始支出+代墊</div>
-                                        <div id="monthlyExpenseTotalChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
+                                        <div id="monthlyExpenseTotalChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyExpenseTotalList" class="chart-detail-list" style="margin-top: 15px;"></div>
                                     </div>
-                                    <div>
+                                    <!-- 原始支出 -->
+                                    <div id="expenseNormalView" style="display: none;">
                                         <div id="monthlyExpenseNormalTotal" style="font-size: 16px; font-weight: 600; color: var(--color-down); text-align: center; margin-bottom: 10px;">原始支出：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">原始支出</div>
-                                        <div id="monthlyExpenseChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
+                                        <div id="monthlyExpenseChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyExpenseList" class="chart-detail-list" style="margin-top: 15px;"></div>
                                     </div>
-                                    <div>
+                                    <!-- 代墊 -->
+                                    <div id="expenseAdvanceView" style="display: none;">
                                         <div id="monthlyExpenseAdvanceTotal" style="font-size: 16px; font-weight: 600; color: var(--color-down); text-align: center; margin-bottom: 10px;">代墊：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">代墊</div>
-                                        <div id="monthlyExpenseAdvanceChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
+                                        <div id="monthlyExpenseAdvanceChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyExpenseAdvanceList" class="chart-detail-list" style="margin-top: 15px;"></div>
                                     </div>
                                 </div>
                             </div>
                             <!-- 收入圓餅圖 -->
-                            <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: visible; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;" id="monthlyIncomeChartPage">
-                                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); text-align: center;">收入</div>
+                            <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyIncomeChartPage">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">收入</div>
+                                    <button id="incomeChartToggleBtn" onclick="toggleIncomeChartView()" style="background: var(--active-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" title="切換顯示模式" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--active-bg)'">
+                                        <span id="incomeChartToggleText">總收入</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                    </button>
+                                </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
-                                    <div>
+                                    <!-- 總收入 -->
+                                    <div id="incomeTotalView" style="display: block;">
                                         <div id="monthlyIncomeTotal" style="font-size: 16px; font-weight: 600; color: var(--color-up); text-align: center; margin-bottom: 10px;">總收入：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">原始收入+代墊</div>
-                                        <div id="monthlyIncomeTotalChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
-                            </div>
-                                    <div>
+                                        <div id="monthlyIncomeTotalChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyIncomeTotalList" class="chart-detail-list" style="margin-top: 15px;"></div>
+                                    </div>
+                                    <!-- 原始收入 -->
+                                    <div id="incomeNormalView" style="display: none;">
                                         <div id="monthlyIncomeNormalTotal" style="font-size: 16px; font-weight: 600; color: var(--color-up); text-align: center; margin-bottom: 10px;">原始收入：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">原始收入</div>
-                                        <div id="monthlyIncomeChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
+                                        <div id="monthlyIncomeChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyIncomeList" class="chart-detail-list" style="margin-top: 15px;"></div>
                                     </div>
-                                    <div>
+                                    <!-- 代墊 -->
+                                    <div id="incomeAdvanceView" style="display: none;">
                                         <div id="monthlyIncomeAdvanceTotal" style="font-size: 16px; font-weight: 600; color: var(--color-up); text-align: center; margin-bottom: 10px;">代墊：$0</div>
                                         <div style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px; text-align: center;">代墊</div>
-                                        <div id="monthlyIncomeAdvanceChart" style="width: 100%; height: 300px; box-sizing: border-box; overflow: visible;"></div>
+                                        <div id="monthlyIncomeAdvanceChart" style="width: 100%; height: 250px; box-sizing: border-box; overflow: hidden;"></div>
+                                        <div id="monthlyIncomeAdvanceList" class="chart-detail-list" style="margin-top: 15px;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -3969,7 +4014,7 @@
                     const txList = document.getElementById('detailTxList');
                     txList.innerHTML = '';
                     if (currentDetailAcc.transactions && currentDetailAcc.transactions.length > 0) {
-                        currentDetailAcc.transactions.forEach(tx => {
+                        currentDetailAcc.transactions.forEach((tx, index) => {
                             let txPnlHtml = '';
                             let txPriceColor = '';
                             if (price > 0 && tx.price > 0) {
@@ -3993,7 +4038,7 @@
                                 }
                             }
                             const priceClass = txPriceColor ? ` ${txPriceColor}` : '';
-                            txList.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price.toFixed(2)}</span></div>${txPnlHtml}</div>`;
+                            txList.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div><button class="tx-delete-btn" onclick="deleteStockTransaction(${index})" title="刪除此筆交易"><i class="fas fa-trash"></i></button></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price.toFixed(2)}</span></div>${txPnlHtml}</div>`;
                         });
                     } else {
                         txList.innerHTML = '<div class="tx-no-data">無詳細交易紀錄<br>請在編輯模式匯入截圖</div>';
@@ -5954,7 +5999,7 @@
         }
         const txList = document.getElementById('detailTxList'); txList.innerHTML = '';
         if (currentDetailAcc.transactions && currentDetailAcc.transactions.length > 0) {
-            currentDetailAcc.transactions.forEach(tx => {
+            currentDetailAcc.transactions.forEach((tx, index) => {
                 let txPnlHtml = '';
                 let txPriceColor = '';
                 // 成交價顏色：與現價比較，現價高於成交價用綠色（漲），現價低於成交價用紅色（跌）
@@ -5979,7 +6024,7 @@
                 }
                 // 確保顏色類被正確應用
                 const priceClass = txPriceColor ? ` ${txPriceColor}` : '';
-                txList.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price.toFixed(2)}</span></div>${txPnlHtml}</div>`;
+                txList.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div><button class="tx-delete-btn" onclick="deleteStockTransaction(${index})" title="刪除此筆交易"><i class="fas fa-trash"></i></button></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price.toFixed(2)}</span></div>${txPnlHtml}</div>`;
             });
         } else { txList.innerHTML = '<div class="tx-no-data">無詳細交易紀錄<br>請在編輯模式匯入截圖</div>'; }
         const detailView = document.getElementById('detailView');
@@ -6014,6 +6059,154 @@
                 detailView.style.transform = 'translateX(100%)';
             }, 400);
         }
+    }
+    
+    // 刪除股票交易明細並重新計算成本與股數
+    function deleteStockTransaction(index) {
+        if (!currentDetailAcc || !currentDetailAcc.transactions || index < 0 || index >= currentDetailAcc.transactions.length) {
+            return;
+        }
+        
+        const tx = currentDetailAcc.transactions[index];
+        const confirmMsg = `確定要刪除此筆交易嗎？\n日期: ${tx.date}\n股數: ${tx.shares}\n成交價: $${tx.price.toFixed(2)}`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+        
+        // 從 transactions 陣列中刪除
+        currentDetailAcc.transactions.splice(index, 1);
+        
+        // 重新計算總股數和加權平均成本
+        let totalShares = 0;
+        let totalCost = 0;
+        const fee = settings.feeRate || 0.1;
+        
+        // 判斷是否為台股固定手續費（這裡簡化處理，使用一般手續費率）
+        // 如果需要更精確，可以從帳戶資料中讀取原始手續費設定
+        const isTWStock = currentDetailAcc.type === 'twstock';
+        
+        if (currentDetailAcc.transactions && currentDetailAcc.transactions.length > 0) {
+            currentDetailAcc.transactions.forEach(tx => {
+                const shares = parseFloat(tx.shares) || 0;
+                const price = parseFloat(tx.price) || 0;
+                // 計算每股成本（含手續費）
+                const costPerShare = price * (1 + fee / 100);
+                totalShares += shares;
+                totalCost += shares * costPerShare;
+            });
+        }
+        
+        // 計算加權平均成本
+        const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
+        
+        // 更新帳戶資料
+        currentDetailAcc.balance = totalShares;
+        currentDetailAcc.cost = avgCost;
+        
+        // 更新 accounts 陣列中的對應帳戶
+        const accountIndex = accounts.findIndex(acc => acc.id === currentDetailAcc.id);
+        if (accountIndex >= 0) {
+            accounts[accountIndex].balance = totalShares;
+            accounts[accountIndex].cost = avgCost;
+            accounts[accountIndex].transactions = currentDetailAcc.transactions;
+        }
+        
+        // 保存資料
+        saveData();
+        
+        // 重新渲染詳情頁面
+        openDetailView(currentDetailAcc.id);
+        
+        // 刷新列表和圖表
+        renderAssets();
+        updateChartData();
+    }
+    
+    // 在編輯模式中刪除股票交易明細並重新計算成本與股數
+    function deleteStockTransactionInEdit(index) {
+        if (!window.tempTransactions || index < 0 || index >= window.tempTransactions.length) {
+            return;
+        }
+        
+        const tx = window.tempTransactions[index];
+        const confirmMsg = `確定要刪除此筆交易嗎？\n日期: ${tx.date}\n股數: ${tx.shares}\n成交價: $${tx.price}`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+        
+        // 從 tempTransactions 陣列中刪除
+        window.tempTransactions.splice(index, 1);
+        
+        // 獲取當前編輯的帳戶類型，用於判斷手續費
+        let accountType = '';
+        let isFixedFee = false;
+        if (editingId) {
+            const acc = accounts.find(x => x.id === editingId);
+            if (acc) {
+                accountType = acc.type;
+            }
+        } else {
+            // 如果沒有 editingId，從輸入欄位獲取
+            const typeInput = document.getElementById('inpType');
+            if (typeInput) {
+                accountType = typeInput.value;
+            }
+        }
+        
+        // 判斷手續費類型
+        const brokerSelect = document.getElementById('brokerSelect');
+        const broker = brokerSelect ? brokerSelect.value : 'custom';
+        const isTWStock = accountType === 'twstock';
+        isFixedFee = isTWStock && broker === 'cathay_fixed';
+        
+        // 獲取手續費率
+        let fee = 0.1;
+        if (accountType === 'crypto') {
+            fee = 0;
+        } else if (isTWStock && broker === 'cathay') {
+            fee = 1.425;
+        } else if (isTWStock && broker === 'cathay_fixed') {
+            fee = 0;
+        } else if (broker === 'fubon') {
+            fee = 0.25;
+        } else {
+            fee = settings.feeRate || 0.1;
+        }
+        
+        // 重新計算總股數和加權平均成本
+        let totalShares = 0;
+        let totalCost = 0;
+        
+        if (window.tempTransactions && window.tempTransactions.length > 0) {
+            window.tempTransactions.forEach(tx => {
+                const shares = parseFloat(tx.shares) || 0;
+                const price = parseFloat(tx.price) || 0;
+                let costPerShare;
+                if (isFixedFee) {
+                    costPerShare = price + 1; // 台股定期定額固定加1元
+                } else {
+                    costPerShare = price * (1 + fee / 100);
+                }
+                totalShares += shares;
+                totalCost += shares * costPerShare;
+            });
+        }
+        
+        // 計算加權平均成本
+        const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
+        
+        // 更新輸入欄位
+        const balanceInput = document.getElementById('inpBalance');
+        const costInput = document.getElementById('inpCost');
+        if (balanceInput) {
+            balanceInput.value = totalShares;
+        }
+        if (costInput) {
+            costInput.value = avgCost.toFixed(4);
+        }
+        
+        // 重新渲染交易列表
+        renderTransactions(window.tempTransactions);
     }
     
     // Detail View Swipe Gesture
@@ -6512,7 +6705,7 @@
             }
         }
         
-        list.forEach(tx => { 
+        list.forEach((tx, index) => { 
             let txPriceColor = '';
             // 成交價顏色：與現價比較，現價高於成交價用綠色（漲），現價低於成交價用紅色（跌）
             if (price > 0 && tx.price > 0) {
@@ -6530,7 +6723,7 @@
                 }
             }
             const priceClass = txPriceColor ? ` ${txPriceColor}` : '';
-            c.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price}</span></div></div>`; 
+            c.innerHTML += `<div class="tx-item"><div class="tx-header-row"><div><span class="tx-badge">整股</span> <span class="tx-date">${tx.date}</span></div><button class="tx-delete-btn" onclick="deleteStockTransactionInEdit(${index})" title="刪除此筆交易"><i class="fas fa-trash"></i></button></div><div class="tx-row"><span class="tx-label">股數</span><span class="tx-val">${tx.shares}</span></div><div class="tx-row"><span class="tx-label">成交價</span><span class="tx-val${priceClass}">$${tx.price}</span></div></div>`; 
         }); 
     }
 
@@ -8033,6 +8226,41 @@
     // Calendar Functions
     let currentCalendarDate = new Date();
     let selectedDate = null;
+    
+    // 保存記帳頁面狀態的函數
+    function saveJournalPageState() {
+        try {
+            const state = {
+                calendarDate: currentCalendarDate.getTime(),
+                journalPageIndex: currentJournalPageIndex || 0,
+                journalViewMode: journalViewMode || 'calendar'  // 記住是日曆還是圖表模式
+            };
+            localStorage.setItem(`journalPageState_${currentUserId}`, JSON.stringify(state));
+        } catch(e) {
+            console.error('保存記帳頁面狀態失敗:', e);
+        }
+    }
+    
+    // 恢復記帳頁面狀態的函數
+    function restoreJournalPageState() {
+        try {
+            const savedState = localStorage.getItem(`journalPageState_${currentUserId}`);
+            if(savedState) {
+                const state = JSON.parse(savedState);
+                if(state.calendarDate) {
+                    currentCalendarDate = new Date(state.calendarDate);
+                }
+                if(state.journalPageIndex !== undefined) {
+                    currentJournalPageIndex = state.journalPageIndex;
+                }
+                if(state.journalViewMode) {
+                    journalViewMode = state.journalViewMode;  // 恢復視圖模式
+                }
+            }
+        } catch(e) {
+            console.error('恢復記帳頁面狀態失敗:', e);
+        }
+    }
     function switchToCalendarPage(showCalendar) {
         const calendarPage = document.getElementById('calendarPage');
         const contentGrid = document.querySelector('.content-grid');
@@ -8041,8 +8269,9 @@
         const pageIndicator = document.querySelector('.page-indicator');
         const navbarTitle = document.querySelector('.navbar h1');
         if(showCalendar) {
-            // 切換到記帳頁面時，強制設置為日曆模式
-            journalViewMode = 'calendar';
+            // 恢復記帳頁面狀態（日期、頁面位置和視圖模式）
+            restoreJournalPageState();
+            // 不再強制設置為日曆模式，使用恢復的狀態
             calendarPage.style.display = 'block';
             if(contentGrid) contentGrid.style.display = 'none';
             assetListTab?.classList.remove('active');
@@ -8059,17 +8288,39 @@
             const sortBtn = document.getElementById('sortBtn');
             const chartBtn = document.getElementById('calendarChartBtn');
             const settingsBtn = document.getElementById('calendarSettingsBtn');
+            const floatingControls = document.getElementById('journalFloatingControls');
             if(addBtn) addBtn.style.display = 'none';
             if(sortBtn) sortBtn.style.display = 'none';
+            // 顯示切換按鈕
             if(chartBtn) {
-                chartBtn.style.display = 'block';
-                // 根據當前模式設置按鈕圖標（現在應該是日曆模式）
-                chartBtn.innerHTML = '<i class="fas fa-chart-pie"></i>';
+                chartBtn.style.display = 'flex';
+                // 根據恢復的視圖模式設置按鈕圖標
+                if(journalViewMode === 'chart') {
+                    chartBtn.innerHTML = '<i class="fas fa-calendar"></i>';
+                } else {
+                    chartBtn.innerHTML = '<i class="fas fa-chart-pie"></i>';
+                }
             }
             if(settingsBtn) {
                 settingsBtn.style.display = 'block';
             }
-            // 初始化顯示模式（現在強制為日曆模式）
+            
+            // 恢復日期顯示
+            const monthYear = document.getElementById('calendarMonthYear');
+            if(monthYear) {
+                const year = currentCalendarDate.getFullYear();
+                const month = currentCalendarDate.getMonth();
+                monthYear.textContent = `${year}年${month + 1}月`;
+            }
+            
+            // 恢復收入支出頁面位置
+            const journalPageContainer = document.getElementById('journalPageContainer');
+            if(journalPageContainer && currentJournalPageIndex !== undefined) {
+                const transform = -currentJournalPageIndex * 33.333;
+                journalPageContainer.style.transform = `translateX(${transform}%)`;
+            }
+            
+            // 根據恢復的視圖模式顯示對應的內容
             if(journalViewMode === 'chart') {
                 const calendarGrid = document.getElementById('calendarGrid');
                 const calendarWeekdays = document.querySelector('.calendar-weekdays');
@@ -8098,23 +8349,41 @@
                 todayDateEl.style.display = 'none';
             }
             
-            // 自動選中今天並顯示詳情（如果沒有選中其他日期）
+            // 只有在日曆模式下才顯示詳情
+            if(journalViewMode === 'calendar') {
+                // 自動選中今天並顯示詳情（如果沒有選中其他日期）
                 const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if(!selectedDate) {
-                // 如果沒有選中日期，自動選中今天並顯示詳情
-                selectedDate = new Date(today);
-            renderCalendar();
-                showFixedTransferDetailsForDate(today);
+                today.setHours(0, 0, 0, 0);
+                if(!selectedDate) {
+                    // 如果沒有選中日期，自動選中今天並顯示詳情
+                    selectedDate = new Date(today);
+                    renderCalendar();
+                    showFixedTransferDetailsForDate(today);
+                } else {
+                    // 如果有選中日期，顯示該日期的詳情
+                    showFixedTransferDetailsForDate(selectedDate);
+                }
             } else {
-                // 如果有選中日期，顯示該日期的詳情
-                showFixedTransferDetailsForDate(selectedDate);
+                // 圖表模式下隱藏詳情
+                const calendarTransferDetails = document.getElementById('calendarTransferDetails');
+                if(calendarTransferDetails) {
+                    calendarTransferDetails.style.display = 'none';
+                }
             }
         } else {
             calendarPage.style.display = 'none';
             if(contentGrid) contentGrid.style.display = '';
             assetListTab?.classList.add('active');
             calendarTabBtn?.classList.remove('active');
+            
+            // 切換到資產頁面時，重置所有圓餅圖高亮
+            resetPieChartHighlight('monthlyExpenseTotalChart');
+            resetPieChartHighlight('monthlyExpenseChart');
+            resetPieChartHighlight('monthlyExpenseAdvanceChart');
+            resetPieChartHighlight('monthlyIncomeTotalChart');
+            resetPieChartHighlight('monthlyIncomeChart');
+            resetPieChartHighlight('monthlyIncomeAdvanceChart');
+            
             if(pageIndicator) {
                 // 顯示頁面指示器
                 pageIndicator.style.display = 'flex';  // 恢復顯示
@@ -8143,7 +8412,8 @@
             const settingsBtn = document.getElementById('calendarSettingsBtn');
             if(addBtn && !isEditMode) addBtn.style.display = 'block';
             if(sortBtn) sortBtn.style.display = 'block';
-            if(chartBtn) chartBtn.style.display = 'none';
+            // 在記帳頁面顯示切換按鈕
+            if(chartBtn) chartBtn.style.display = 'flex';
             if(settingsBtn) settingsBtn.style.display = 'none';
         }
     }
@@ -8152,6 +8422,8 @@
         if(journalViewMode !== 'calendar') {
             // 如果在圖表模式下，切換月份並重新渲染圓餅圖
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            // 保存日期狀態
+            saveJournalPageState();
             renderMonthlyCharts();
             // 更新月份顯示
             const monthYear = document.getElementById('calendarMonthYear');
@@ -8164,6 +8436,8 @@
         }
         
         currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+        // 保存日期狀態
+        saveJournalPageState();
         renderCalendar();
         // 不顯示今日日期
         const todayDateEl = document.getElementById('calendarTodayDate');
@@ -8556,6 +8830,10 @@
     let journalViewMode = 'calendar';
     // 月份圓餅圖當前分頁索引（0: 支出, 1: 收入）
     let currentMonthlyChartIndex = 0;
+    // 支出圖表當前視圖（'total': 總支出, 'normal': 原始支出, 'advance': 代墊）
+    let currentExpenseChartView = 'total';
+    // 收入圖表當前視圖（'total': 總收入, 'normal': 原始收入, 'advance': 代墊）
+    let currentIncomeChartView = 'total';
     // 記帳日程圖表動畫引擎
     let monthlyExpenseChartAnimationEngine = null;
     let monthlyExpenseAdvanceChartAnimationEngine = null;
@@ -8566,6 +8844,9 @@
     function toggleJournalChartView() {
         journalViewMode = journalViewMode === 'calendar' ? 'chart' : 'calendar';
         
+        // 保存視圖模式狀態
+        saveJournalPageState();
+        
         // 更新按鈕圖標
         const chartBtn = document.getElementById('calendarChartBtn');
         if(chartBtn) {
@@ -8574,6 +8855,8 @@
             } else {
                 chartBtn.innerHTML = '<i class="fas fa-chart-pie"></i>';
             }
+            // 確保按鈕在記帳頁面時顯示
+            chartBtn.style.display = 'flex';
         }
         
         // 切換日曆和圓餅圖的顯示
@@ -8600,6 +8883,15 @@
             if(calendarGrid) calendarGrid.style.display = 'grid';
             if(calendarWeekdays) calendarWeekdays.style.display = 'grid';  // 使用 grid 與日曆網格對齊
             if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
+            
+            // 切換到日曆模式時，重置所有圓餅圖高亮
+            resetPieChartHighlight('monthlyExpenseTotalChart');
+            resetPieChartHighlight('monthlyExpenseChart');
+            resetPieChartHighlight('monthlyExpenseAdvanceChart');
+            resetPieChartHighlight('monthlyIncomeTotalChart');
+            resetPieChartHighlight('monthlyIncomeChart');
+            resetPieChartHighlight('monthlyIncomeAdvanceChart');
+            
             renderCalendar();
             // 如果有選中日期，顯示詳情
             if(selectedDate) {
@@ -8673,6 +8965,14 @@
             incomeAdvanceTotalElement.textContent = `代墊：$${totalIncomeAdvance.toLocaleString()}`;
         }
         
+        // 在重新渲染前，先清除所有圓餅圖的高亮狀態和中心文字
+        resetPieChartHighlight('monthlyExpenseTotalChart');
+        resetPieChartHighlight('monthlyExpenseChart');
+        resetPieChartHighlight('monthlyExpenseAdvanceChart');
+        resetPieChartHighlight('monthlyIncomeTotalChart');
+        resetPieChartHighlight('monthlyIncomeChart');
+        resetPieChartHighlight('monthlyIncomeAdvanceChart');
+        
         // 渲染支出圓餅圖（合計、一般、代墊）
         renderMonthlyPieChart('expense', expenseRecords, 'monthlyExpenseTotalChart');
         renderMonthlyPieChart('expense', expenseRecordsNormal, 'monthlyExpenseChart');
@@ -8685,6 +8985,35 @@
         
         // 確保切換到當前顯示的圖表
         switchMonthlyChartPage(currentMonthlyChartIndex);
+        
+        // 監聽視窗大小改變，自動重新調整圓餅圖
+        if(!window.monthlyChartResizeHandler) {
+            let resizeTimeout;
+            window.monthlyChartResizeHandler = () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    // 重新渲染所有圓餅圖以應用新的響應式配置
+                    if(journalViewMode === 'chart') {
+                        renderMonthlyCharts();
+                    }
+                }, 300); // 防抖處理
+            };
+            window.addEventListener('resize', window.monthlyChartResizeHandler);
+        }
+    }
+    
+    // 獲取響應式圓餅圖配置（根據螢幕寬度）
+    // 新方案：圓餅圖更大，不顯示標籤（標籤信息在下方列表中顯示）
+    function getResponsivePieChartConfig() {
+        // 圓餅圖更大，中間空白區域也更大以容納文字
+        return {
+            pieSize: '90%',  // 更大的圓餅圖
+            innerSize: '50%',  // 中間空白區域要夠大以容納文字（與 highlightPieChartSlice 中的 innerSizePercent 保持一致）
+            labelDistance: 0,  // 不顯示標籤
+            labelFontSize: '0px',  // 不顯示
+            spacing: [20, 20, 20, 20],  // 標準間距
+            margin: [10, 10, 10, 10]  // 標準邊距
+        };
     }
     
     // 渲染單個月份圓餅圖
@@ -8751,7 +9080,7 @@
         }));
         
         const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#ffffff';
-        // 確保圖表容器允許內容溢出
+        // 確保圖表容器設定
         if(chartContainer) {
             chartContainer.style.overflow = 'visible';
             chartContainer.style.position = 'relative';
@@ -8795,12 +9124,16 @@
             
             // 使用動畫引擎更新圖表
             if(animationEngine) {
+                // 在更新前先清除高亮狀態和中心文字
+                resetPieChartHighlight(chartId);
                 animationEngine.animate({
                     newData: chartDataWithColors,
                     animationType: 'switch',
                     duration: CHART_ANIMATION_CONFIG.duration,
                     easing: CHART_ANIMATION_CONFIG.easing
                 });
+                // 動畫完成後，如果沒有高亮狀態，清除中心文字
+                // 注意：這裡不清除，因為用戶可能正在點擊細項，應該由 resetPieChartHighlight 來清除
                 return; // 動畫引擎會處理更新，不需要重新創建圖表
             }
         }
@@ -8823,18 +9156,23 @@
         }
         
         // 確保容器完全清空（包括任何提示文字和DOM元素）
+        // 但保留自定義文字容器（如果存在），稍後會重新設置
+        const existingTextContainer = chartContainer.querySelector('.pie-chart-center-text');
         while(chartContainer.firstChild) {
             chartContainer.removeChild(chartContainer.firstChild);
         }
+        
+        // 獲取響應式配置
+        const responsiveConfig = getResponsivePieChartConfig();
         
         // 創建新圖表
         chartContainer.chartInstance = Highcharts.chart(chartId, {
             chart: {
                 type: 'pie',
                 backgroundColor: 'transparent',
-                height: 300,  // 調整高度以適應上下兩個圖表
-                spacing: [40, 60, 40, 60],  // 調整間距
-                margin: [20, 50, 20, 50],  // 調整邊距
+                height: 250,  // 減少高度，為列表留出空間
+                spacing: responsiveConfig.spacing,
+                margin: responsiveConfig.margin,
                 plotBackgroundColor: 'transparent',
                 plotBorderWidth: 0
             },
@@ -8844,30 +9182,11 @@
                 pointFormat: '<b>{point.percentage:.1f}%</b><br/>${point.y:,.0f}'
             },
             plotOptions: {
-                pie: {
-                    size: '85%',
-                    innerSize: '60%',
+                    pie: {
+                        size: responsiveConfig.pieSize,
+                        innerSize: responsiveConfig.innerSize,
                     dataLabels: {
-                        enabled: true,
-                        distance: 35,
-                        format: '{point.name}<br/><span style="opacity:0.7">{point.percentage:.1f}%</span><br/><span style="font-size:11px;opacity:0.6;">${point.y:,.0f}</span>',
-                        style: {
-                            color: chartTextColor,
-                            fontSize: '12px',
-                            fontWeight: 'normal',
-                            textOutline: 'none',
-                            whiteSpace: 'nowrap'  // 防止文字換行
-                        },
-                        allowOverlap: true,
-                        minFontSize: 8,
-                        maxFontSize: 14,
-                        connectorWidth: 1,
-                        connectorColor: chartTextColor,
-                        softConnector: true,
-                        crop: false,  // 不裁剪標籤
-                        overflow: 'allow',  // 允許標籤超出圖表區域
-                            useHTML: true,  // 使用HTML渲染以支持金額顯示
-                        padding: 0  // 移除內邊距
+                        enabled: false  // 不顯示標籤，所有詳細信息在下方列表中顯示
                     },
                     colors: colors,  // 設置顏色數組
                     states: {
@@ -8918,11 +9237,352 @@
             }]
         });
         
+        // 確保圖表容器有相對定位，以便文字容器可以絕對定位
+        chartContainer.style.position = 'relative';
+        
+        // 在創建新圖表後，清除可能存在的舊文字容器並重置高亮狀態
+        resetPieChartHighlight(chartId);
+        
         // 初始化動畫引擎
         if(chartId === 'monthlyExpenseChart') {
             monthlyExpenseChartAnimationEngine = new ChartAnimationEngine(chartContainer.chartInstance);
         } else if(chartId === 'monthlyIncomeChart') {
             monthlyIncomeChartAnimationEngine = new ChartAnimationEngine(chartContainer.chartInstance);
+        }
+        
+        // 渲染詳細列表
+        renderMonthlyChartList(type, chartDataWithColors, chartId);
+    }
+    
+    // 切換支出圖表視圖（總支出、原始支出、代墊）
+    function toggleExpenseChartView() {
+        const views = ['total', 'normal', 'advance'];
+        const viewNames = ['總支出', '原始支出', '代墊'];
+        const currentIndex = views.indexOf(currentExpenseChartView);
+        const nextIndex = (currentIndex + 1) % views.length;
+        currentExpenseChartView = views[nextIndex];
+        
+        // 隱藏所有視圖
+        document.getElementById('expenseTotalView').style.display = 'none';
+        document.getElementById('expenseNormalView').style.display = 'none';
+        document.getElementById('expenseAdvanceView').style.display = 'none';
+        
+        // 顯示當前視圖
+        if(currentExpenseChartView === 'total') {
+            document.getElementById('expenseTotalView').style.display = 'block';
+        } else if(currentExpenseChartView === 'normal') {
+            document.getElementById('expenseNormalView').style.display = 'block';
+        } else if(currentExpenseChartView === 'advance') {
+            document.getElementById('expenseAdvanceView').style.display = 'block';
+        }
+        
+        // 更新按鈕文字
+        const toggleText = document.getElementById('expenseChartToggleText');
+        if(toggleText) {
+            toggleText.textContent = viewNames[nextIndex];
+        }
+        
+        // 切換視圖時恢復圓餅圖高亮
+        resetPieChartHighlight('monthlyExpenseTotalChart');
+        resetPieChartHighlight('monthlyExpenseChart');
+        resetPieChartHighlight('monthlyExpenseAdvanceChart');
+    }
+    
+    // 切換收入圖表視圖（總收入、原始收入、代墊）
+    function toggleIncomeChartView() {
+        const views = ['total', 'normal', 'advance'];
+        const viewNames = ['總收入', '原始收入', '代墊'];
+        const currentIndex = views.indexOf(currentIncomeChartView);
+        const nextIndex = (currentIndex + 1) % views.length;
+        currentIncomeChartView = views[nextIndex];
+        
+        // 隱藏所有視圖
+        document.getElementById('incomeTotalView').style.display = 'none';
+        document.getElementById('incomeNormalView').style.display = 'none';
+        document.getElementById('incomeAdvanceView').style.display = 'none';
+        
+        // 顯示當前視圖
+        if(currentIncomeChartView === 'total') {
+            document.getElementById('incomeTotalView').style.display = 'block';
+        } else if(currentIncomeChartView === 'normal') {
+            document.getElementById('incomeNormalView').style.display = 'block';
+        } else if(currentIncomeChartView === 'advance') {
+            document.getElementById('incomeAdvanceView').style.display = 'block';
+        }
+        
+        // 更新按鈕文字
+        const toggleText = document.getElementById('incomeChartToggleText');
+        if(toggleText) {
+            toggleText.textContent = viewNames[nextIndex];
+        }
+        
+        // 切換視圖時恢復圓餅圖高亮
+        resetPieChartHighlight('monthlyIncomeTotalChart');
+        resetPieChartHighlight('monthlyIncomeChart');
+        resetPieChartHighlight('monthlyIncomeAdvanceChart');
+    }
+    
+    // 渲染圓餅圖下方的詳細列表
+    function renderMonthlyChartList(type, chartData, chartId) {
+        // 根據 chartId 找到對應的列表容器
+        let listContainerId = '';
+        if(chartId === 'monthlyExpenseTotalChart') {
+            listContainerId = 'monthlyExpenseTotalList';
+        } else if(chartId === 'monthlyExpenseChart') {
+            listContainerId = 'monthlyExpenseList';
+        } else if(chartId === 'monthlyExpenseAdvanceChart') {
+            listContainerId = 'monthlyExpenseAdvanceList';
+        } else if(chartId === 'monthlyIncomeTotalChart') {
+            listContainerId = 'monthlyIncomeTotalList';
+        } else if(chartId === 'monthlyIncomeChart') {
+            listContainerId = 'monthlyIncomeList';
+        } else if(chartId === 'monthlyIncomeAdvanceChart') {
+            listContainerId = 'monthlyIncomeAdvanceList';
+        }
+        
+        if(!listContainerId) return;
+        
+        const listContainer = document.getElementById(listContainerId);
+        if(!listContainer) return;
+        
+        // 清空列表
+        listContainer.innerHTML = '';
+        
+        if(!chartData || chartData.length === 0) {
+            return;
+        }
+        
+        // 計算總額
+        const total = chartData.reduce((sum, item) => sum + (item.y || 0), 0);
+        
+        // 按金額排序（從大到小）
+        const sortedData = [...chartData].sort((a, b) => (b.y || 0) - (a.y || 0));
+        
+        // 創建列表項目
+        sortedData.forEach((item, index) => {
+            const percentage = total > 0 ? ((item.y || 0) / total * 100).toFixed(1) : '0.0';
+            const amount = (item.y || 0).toLocaleString();
+            const color = item.color || '#999';
+            
+            const listItem = document.createElement('div');
+            listItem.style.cssText = 'display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);';
+            
+            // 顏色標記
+            const colorDot = document.createElement('div');
+            colorDot.style.cssText = `width: 12px; height: 12px; border-radius: 50%; background: ${color}; margin-right: 12px; flex-shrink: 0;`;
+            
+            // 類別名稱
+            const categoryName = document.createElement('div');
+            categoryName.style.cssText = 'flex: 1; font-size: 14px; color: var(--text-primary); font-weight: 500;';
+            categoryName.textContent = item.name || '其他';
+            
+            // 百分比和金額
+            const details = document.createElement('div');
+            details.style.cssText = 'display: flex; flex-direction: column; align-items: flex-end; margin-left: 12px;';
+            
+            const percentageSpan = document.createElement('span');
+            percentageSpan.style.cssText = 'font-size: 13px; color: var(--text-secondary); margin-bottom: 2px;';
+            percentageSpan.textContent = `${percentage}%`;
+            
+            const amountSpan = document.createElement('span');
+            amountSpan.style.cssText = 'font-size: 15px; color: var(--text-primary); font-weight: 600;';
+            amountSpan.textContent = `$${amount}`;
+            
+            details.appendChild(percentageSpan);
+            details.appendChild(amountSpan);
+            
+            listItem.appendChild(colorDot);
+            listItem.appendChild(categoryName);
+            listItem.appendChild(details);
+            
+            // 添加點擊事件：高亮對應的圓餅圖區塊
+            listItem.style.cursor = 'pointer';
+            listItem.classList.add('pie-chart-list-item'); // 添加標記類
+            listItem.setAttribute('data-chart-id', chartId); // 添加圖表ID標記
+            listItem.addEventListener('click', function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                highlightPieChartSlice(chartId, item.name || item.category);
+            });
+            
+            listContainer.appendChild(listItem);
+        });
+        
+        // 添加點擊監聽器：點擊列表容器（非列表項）時重置圓餅圖高亮
+        const existingHandler = listContainer._resetHandler;
+        if(existingHandler) {
+            listContainer.removeEventListener('click', existingHandler);
+        }
+        const resetHandler = function(e) {
+            // 檢查點擊的目標是否是列表項或其子元素
+            const clickedListItem = e.target.closest('.pie-chart-list-item');
+            // 如果不是列表項，重置高亮
+            if(!clickedListItem) {
+                resetPieChartHighlight(chartId);
+            }
+        };
+        listContainer._resetHandler = resetHandler;
+        listContainer.addEventListener('click', resetHandler);
+        
+        // 全局點擊監聽器：點擊列表項以外的任何地方都重置高亮
+        // 因為列表項的 click 有 stopPropagation()，所以只要事件冒泡到 document，就代表不是點在列表項上
+        if(!window.pieChartGlobalClickHandler) {
+            window.pieChartGlobalClickHandler = function(e) {
+                resetPieChartHighlight('monthlyExpenseTotalChart');
+                resetPieChartHighlight('monthlyExpenseChart');
+                resetPieChartHighlight('monthlyExpenseAdvanceChart');
+                resetPieChartHighlight('monthlyIncomeTotalChart');
+                resetPieChartHighlight('monthlyIncomeChart');
+                resetPieChartHighlight('monthlyIncomeAdvanceChart');
+            };
+            document.addEventListener('click', window.pieChartGlobalClickHandler);
+        }
+        
+        // 動態設置列表高度：根據項目數量自動調整，只有超過視窗高度時才啟用滾動
+        setTimeout(() => {
+            const pageItem = listContainer.closest('.page-item');
+            if(pageItem) {
+                const listRect = listContainer.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                
+                // 計算可用高度（視窗高度 - 列表頂部到視窗頂部的距離 - 底部導航欄高度 - 安全邊距）
+                const bottomNavHeight = 80; // 底部導航欄高度
+                const safeMargin = 20; // 安全邊距
+                const availableHeight = viewportHeight - listRect.top - bottomNavHeight - safeMargin;
+                
+                // 如果列表內容高度超過可用高度，設置 max-height 並啟用滾動
+                if(listContainer.scrollHeight > availableHeight) {
+                    listContainer.style.maxHeight = `${availableHeight}px`;
+                    listContainer.style.overflowY = 'auto';
+                } else {
+                    // 否則移除 max-height，讓列表自然展開
+                    listContainer.style.maxHeight = 'none';
+                    listContainer.style.overflowY = 'visible';
+                }
+            }
+        }, 100);
+    }
+    
+    // 高亮圓餅圖的指定區塊，其他區塊變暗，並在中心顯示信息
+    function highlightPieChartSlice(chartId, categoryName) {
+        const chartContainer = document.getElementById(chartId);
+        if(!chartContainer || !chartContainer.chartInstance) {
+            return;
+        }
+        
+        const chart = chartContainer.chartInstance;
+        if(!chart.series || chart.series.length === 0) {
+            return;
+        }
+        
+        const series = chart.series[0];
+        if(!series.points) {
+            return;
+        }
+        
+        // 找到選中的點
+        let selectedPoint = null;
+        let total = 0;
+        
+        // 找到對應的區塊並高亮，其他變暗
+        series.points.forEach(point => {
+            total += point.y || 0;
+            if(point.name === categoryName) {
+                selectedPoint = point;
+                // 選中的區塊：正常狀態，不變暗
+                point.setState('normal');
+                const pointEl = point.graphic?.element;
+                if(pointEl) {
+                    pointEl.style.setProperty('opacity', '1', 'important');
+                }
+            } else {
+                // 其他區塊：變暗
+                point.setState('inactive');
+                const pointEl = point.graphic?.element;
+                if(pointEl) {
+                    pointEl.style.setProperty('opacity', '0.3', 'important');
+                }
+            }
+        });
+        
+        // 在圓餅圖中心顯示信息（使用自定義 DOM 元素）
+        if(selectedPoint) {
+            const percentage = total > 0 ? ((selectedPoint.y || 0) / total * 100).toFixed(1) : '0.0';
+            const amount = (selectedPoint.y || 0).toLocaleString();
+            const name = selectedPoint.name || '其他';
+            
+            // 計算中間空白區域的實際大小
+            const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#ffffff';
+            const innerSizePercent = 50; // 與 getResponsivePieChartConfig 中的 innerSize 保持一致
+            // 取得圓餅圖實際繪製區域的寬度
+            const plotWidth = chart.plotWidth || chart.chartWidth || 250;
+            const pieSize = plotWidth * 0.9; // pieSize 為 90%
+            const innerDiameter = pieSize * (innerSizePercent / 100);
+            const maxTextWidth = Math.floor(innerDiameter * 0.85); // 使用 85% 的內圈直徑
+            
+            // 查找或創建自定義文字容器
+            let textContainer = chartContainer.querySelector('.pie-chart-center-text');
+            if(!textContainer) {
+                textContainer = document.createElement('div');
+                textContainer.className = 'pie-chart-center-text';
+                chartContainer.style.position = 'relative';
+                chartContainer.appendChild(textContainer);
+            }
+            
+            // 設定容器樣式和文字內容
+            textContainer.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                pointer-events: none;
+                z-index: 10;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                width: ${maxTextWidth}px;
+                max-width: ${maxTextWidth}px;
+                box-sizing: border-box;
+            `;
+            textContainer.innerHTML = `
+                <div style="font-size: 16px; font-weight: 600; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${name}</div>
+                <div style="font-size: 20px; font-weight: 700; color: ${chartTextColor}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">$${amount}</div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${percentage}%</div>
+            `;
+        } else {
+            // 如果找不到對應的類別，隱藏文字
+            const textContainer = chartContainer.querySelector('.pie-chart-center-text');
+            if(textContainer) {
+                textContainer.style.display = 'none';
+            }
+        }
+    }
+    
+    // 恢復圓餅圖所有區塊為正常狀態
+    function resetPieChartHighlight(chartId) {
+        const chartContainer = document.getElementById(chartId);
+        if(!chartContainer || !chartContainer.chartInstance) {
+            return;
+        }
+        
+        const chart = chartContainer.chartInstance;
+        
+        // 恢復所有區塊為正常狀態
+        if(chart.series && chart.series.length > 0 && chart.series[0].points) {
+            chart.series[0].points.forEach(point => {
+                point.setState('normal');
+                const pointEl = point.graphic?.element;
+                if(pointEl) {
+                    pointEl.style.setProperty('opacity', '1', 'important');
+                }
+            });
+        }
+        
+        // 隱藏自定義文字容器
+        const textContainer = chartContainer.querySelector('.pie-chart-center-text');
+        if(textContainer) {
+            textContainer.style.display = 'none';
         }
     }
     
@@ -9031,6 +9691,14 @@
             container.classList.remove('swiping');
             const transform = -index * 50;
             container.style.transform = `translateX(${transform}%)`;
+            
+            // 切換頁面時恢復所有圓餅圖高亮
+            resetPieChartHighlight('monthlyExpenseTotalChart');
+            resetPieChartHighlight('monthlyExpenseChart');
+            resetPieChartHighlight('monthlyExpenseAdvanceChart');
+            resetPieChartHighlight('monthlyIncomeTotalChart');
+            resetPieChartHighlight('monthlyIncomeChart');
+            resetPieChartHighlight('monthlyIncomeAdvanceChart');
             
             // 重新渲染當前圖表以觸發動畫（動畫引擎會處理平滑過渡）
             setTimeout(() => {
@@ -9239,24 +9907,27 @@
                 chartContainer.chartInstance.destroy();
             }
             
-            // 確保圖表容器允許內容溢出
+            // 確保圖表容器限制內容在視窗內
             if(chartContainer) {
-                chartContainer.style.overflow = 'visible';
+                chartContainer.style.overflow = 'hidden';
                 chartContainer.style.position = 'relative';
             }
+            
+            // 獲取響應式配置
+            const responsiveConfig = getResponsivePieChartConfig();
             
             // 創建新圖表
             const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary') || '#ffffff';
             chartContainer.chartInstance = Highcharts.chart(chartId, {
-                chart: {
-                    type: 'pie',
-                    backgroundColor: 'transparent',
-                    height: 200,
-                    spacing: [40, 70, 40, 70],  // 進一步增加上下左右的間距，為標籤留出更多空間
-                    margin: [20, 50, 20, 50],  // 進一步增加邊距
-                    plotBackgroundColor: 'transparent',
-                    plotBorderWidth: 0
-                },
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent',
+                height: 200,
+                spacing: responsiveConfig.spacing,
+                margin: responsiveConfig.margin,
+                plotBackgroundColor: 'transparent',
+                plotBorderWidth: 0
+            },
                 title: { text: '' },
                 credits: { enabled: false },
                 tooltip: {
@@ -9264,30 +9935,11 @@
                 },
                 plotOptions: {
                     pie: {
-                        size: '80%',
-                        innerSize: '50%',
-                        dataLabels: {
-                            enabled: true,
-                            distance: 30,
-                            format: '{point.name}<br/><span style="opacity:0.7">{point.percentage:.1f}%</span><br/><span style="font-size:10px;opacity:0.6;">${point.y:,.0f}</span>',
-                            style: {
-                                color: chartTextColor,
-                                fontSize: '11px',
-                                fontWeight: 'normal',
-                                textOutline: 'none',
-                                whiteSpace: 'nowrap'  // 防止文字換行
-                            },
-                            allowOverlap: true,
-                            minFontSize: 7,
-                            maxFontSize: 13,
-                            connectorWidth: 1,
-                            connectorColor: chartTextColor,
-                            softConnector: true,
-                            crop: false,  // 不裁剪標籤
-                            overflow: 'allow',  // 允許標籤超出圖表區域
-                            useHTML: true,  // 使用HTML渲染以支持金額顯示
-                            padding: 0  // 移除內邊距
-                        },
+                        size: responsiveConfig.pieSize,
+                        innerSize: responsiveConfig.innerSize,
+                    dataLabels: {
+                        enabled: false  // 不顯示標籤，所有詳細信息在下方列表中顯示
+                    },
                         colors: colors,  // 設置顏色數組
                         states: {
                             hover: {
@@ -9561,6 +10213,17 @@
             // 更新當前 transform 值
             journalCurrentTransform = transformValue;
         }
+        
+        // 切換記帳頁面時，重置所有圓餅圖高亮
+        resetPieChartHighlight('monthlyExpenseTotalChart');
+        resetPieChartHighlight('monthlyExpenseChart');
+        resetPieChartHighlight('monthlyExpenseAdvanceChart');
+        resetPieChartHighlight('monthlyIncomeTotalChart');
+        resetPieChartHighlight('monthlyIncomeChart');
+        resetPieChartHighlight('monthlyIncomeAdvanceChart');
+        
+        // 保存頁面位置狀態
+        saveJournalPageState();
     }
     
     // 記帳詳情滑動相關變數
