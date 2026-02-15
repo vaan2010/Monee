@@ -126,7 +126,7 @@
         }
         
         .content-grid { display: flex; flex-direction: column; width: 100%; max-width: 100%; overflow-x: hidden; min-height: 0; }
-        .chart-section { display: flex; flex-direction: column; flex-shrink: 0; width: 100%; max-width: 100%; min-width: 0; }
+        .chart-section { display: flex; flex-direction: column; flex-shrink: 0; width: 100%; max-width: 100%; min-width: 0; position: relative; overflow: visible; }
         .list-section { flex: 0 1 auto; overflow-y: visible; min-height: 0; position: relative; width: 100%; max-width: 100%; min-width: 0; }
         /* 手機版：確保 page-item 內容緊貼，避免多餘空白 */
         @media (max-width: 767px) {
@@ -205,6 +205,7 @@
             #chartWrapper .highcharts-container { max-width: 100% !important; overflow: hidden !important; width: 100% !important; height: 100% !important; }
             #chartWrapper .highcharts-root { max-width: 100% !important; overflow: hidden !important; width: 100% !important; height: 100% !important; }
             #chartWrapper svg { max-width: 100% !important; height: auto !important; }
+            #lineChartWrapper { max-width: 100%; width: 100%; height: 350px !important; }
         }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: var(--bg-color); position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; width: 100%; }
@@ -619,13 +620,9 @@
         
         .amount-spacer { font-size: 13px; line-height: 1.35; visibility: hidden; height: 0; margin: 0; padding: 0; }
         .amount-green { color: var(--color-up); } .amount-red { color: var(--color-down); } .sub-green { color: var(--color-up); } .sub-red { color: var(--color-down); }
-        .drag-handle { display: none; color: #666; font-size: 20px; padding-left: 15px; cursor: grab; }
-        /* 排序模式下，整個卡片可以拖動 */
-        .list-item:has(.drag-handle) { cursor: grab; }
-        .list-item:has(.drag-handle):active { cursor: grabbing; }
-        /* 負債項目即使有 drag-handle 也不可拖動 */
-        #group-debt .list-item:has(.drag-handle) { cursor: pointer !important; }
-        #group-debt .list-item:has(.drag-handle):active { cursor: pointer !important; }
+        /* 長按可拖動排序（資產細項、總覽類別卡片） */
+        #group-overview .list-item, #group-bank .list-item, #group-stock .list-item, #group-twstock .list-item, #group-crypto .list-item { cursor: grab; }
+        #group-overview .list-item:active, #group-bank .list-item:active, #group-stock .list-item:active, #group-twstock .list-item:active, #group-crypto .list-item:active { cursor: grabbing; }
 
         .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--card-bg); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 200; }
         .tab-item { color: var(--text-secondary); text-align: center; font-size: 10px; background: none; border: none; width: 30%; }
@@ -681,6 +678,88 @@
                 width: 56px;
                 height: 56px;
                 z-index: 10001; /* 確保在最上層 */
+            }
+        }
+
+        /* Chart Mode Toggle Button */
+        .chart-mode-toggle-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(58, 58, 60, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 91;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+        .chart-mode-toggle-btn:hover { background: rgba(58, 58, 60, 0.8); color: var(--text-primary); }
+        .chart-mode-toggle-btn.active { color: #0a84ff; background: rgba(10, 132, 255, 0.15); border-color: #0a84ff; }
+        
+        /* Line Chart Range Selector */
+        .line-chart-range-selector {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 10px 8px 10px;
+            flex-shrink: 0;
+        }
+        .line-chart-range-selector .range-btn {
+            padding: 4px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .line-chart-range-selector .range-btn:hover { background: rgba(58, 58, 60, 0.3); }
+        .line-chart-range-selector .range-btn.active {
+            background: #0a84ff;
+            color: #fff;
+            border-color: #0a84ff;
+        }
+        
+        /* Line Chart Wrapper - 實際大小=顯示大小，不裁切 */
+        #lineChartWrapper {
+            flex: 0 0 auto;
+            height: 320px;
+            min-height: 320px;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+        #lineChartWrapper .highcharts-container,
+        #lineChartWrapper .highcharts-root,
+        #lineChartWrapper svg { width: 100% !important; height: 100% !important; overflow: hidden !important; }
+        #lineChartWrapper .highcharts-point { pointer-events: auto !important; cursor: pointer !important; }
+        #lineChartWrapper .highcharts-plot-background,
+        #lineChartWrapper .highcharts-series { pointer-events: auto !important; cursor: pointer !important; }
+        
+        @media (max-width: 767px) {
+            .chart-mode-toggle-btn {
+                top: 6px;
+                right: 6px;
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            #lineChartWrapper {
+                height: 280px !important;
+                min-height: 280px !important;
+            }
+            .line-chart-range-selector .range-btn {
+                padding: 3px 10px;
+                font-size: 11px;
             }
         }
 
@@ -1153,7 +1232,7 @@
                 <h1><img src="./favico.png" alt="Logo" class="title-logo">Monee</h1>
                 <div class="btn-group">
                     <button class="btn-icon sidebar-toggle-btn-navbar" id="sidebarToggleBtnNavbar" onclick="toggleSidebarCollapse()" title="展開選單"><i class="fas fa-bars"></i></button>
-                    <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()"><i class="fas fa-sort-amount-down"></i></button>
+                    <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()" style="display:none"><i class="fas fa-sort-amount-down"></i></button>
                     <button class="btn-icon" id="addBtn" onclick="openModal()"><i class="fas fa-plus"></i></button>
                     <button class="btn-icon" id="calendarSettingsBtn" onclick="openNewExpenseFromCalendar()" style="display: none;"><i class="fas fa-plus"></i></button>
                 </div>
@@ -1185,6 +1264,26 @@
                     <div id="chartWrapper">
                         <div id="customTooltip"><div class="tt-header">類別</div><div class="tt-body"><span class="tt-dot"></span>資產: 0</div></div>
                         <div id="assetChart" style="width:100%; height:100%;"></div>
+                    </div>
+                    
+                    <!-- Line Chart Container -->
+                    <div id="lineChartWrapper" style="display:none; width:100%; padding: 0 10px; box-sizing:border-box; position:relative;">
+                        <div id="assetLineChart" style="width:100%; height:100%; min-height:280px;"></div>
+                        <div id="lineChartPointTooltip" style="display:none; position:absolute; background:var(--card-bg); color:var(--text-primary); padding:10px 14px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.5); border:1px solid var(--border-color); z-index:300; font-size:13px; font-weight:600; white-space:nowrap; pointer-events:none;"></div>
+                    </div>
+                    
+                    <!-- Chart Mode Toggle Button -->
+                    <button id="chartModeToggleBtn" class="chart-mode-toggle-btn" onclick="event.stopPropagation(); toggleChartMode();" title="切換圖表模式">
+                        <i class="fas fa-chart-line" id="chartModeIcon"></i>
+                    </button>
+                    
+                    <!-- Line Chart Range Selector -->
+                    <div id="lineChartRangeSelector" class="line-chart-range-selector" style="display:none;">
+                        <button class="range-btn" data-range="7" onclick="changeLineChartRange(7)">7天</button>
+                        <button class="range-btn active" data-range="30" onclick="changeLineChartRange(30)">30天</button>
+                        <button class="range-btn" data-range="90" onclick="changeLineChartRange(90)">90天</button>
+                        <button class="range-btn" data-range="365" onclick="changeLineChartRange(365)">1年</button>
+                        <button class="range-btn" data-range="0" onclick="changeLineChartRange(0)">全部</button>
                     </div>
                     
                     <!-- Currency Toggle Button -->
@@ -2233,6 +2332,7 @@
     const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
     const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes'; // 日期記事
+    const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
     
     // 銀行代碼資料（包含銀行名稱和代碼）
     const BANK_DATA = [
@@ -2285,127 +2385,46 @@
         '👤', '👨', '👩', '🧑', '👨‍💼', '👩‍💼'
     ];
     
-    const TYPE_COLORS = { 'bank': '#64d2ff', 'stock': '#bf5af2', 'twstock': '#0a84ff', 'crypto': '#ff9f0a', 'debt': '#ff453a' };
+    // 總覽圓餅圖專用：四類彼此區分（錢包、台股不可同色）
+    const OVERVIEW_COLORS = { 'bank': '#6bb5ff', 'stock': '#d9a8f8', 'twstock': '#7ee58f', 'crypto': '#ffcc80' };
+    // 折線圖等使用（與 OVERVIEW_COLORS 一致）
+    const TYPE_COLORS = { 'bank': '#6bb5ff', 'stock': '#d9a8f8', 'twstock': '#7ee58f', 'crypto': '#ffcc80', 'debt': '#ff453a' };
     const TYPE_NAMES = { 'bank': '錢包', 'stock': '美股', 'twstock': '台股', 'crypto': '加密貨幣', 'debt': '負債' };
     
-    // 為每個分類定義專屬主題配色（每個主題內顏色差異明顯，避免相近色，所有顏色都是淡色）
+    // 為每個分類定義專屬主題配色（20色，同色系只保留一個，彼此對比明顯）
     const CHART_ITEM_COLOR_PALETTES = {
         'bank': [
-            // 錢包主題 - 穩重金融風（完全避免相近色，每個顏色差異極大，淡色版）
-            '#6bb5ff',  // 1. 淡藍色
-            '#ffeb80',  // 2. 淡金色
-            '#7ee58f',  // 3. 淡綠色
-            '#ffa8a0',  // 4. 淡紅色
-            '#80e5ff',  // 5. 淡天藍
-            '#ffe880',  // 6. 淡金黃色
-            '#c9a8f0',  // 7. 淡紫色
-            '#7ee58f',  // 8. 淡翠綠色
-            '#a8e8ff',  // 9. 淡淺藍色
-            '#ffcc80',  // 10. 淡橘色
-            '#9bb3f0',  // 11. 淡皇家藍
-            '#ff9980',  // 12. 淡橙紅色
-            '#b3e8ff',  // 13. 淡亮藍色
-            '#80ff80',  // 14. 淡亮綠色
-            '#80b5ff',  // 15. 淡系統藍
-            '#ffeb80',  // 16. 淡黃色
-            '#9bb3d0',  // 17. 淡鋼藍色
-            '#ffb3a0',  // 18. 淡珊瑚紅
-            '#9fd0ff',  // 19. 淡道奇藍
-            '#a8a0e8',  // 20. 淡靛藍色
+            '#6bb5ff',  '#ffeb80',  '#7ee58f',  '#ffa8a0',  '#d9a8f8',  '#ffcc80',
+            '#00d4aa',  '#ff6b9d',  '#a8a0e8',  '#ffbf00',  '#c4a574',  '#22b8cf',
+            '#f43f5e',  '#20c997',  '#8b5cf6',  '#ff7f50',  '#b8e986',  '#748ffc',
+            '#ff922b',  '#868e96'
         ],
         'stock': [
-            // 美股主題 - 科技金融風（完全避免相近色，每個顏色差異極大，淡色版）
-            '#d9a8f8',  // 1. 淡紫色
-            '#7ee58f',  // 2. 淡亮綠色
-            '#a8e8ff',  // 3. 淡淺藍色
-            '#ffa8a0',  // 4. 淡番茄紅
-            '#6bb5ff',  // 5. 淡深藍色
-            '#ffeb80',  // 6. 淡金色
-            '#80e5ff',  // 7. 淡深天藍
-            '#ffcc80',  // 8. 淡橘色
-            '#b3e8ff',  // 9. 淡亮藍色
-            '#ffeb80',  // 10. 淡黃色
-            '#80b5ff',  // 11. 淡系統藍
-            '#ff9980',  // 12. 淡橙紅色
-            '#9bb3f0',  // 13. 淡天空藍
-            '#80ff80',  // 14. 淡亮綠色
-            '#a8a0e8',  // 15. 淡靛藍色
-            '#ffb3a0',  // 16. 淡珊瑚紅
-            '#9fd0ff',  // 17. 淡道奇藍
-            '#7ee58f',  // 18. 淡翠綠色
-            '#9bb3f0',  // 19. 淡皇家藍
-            '#ffb380',  // 20. 淡珊瑚橘
+            '#d9a8f8',  '#7ee58f',  '#6bb5ff',  '#ffa8a0',  '#ffeb80',  '#ffcc80',
+            '#00d4aa',  '#ff6b9d',  '#a8a0e8',  '#ffbf00',  '#c4a574',  '#22b8cf',
+            '#f43f5e',  '#20c997',  '#8b5cf6',  '#ff7f50',  '#b8e986',  '#748ffc',
+            '#ff922b',  '#868e96'
         ],
         'twstock': [
-            // 台股主題 - 東方市場風（完全避免相近色，每個顏色差異極大，淡色版）
-            '#6bb5ff',  // 1. 淡深藍色
-            '#7ee58f',  // 2. 淡亮綠色
-            '#ffa8a0',  // 3. 淡番茄紅
-            '#80e5ff',  // 4. 淡深天藍
-            '#7ee58f',  // 5. 淡翠綠色
-            '#ffeb80',  // 6. 淡金色
-            '#80ccff',  // 7. 淡青藍色
-            '#ffcc80',  // 8. 淡橘色
-            '#80e5e5',  // 9. 淡青色
-            '#d9a8f8',  // 10. 淡紫色
-            '#a8e8ff',  // 11. 淡淺藍色
-            '#ff9980',  // 12. 淡橙紅色
-            '#8fd4e0',  // 13. 淡青綠色
-            '#ffeb80',  // 14. 淡黃色
-            '#80b3ff',  // 15. 淡深藍
-            '#c9a8f0',  // 16. 淡中紫色
-            '#b3e8ff',  // 17. 淡亮藍色
-            '#80ff80',  // 18. 淡亮綠色
-            '#80b5ff',  // 19. 淡系統藍
-            '#ffb3a0',  // 20. 淡珊瑚紅
+            '#6bb5ff',  '#7ee58f',  '#ffa8a0',  '#80ffff',  '#ffeb80',  '#ffcc80',
+            '#00d4aa',  '#ff6b9d',  '#a8a0e8',  '#ffbf00',  '#c4a574',  '#22b8cf',
+            '#f43f5e',  '#20c997',  '#8b5cf6',  '#ff7f50',  '#b8e986',  '#748ffc',
+            '#ff922b',  '#868e96'
         ],
         'crypto': [
-            // 加密貨幣主題 - 數位科技風（完全避免相近色，每個顏色差異極大，淡色版）
-            '#ffcc80',  // 1. 淡橘色
-            '#80ffff',  // 2. 淡青色
-            '#ffeb80',  // 3. 淡金色
-            '#80ff80',  // 4. 淡亮綠色
-            '#ffa8a0',  // 5. 淡番茄紅
-            '#80e5ff',  // 6. 淡深天藍
-            '#ffeb80',  // 7. 淡黃色
-            '#d9a8f8',  // 8. 淡紫色
-            '#ff9980',  // 9. 淡橙紅色
-            '#a8e8ff',  // 10. 淡淺藍色
-            '#7ee58f',  // 11. 淡亮綠色
-            '#6bb5ff',  // 12. 淡深藍色
-            '#c9a8f0',  // 13. 淡中紫色
-            '#80b5ff',  // 14. 淡系統藍
-            '#7ee58f',  // 15. 淡翠綠色
-            '#b3e8ff',  // 16. 淡亮藍色
-            '#ffb3a0',  // 17. 淡珊瑚紅
-            '#9bb3f0',  // 18. 淡天空藍
-            '#9bb3f0',  // 19. 淡皇家藍
-            '#a8a0e8',  // 20. 淡靛藍色
+            '#ffcc80',  '#80ffff',  '#ffeb80',  '#7ee58f',  '#ffa8a0',  '#d9a8f8',
+            '#00d4aa',  '#ff6b9d',  '#a8a0e8',  '#ffbf00',  '#c4a574',  '#22b8cf',
+            '#f43f5e',  '#20c997',  '#8b5cf6',  '#ff7f50',  '#b8e986',  '#748ffc',
+            '#ff922b',  '#868e96'
         ]
     };
     
-    // 統一的備用顏色（當分類未定義時使用，淡色版）
+    // 統一的備用顏色（當分類未定義時使用）
     const CHART_ITEM_COLORS_FALLBACK = [
-        '#b3e8ff',  // 淡藍色
-        '#d9a8f8',  // 淡紫色
-        '#ffcc80',  // 淡橘色
-        '#7ee58f',  // 淡綠色
-        '#ffa8a0',  // 淡紅色
-        '#6bb5ff',  // 淡深藍色
-        '#ffeb80',  // 淡黃色
-        '#ffb3d0',  // 淡粉色
-        '#a8e8ff',  // 淡淺藍色
-        '#c9a8f0',  // 淡深紫色
-        '#ffcc80',  // 淡深橘色
-        '#7ee58f',  // 淡亮綠色
-        '#ffa8c0',  // 淡玫瑰紅
-        '#80b5ff',  // 淡系統藍
-        '#a8a0e8',  // 淡靛藍色
-        '#ff9980',  // 淡鮮紅色
-        '#7ee58f',  // 淡翠綠色
-        '#ffeb80',  // 淡金色
-        '#ffb380',  // 淡珊瑚橘
-        '#c0c0c0',  // 淡灰色
+        '#6bb5ff',  '#d9a8f8',  '#ffcc80',  '#7ee58f',  '#ffa8a0',  '#ffeb80',
+        '#00d4aa',  '#ff6b9d',  '#a8a0e8',  '#ffbf00',  '#c4a574',  '#22b8cf',
+        '#f43f5e',  '#20c997',  '#8b5cf6',  '#ff7f50',  '#b8e986',  '#748ffc',
+        '#ff922b',  '#868e96'
     ];
 
     let editingId = null;
@@ -3477,13 +3496,17 @@
         let chartTitle = '';
         
         if(chartLevel === 'root' || (chartLevel === 'page' && currentPage === 0)) {
-            // 總覽分頁：顯示四個類別的總覽，使用各分類主題的第一個顏色
-            chartData = [
-                {name:TYPE_NAMES['bank'],y:Math.round(groups.bank),drilldown:'bank',color:CHART_ITEM_COLOR_PALETTES['bank']?.[0] || TYPE_COLORS.bank},
-                {name:TYPE_NAMES['stock'],y:Math.round(groups.stock),drilldown:'stock',color:CHART_ITEM_COLOR_PALETTES['stock']?.[0] || TYPE_COLORS.stock},
-                {name:TYPE_NAMES['twstock'],y:Math.round(groups.twstock),drilldown:'twstock',color:CHART_ITEM_COLOR_PALETTES['twstock']?.[0] || TYPE_COLORS.twstock},
-                {name:TYPE_NAMES['crypto'],y:Math.round(groups.crypto),drilldown:'crypto',color:CHART_ITEM_COLOR_PALETTES['crypto']?.[0] || TYPE_COLORS.crypto}
-            ].filter(d=>d.y>0);
+            // 總覽分頁：依 pageOrder 顯示各類別，使用各分類主題的第一個顏色（與其他圓餅圖一致）
+            const orderedCategoryTypes = pageOrder
+                .filter(index => index !== 0)
+                .map(index => PAGE_TYPES[index])
+                .filter(type => pageVisibility[type] !== false);
+            chartData = orderedCategoryTypes.map(type => ({
+                name: TYPE_NAMES[type],
+                y: Math.round(groups[type] || 0),
+                drilldown: type,
+                color: OVERVIEW_COLORS[type] || CHART_ITEM_COLORS_FALLBACK[0]
+            })).filter(d => d.y > 0);
             chartTitle = '';
         } else if(chartLevel === 'page' && currentPage > 0) {
             // 分頁模式：顯示當前分頁類別內的資產分布
@@ -3730,6 +3753,13 @@
             }
         }, 300); 
         document.getElementById('chartWrapper').addEventListener('click',function(e){const t=e.target;if(t.tagName!=='path'&&!t.closest('.highcharts-point')&&chartInstance){if(clickTimer)clearTimeout(clickTimer);activeInactivePoints.clear();if(chartInstance.series[0]){chartInstance.series[0].points.forEach(p=>{p.slice(false);p.setState('normal');const pEl = p.graphic?.element;if(pEl) pEl.style.setProperty('opacity', '1', 'important');});}hideCustomTooltip();}}); 
+        // 只有點擊折線圖「外」的區域才隱藏標籤；點擊折線圖內會由 chart.events.click 顯示
+        document.addEventListener('click', function(e) {
+            const tooltipEl = document.getElementById('lineChartPointTooltip');
+            if(!tooltipEl || tooltipEl.style.display !== 'block') return;
+            if(e.target.closest('#lineChartWrapper')) return; // 點擊在折線圖內不隱藏
+            hideLineChartPointTooltip();
+        });
     }
 
     // --- Calculations ---
@@ -4607,6 +4637,7 @@
         closeDetailView();
         renderAssets();
     }
+    let _snapshotDebounceTimer = null;
     function saveData() { 
         if (isUserSwitching) return; // 鎖定攔截
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
@@ -4614,6 +4645,10 @@
         if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
             window.syncAccountsToFirestore(accounts);
         }
+        // 延遲記錄快照，避免短時間內多次觸發
+        if(_snapshotDebounceTimer) clearTimeout(_snapshotDebounceTimer);
+        _snapshotDebounceTimer = setTimeout(() => { recordDailyAssetSnapshot(); }, 3000);
+        if(currentChartMode === 'line') recordDailyAssetSnapshot();
     }
     
     function saveSettings() {
@@ -4624,6 +4659,520 @@
             window.syncSettingsToFirestore(settings);
         }
     }
+    // ========== 資產歷史快照系統 ==========
+    let assetHistoryLineChart = null;
+    let currentChartMode = 'pie'; // 'pie' or 'line'
+    let currentLineChartRange = 30; // 預設顯示30天
+    
+    // 載入資產歷史記錄
+    function loadAssetHistory() {
+        const historyKey = `${STORAGE_KEY_ASSET_HISTORY}_${currentUserId}`;
+        return JSON.parse(localStorage.getItem(historyKey) || '{}');
+    }
+    
+    // 保存資產歷史記錄
+    function saveAssetHistory(history) {
+        if (isUserSwitching) return;
+        const historyKey = `${STORAGE_KEY_ASSET_HISTORY}_${currentUserId}`;
+        localStorage.setItem(historyKey, JSON.stringify(history));
+        // 同步到 Firestore
+        if (window.syncAssetHistoryToFirestore && window.firebaseUserLoggedIn) {
+            window.syncAssetHistoryToFirestore(history);
+        }
+    }
+    
+    // 記錄今日資產快照（每天只記錄一次，但會更新當天最新值）
+    function recordDailyAssetSnapshot() {
+        if (isUserSwitching) return;
+        if (!accounts || accounts.length === 0) return;
+        
+        const today = new Date();
+        const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        
+        // 計算各分類總值（TWD）
+        let totals = { bank: 0, stock: 0, twstock: 0, crypto: 0, total: 0, debt: 0 };
+        accounts.forEach(acc => {
+            let val = calculateTWD(acc);
+            if(acc.type === 'debt') {
+                totals.debt += val;
+            } else if(totals[acc.type] !== undefined) {
+                totals[acc.type] += val;
+            }
+        });
+        totals.total = totals.bank + totals.stock + totals.twstock + totals.crypto - totals.debt;
+        
+        // 四捨五入
+        Object.keys(totals).forEach(k => { totals[k] = Math.round(totals[k]); });
+        
+        const history = loadAssetHistory();
+        history[dateStr] = totals;
+        
+        // 清理超過 730 天（2年）的舊資料
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - 730);
+        const cutoffStr = `${cutoffDate.getFullYear()}-${String(cutoffDate.getMonth()+1).padStart(2,'0')}-${String(cutoffDate.getDate()).padStart(2,'0')}`;
+        Object.keys(history).forEach(key => {
+            if(key < cutoffStr) delete history[key];
+        });
+        
+        saveAssetHistory(history);
+        if(currentChartMode === 'line') {
+            requestAnimationFrame(() => renderAssetLineChart());
+        }
+    }
+    
+    // 切換圖表模式（圓餅圖 ↔ 折線圖）
+    function toggleChartMode() {
+        const pieWrapper = document.getElementById('chartWrapper');
+        const lineWrapper = document.getElementById('lineChartWrapper');
+        const rangeSelector = document.getElementById('lineChartRangeSelector');
+        const toggleBtn = document.getElementById('chartModeToggleBtn');
+        const toggleIcon = document.getElementById('chartModeIcon');
+        
+        if(currentChartMode === 'pie') {
+            currentChartMode = 'line';
+            pieWrapper.style.display = 'none';
+            lineWrapper.style.display = 'block';
+            rangeSelector.style.display = 'flex';
+            // 同步時間範圍按鈕的 active 狀態
+            document.querySelectorAll('#lineChartRangeSelector .range-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.getAttribute('data-range')) === currentLineChartRange);
+            });
+            toggleBtn.classList.add('active');
+            toggleIcon.className = 'fas fa-chart-pie';
+            toggleBtn.title = '切換為圓餅圖';
+            // 延遲渲染，確保 lineChartWrapper 已取得正確尺寸
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => renderAssetLineChart());
+            });
+        } else {
+            currentChartMode = 'pie';
+            pieWrapper.style.display = 'flex';
+            lineWrapper.style.display = 'none';
+            rangeSelector.style.display = 'none';
+            hideLineChartPointTooltip();
+            toggleBtn.classList.remove('active');
+            toggleIcon.className = 'fas fa-chart-line';
+            toggleBtn.title = '切換為折線圖';
+            // 重新 reflow 圓餅圖
+            if(chartInstance) {
+                setTimeout(() => {
+                    chartInstance.reflow();
+                }, 100);
+            }
+        }
+    }
+    
+    // 隱藏折線圖點擊標籤（點選其他地方時呼叫）
+    function hideLineChartPointTooltip() {
+        const tooltipEl = document.getElementById('lineChartPointTooltip');
+        if(tooltipEl) {
+            tooltipEl.style.display = 'none';
+            clearTimeout(window._lineChartTooltipTimer);
+        }
+    }
+    
+    // 切換折線圖時間範圍
+    function changeLineChartRange(days) {
+        currentLineChartRange = days;
+        hideLineChartPointTooltip();
+        // 更新按鈕狀態
+        document.querySelectorAll('#lineChartRangeSelector .range-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.getAttribute('data-range')) === days);
+        });
+        renderAssetLineChart();
+    }
+    
+    // 渲染資產折線圖
+    function renderAssetLineChart() {
+        if(typeof Highcharts === 'undefined') return;
+        
+        const history = loadAssetHistory();
+        const dates = Object.keys(history).sort();
+        
+        if(dates.length === 0) {
+            // 沒有歷史資料
+            const container = document.getElementById('assetLineChart');
+            if(container) {
+                container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">尚無歷史資料<br><span style="font-size:12px;opacity:0.7;">資料會在每次更新價格時自動記錄</span></div>';
+            }
+            return;
+        }
+        
+        // 生成完整日期範圍（從 cutoff 到今天，每天）
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+        let cutoffStr;
+        if(currentLineChartRange > 0) {
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - currentLineChartRange);
+            cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+        } else {
+            cutoffStr = dates.length > 0 ? dates[0] : todayStr;
+        }
+        
+        // 建立完整日期陣列（每天一筆）
+        const fullDateRange = [];
+        const d = new Date(cutoffStr);
+        const endD = new Date(todayStr);
+        while(d <= endD) {
+            fullDateRange.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+            d.setDate(d.getDate() + 1);
+        }
+        
+        // 填充缺失日期：某天沒開 App 則延續前一天的數值
+        const filledHistory = {};
+        let lastKnown = null;
+        // 若範圍第一天之前有歷史，用最近一筆作為起始
+        const beforeRange = dates.filter(d => d < cutoffStr);
+        if(beforeRange.length > 0) {
+            lastKnown = history[beforeRange[beforeRange.length - 1]];
+        }
+        for(const dateStr of fullDateRange) {
+            if(history[dateStr]) {
+                lastKnown = history[dateStr];
+            }
+            if(lastKnown) {
+                filledHistory[dateStr] = lastKnown;
+            }
+        }
+        
+        let filteredDates = Object.keys(filledHistory).sort();
+        if(filteredDates.length === 0) {
+            filteredDates = dates.length > 0 ? dates.slice(-1) : [todayStr];
+        }
+        
+        // 點距優化：90天/1年等資料過多時，採樣至約35點，保持與30天相近的視覺密度
+        const TARGET_POINTS = 35;
+        let chartDates = filteredDates;
+        if(filteredDates.length > TARGET_POINTS) {
+            chartDates = [];
+            const step = (filteredDates.length - 1) / (TARGET_POINTS - 1);
+            for(let i = 0; i < TARGET_POINTS; i++) {
+                const idx = Math.min(Math.round(i * step), filteredDates.length - 1);
+                chartDates.push(filteredDates[idx]);
+            }
+            chartDates[chartDates.length - 1] = filteredDates[filteredDates.length - 1]; // 確保最後一天
+        }
+        
+        // 準備各系列資料
+        // 為了讓折線從0垂直上升：使用 [0,0] 與 [0,value] 同 x 形成垂直線（非斜線）
+        const allSeriesConfig = [
+            { key: 'total', name: '總資產', color: '#ffffff', dashStyle: 'Solid', lineWidth: 2.5, zIndex: 5 },
+            { key: 'bank', name: '錢包', color: TYPE_COLORS.bank, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 4 },
+            { key: 'stock', name: '美股', color: TYPE_COLORS.stock, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 3 },
+            { key: 'twstock', name: '台股', color: TYPE_COLORS.twstock, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 2 },
+            { key: 'crypto', name: '加密貨幣', color: TYPE_COLORS.crypto, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 1 }
+        ];
+        
+        // 根據當前分頁篩選要顯示的系列
+        let seriesConfig;
+        if(currentPage === 0) {
+            // 總覽：只顯示總資產折線
+            seriesConfig = allSeriesConfig.filter(cfg => cfg.key === 'total');
+        } else {
+            // 其他分頁：只顯示該分類
+            const currentType = PAGE_TYPES[currentPage];
+            seriesConfig = allSeriesConfig.filter(cfg => cfg.key === currentType);
+            // 加粗單一分類的線條
+            seriesConfig = seriesConfig.map(cfg => ({ ...cfg, lineWidth: 2.5 }));
+        }
+        
+        // 幣別轉換：assetHistory 存 TWD，USD 時需除以匯率
+        const usdRate = settings.usdRate || 31;
+        const toDisplayValue = (twdVal) => currentDisplayCurrency === 'USD' ? (twdVal / usdRate) : twdVal;
+        
+        // 為每個系列準備數據：同 x 的 [0,0] 與 [0,value] 形成垂直線
+        const series = seriesConfig.map(cfg => {
+            const dataPoints = [];
+            
+            if(chartDates.length > 0) {
+                const getVal = (dateStr) => (filledHistory[dateStr] || history[dateStr])?.[cfg.key] || 0;
+                const firstRaw = getVal(chartDates[0]);
+                const firstValue = toDisplayValue(firstRaw);
+                dataPoints.push([0, 0]);      // 起始點 y=0
+                dataPoints.push([0, firstValue]); // 與起始點同 x，形成垂直線
+                // 其餘日期（含延續前一天的數值）
+                for(let idx = 1; idx < chartDates.length; idx++) {
+                    const raw = getVal(chartDates[idx]);
+                    dataPoints.push([idx, toDisplayValue(raw)]);
+                }
+            }
+            
+            return {
+                name: cfg.name,
+                data: dataPoints,
+                color: cfg.color,
+                dashStyle: cfg.dashStyle,
+                lineWidth: cfg.lineWidth,
+                zIndex: cfg.zIndex,
+                marker: { 
+                    enabled: true, // 始終顯示標記點
+                    radius: chartDates.length <= 14 ? 5 : 3,
+                    states: {
+                        hover: {
+                            enabled: true,
+                            radius: chartDates.length <= 14 ? 7 : 5
+                        }
+                    }
+                },
+                point: {
+                    events: {
+                        click: function() {
+                            // 點擊時顯示該點的日期與金額（使用 DOM 元素，避免被裁切）
+                            const point = this;
+                            const value = point.y;
+                            let dateStr = '開始';
+                            if(point.y !== 0 && chartDates.length > 0) {
+                                const idx = Math.round(point.x);
+                                const d = chartDates[Math.min(idx, chartDates.length - 1)];
+                                if(d) {
+                                    const [y, m, day] = d.split('-');
+                                    dateStr = `${y}/${parseInt(m)}/${parseInt(day)}`;
+                                }
+                            }
+                            const amountStr = currentDisplayCurrency === 'USD' 
+                                ? '$' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                                : 'NT$' + Math.round(value).toLocaleString('zh-TW');
+                            
+                            const chart = assetHistoryLineChart;
+                            const tooltipEl = document.getElementById('lineChartPointTooltip');
+                            const wrapper = document.getElementById('lineChartWrapper');
+                            const chartContainer = document.getElementById('assetLineChart');
+                            if(!tooltipEl || !wrapper || !chartContainer) return;
+                            
+                            tooltipEl.innerHTML = '<div style="margin-bottom:4px;">' + dateStr + '</div><div>' + amountStr + '</div>';
+                            tooltipEl.style.display = 'block';
+                            tooltipEl.style.left = '-9999px';
+                            tooltipEl.style.top = '0';
+                            const tw = tooltipEl.offsetWidth;
+                            const th = tooltipEl.offsetHeight;
+                            
+                            const wrapperRect = wrapper.getBoundingClientRect();
+                            const chartRect = chartContainer.getBoundingClientRect();
+                            const plotX = chart.plotLeft + point.plotX;
+                            const plotY = chart.plotTop + point.plotY;
+                            const left = (chartRect.left - wrapperRect.left) + plotX + 15;
+                            const top = (chartRect.top - wrapperRect.top) + plotY - th - 8;
+                            tooltipEl.style.left = Math.max(8, Math.min(left, wrapperRect.width - tw - 8)) + 'px';
+                            tooltipEl.style.top = Math.max(8, top) + 'px';
+                            
+                            clearTimeout(window._lineChartTooltipTimer);
+                            window._lineChartTooltipTimer = setTimeout(() => {
+                                tooltipEl.style.display = 'none';
+                            }, 5000);
+                        }
+                    }
+                }
+            };
+        });
+        
+        // 自動計算 Y 軸顯示區間：根據資料範圍按比例留白
+        let allValues = [];
+        series.forEach(s => { 
+            s.data.forEach(point => { 
+                // 數據點格式為 [x, y]，提取y值
+                const yValue = Array.isArray(point) ? point[1] : point;
+                if(typeof yValue === 'number') allValues.push(yValue); 
+            }); 
+        });
+        let dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
+        let dataMax = allValues.length > 0 ? Math.max(...allValues) : 0;
+        let dataRange = dataMax - dataMin;
+        // 如果只有一個值或所有值相同，用該值的 20% 作為範圍
+        if(dataRange === 0) dataRange = Math.max(dataMax * 0.2, 1000);
+        // 上方留 20% 空間，下方留 10% 空間，但最小值至少為0（確保從0開始）
+        let yAxisMax = dataMax + dataRange * 0.2;
+        let yAxisMin = 0; // 強制從0開始
+        // 選擇合適的刻度對齊單位（依落差自動計算，支援大金額範圍）
+        const rawRange = yAxisMax - yAxisMin;
+        let tickSize;
+        if(rawRange >= 1000000000) tickSize = 200000000;
+        else if(rawRange >= 500000000) tickSize = 100000000;
+        else if(rawRange >= 100000000) tickSize = 20000000;
+        else if(rawRange >= 50000000) tickSize = 10000000;
+        else if(rawRange >= 10000000) tickSize = 2000000;
+        else if(rawRange >= 5000000) tickSize = 1000000;
+        else if(rawRange >= 2000000) tickSize = 500000;
+        else if(rawRange >= 500000) tickSize = 100000;
+        else if(rawRange >= 200000) tickSize = 50000;
+        else if(rawRange >= 50000) tickSize = 10000;
+        else if(rawRange >= 20000) tickSize = 5000;
+        else if(rawRange >= 5000) tickSize = 1000;
+        else tickSize = 500;
+        yAxisMin = 0; // 強制保持為0，確保從0開始顯示
+        yAxisMax = Math.ceil(yAxisMax / tickSize) * tickSize;
+        
+        // 設定文字顏色
+        const chartTextColor = getChartTextColor();
+        
+        // 銷毀舊圖表
+        if(assetHistoryLineChart) {
+            const oldContainer = assetHistoryLineChart.container;
+            if(oldContainer && assetHistoryLineChart._lineChartContainerClick) {
+                oldContainer.removeEventListener('click', assetHistoryLineChart._lineChartContainerClick);
+            }
+            assetHistoryLineChart.destroy();
+            assetHistoryLineChart = null;
+        }
+        
+        // 取得容器實際尺寸，確保圖表大小=顯示大小
+        const lineWrapper = document.getElementById('lineChartWrapper');
+        const chartContainer = document.getElementById('assetLineChart');
+        let chartW = chartContainer ? chartContainer.clientWidth : 0;
+        let chartH = chartContainer ? chartContainer.clientHeight : 0;
+        if(chartH <= 0 && lineWrapper) {
+            chartW = lineWrapper.clientWidth;
+            chartH = lineWrapper.clientHeight;
+        }
+        if(chartH <= 0) chartH = window.innerWidth <= 767 ? 280 : 350;
+        if(chartW <= 0) chartW = (lineWrapper || chartContainer || {}).clientWidth || 300;
+        
+        assetHistoryLineChart = Highcharts.chart('assetLineChart', {
+            chart: {
+                type: 'line',
+                backgroundColor: 'transparent',
+                width: chartW,
+                height: chartH,
+                margin: [20, 10, 40, 50],
+                spacing: [0, 0, 0, 0],
+                style: { fontFamily: 'sans-serif' }
+            },
+            title: { text: '' },
+            credits: { enabled: false },
+            legend: {
+                enabled: true,
+                align: 'center',
+                verticalAlign: 'top',
+                floating: false,
+                itemStyle: { color: chartTextColor, fontSize: '11px', fontWeight: 'normal' },
+                itemHoverStyle: { color: '#0a84ff' },
+                symbolRadius: 2,
+                padding: 0,
+                margin: 8
+            },
+            xAxis: {
+                type: 'linear',
+                min: -0.2,
+                max: Math.max(chartDates.length - 1, 0) + 0.2,
+                labels: {
+                    style: { color: chartTextColor, fontSize: '10px' },
+                    rotation: chartDates.length > 30 ? -45 : 0,
+                    step: chartDates.length > 60 ? Math.ceil(chartDates.length / 15) : (chartDates.length > 14 ? 2 : 1),
+                    formatter: function() {
+                        const idx = Math.round(this.value);
+                        if(idx < 0 || idx >= chartDates.length) return '';
+                        if(idx === 0) return '開始';
+                        const d = chartDates[idx];
+                        if(!d) return '';
+                        const parts = d.split('-');
+                        return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                    }
+                },
+                tickPositions: chartDates.map((d, idx) => idx),
+                lineColor: 'rgba(255,255,255,0.1)',
+                tickColor: 'rgba(255,255,255,0.1)',
+                crosshair: {
+                    color: 'rgba(255,255,255,0.15)',
+                    width: 1
+                }
+            },
+            yAxis: {
+                title: { text: '' },
+                min: yAxisMin,
+                max: yAxisMax,
+                startOnTick: false,
+                endOnTick: false,
+                tickAmount: 6,
+                labels: {
+                    enabled: true,
+                    style: { color: chartTextColor, fontSize: '10px' },
+                    formatter: function() {
+                        const v = this.value;
+                        if(Math.abs(v) >= 1000000) return (v/1000000).toFixed(1) + 'M';
+                        if(currentDisplayCurrency === 'TWD' && Math.abs(v) >= 10000) return (v/10000).toFixed(0) + '萬';
+                        if(currentDisplayCurrency === 'USD' && Math.abs(v) >= 1000) return (v/1000).toFixed(1) + 'K';
+                        return v.toLocaleString();
+                    }
+                },
+                gridLineColor: 'rgba(255,255,255,0.05)',
+                gridLineDashStyle: 'Dot',
+                lineColor: 'rgba(255,255,255,0.1)',
+                tickColor: 'rgba(255,255,255,0.1)'
+            },
+            tooltip: {
+                shared: true,
+                backgroundColor: 'rgba(30,30,30,0.95)',
+                borderColor: 'rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                style: { color: '#fff', fontSize: '12px' },
+                formatter: function() {
+                    let s = '<b>' + this.x + '</b><br/>';
+                    this.points.forEach(p => {
+                        s += '<span style="color:' + p.series.color + '">●</span> ' + p.series.name + ': <b>' + p.y.toLocaleString() + '</b><br/>';
+                    });
+                    return s;
+                }
+            },
+            plotOptions: {
+                line: {
+                    animation: { duration: 500 },
+                    connectNulls: true
+                }
+            },
+            series: series
+        });
+        
+        // 使用容器點擊監聽（比 chart.events.click 更可靠，確保折線圖內任一點擊都有反應）
+        const chart = assetHistoryLineChart;
+        const container = chart.container;
+        const onChartClick = function(e) {
+            if(chartDates.length === 0) return;
+            const rect = container.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+            const relY = e.clientY - rect.top;
+            if(relX < chart.plotLeft || relX > chart.plotLeft + chart.plotWidth || relY < chart.plotTop || relY > chart.plotTop + chart.plotHeight) return;
+            const xVal = chart.xAxis[0].toValue(relX);
+            let idx = Math.round(xVal);
+            idx = Math.max(0, Math.min(idx, chartDates.length - 1));
+            const series = chart.series[0];
+            if(!series || !series.points) return;
+            const pointIndex = idx + 1;
+            const pt = series.points[pointIndex];
+            const value = pt ? pt.y : (series.points[1] ? series.points[1].y : 0);
+            let dateStr = '開始';
+            const d = chartDates[idx];
+            if(d) {
+                const [y, m, day] = d.split('-');
+                dateStr = `${y}/${parseInt(m)}/${parseInt(day)}`;
+            }
+            const amountStr = currentDisplayCurrency === 'USD' 
+                ? '$' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                : 'NT$' + Math.round(value).toLocaleString('zh-TW');
+            const tooltipEl = document.getElementById('lineChartPointTooltip');
+            const wrapper = document.getElementById('lineChartWrapper');
+            const chartContainer = document.getElementById('assetLineChart');
+            if(!tooltipEl || !wrapper || !chartContainer) return;
+            tooltipEl.innerHTML = '<div style="margin-bottom:4px;">' + dateStr + '</div><div>' + amountStr + '</div>';
+            tooltipEl.style.display = 'block';
+            tooltipEl.style.left = '-9999px';
+            tooltipEl.style.top = '0';
+            const tw = tooltipEl.offsetWidth;
+            const th = tooltipEl.offsetHeight;
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const chartRect = chartContainer.getBoundingClientRect();
+            const left = (chartRect.left - wrapperRect.left) + relX + 15;
+            const top = (chartRect.top - wrapperRect.top) + relY - th - 8;
+            tooltipEl.style.left = Math.max(8, Math.min(left, wrapperRect.width - tw - 8)) + 'px';
+            tooltipEl.style.top = Math.max(8, top) + 'px';
+            clearTimeout(window._lineChartTooltipTimer);
+            window._lineChartTooltipTimer = setTimeout(function() { tooltipEl.style.display = 'none'; }, 5000);
+        };
+        if(chart._lineChartContainerClick) container.removeEventListener('click', chart._lineChartContainerClick);
+        chart._lineChartContainerClick = onChartClick;
+        container.addEventListener('click', onChartClick);
+    }
+    
     function updateOrder(type,container){ let ids=Array.from(container.children).map(c=>parseInt(c.getAttribute('data-id'))); ids.forEach((id,idx)=>{ let a=accounts.find(x=>x.id===id); if(a)a.order=idx; }); saveData(); }
     function setApiKey(t) { if(t==='finnhub'){const k=prompt("Finnhub Key:", settings.apiKey);if(k)settings.apiKey=k.trim();} else if(t==='fugle'){const k=prompt("Fugle Key:", settings.fugleKey);if(k)settings.fugleKey=k.trim();} else {const k=prompt("Gemini Key:", settings.geminiKey);if(k)settings.geminiKey=k.trim();} saveSettings(); refreshAllData(); }
     function setFeeRate() { const k=prompt("手續費率 (%):", settings.feeRate); if(k)settings.feeRate=parseFloat(k); saveSettings(); }
@@ -4637,18 +5186,21 @@
             const userJournalKey = `${STORAGE_KEY_JOURNAL}_${user.id}`;
             const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${user.id}`;
             const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
+            const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
             const userAccounts = JSON.parse(localStorage.getItem(userDataKey)) || [];
             const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
             const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
             const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
             const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
+            const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
                 settings: userSettings,
                 journal: userJournal,
                 fixedTransfers: userFixedTransfers,
-                dateNotes: userDateNotes
+                dateNotes: userDateNotes,
+                assetHistory: userAssetHistory
             };
         });
         
@@ -4981,13 +5533,16 @@
             const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
             const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
             const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
+            const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
+            const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
                 settings: userSettings,
                 journal: userJournal,
                 fixedTransfers: userFixedTransfers,
-                dateNotes: userDateNotes
+                dateNotes: userDateNotes,
+                assetHistory: userAssetHistory
             };
         });
         
@@ -5077,6 +5632,10 @@
                             // 匯入日期記事
                             if (userData.dateNotes !== undefined) {
                                 localStorage.setItem(`${STORAGE_KEY_DATE_NOTES}_${userId}`, JSON.stringify(userData.dateNotes || {}));
+                            }
+                            // 匯入資產歷史快照
+                            if (userData.assetHistory !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_ASSET_HISTORY}_${userId}`, JSON.stringify(userData.assetHistory || {}));
                             }
                         });
 
@@ -6878,7 +7437,7 @@
             alert(`已重新整理 ${updated}/${total} 個股票資訊`);
         }, 500);
     }
-    async function fetchPrices() { const autos=accounts.filter(a=>a.isAuto&&a.symbol); for(let acc of autos){ try{ if(acc.type==='twstock'){ if(!settings.fugleKey)continue; await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`,{headers:{'X-API-KEY':settings.fugleKey}}); const j=await res.json(); if(j){ const price=j.lastPrice||(j.trade&&j.trade.price)||(j.trades&&j.trades[0]&&j.trades[0].price)||0; const changePercent=j.changePercent||(j.trade&&j.trade.changePercent)||0; const prevClose=j.previousClose||(price&&changePercent?price/(1+changePercent/100):price)||price; acc.currentPrice=price; acc.dayChangePercent=changePercent||0; acc.dayChange=(price-prevClose)||0; } } else { if(!settings.apiKey)continue; let sym=acc.symbol; if(acc.type==='crypto'){ if(acc.symbol==='USDT'||acc.symbol==='USDC'){acc.currentPrice=1;acc.dayChange=0;acc.dayChangePercent=0;continue;} if(!sym.includes(':'))sym=`COINBASE:${sym}-USD`; } await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`); const j=await res.json(); if(j.c){ acc.currentPrice=j.c; acc.dayChange=j.d||0; acc.dayChangePercent=j.dp||0; } } }catch(e){} } saveData(); renderAssets(); }
+    async function fetchPrices() { const autos=accounts.filter(a=>a.isAuto&&a.symbol); for(let acc of autos){ try{ if(acc.type==='twstock'){ if(!settings.fugleKey)continue; await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`,{headers:{'X-API-KEY':settings.fugleKey}}); const j=await res.json(); if(j){ const price=j.lastPrice||(j.trade&&j.trade.price)||(j.trades&&j.trades[0]&&j.trades[0].price)||0; const changePercent=j.changePercent||(j.trade&&j.trade.changePercent)||0; const prevClose=j.previousClose||(price&&changePercent?price/(1+changePercent/100):price)||price; acc.currentPrice=price; acc.dayChangePercent=changePercent||0; acc.dayChange=(price-prevClose)||0; } } else { if(!settings.apiKey)continue; let sym=acc.symbol; if(acc.type==='crypto'){ if(acc.symbol==='USDT'||acc.symbol==='USDC'){acc.currentPrice=1;acc.dayChange=0;acc.dayChangePercent=0;continue;} if(!sym.includes(':'))sym=`COINBASE:${sym}-USD`; } await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`); const j=await res.json(); if(j.c){ acc.currentPrice=j.c; acc.dayChange=j.d||0; acc.dayChangePercent=j.dp||0; } } }catch(e){} } saveData(); renderAssets(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); }
     // Page Swiper Functions
     function switchToPage(pageIndex) {
         if(pageIndex < 0 || pageIndex >= PAGE_TYPES.length) return;
@@ -6991,6 +7550,8 @@
         // 使用動畫更新圖表（動畫引擎會處理沒有起始數據的情況）
         updateChartData(true);
         renderAssets();
+        // 如果折線圖正在顯示，切換分頁時重新渲染
+        if(currentChartMode === 'line') renderAssetLineChart();
     }
     
     // === 方案C：position 疊加頁面管理 ===
@@ -7058,6 +7619,18 @@
     
     let isSwiping = false;
     let isSorting = false; // 追蹤是否正在拖動排序
+    function lockScrollForSort() {
+        const main = document.querySelector('.main-content');
+        if(main) { main.style.touchAction = 'none'; main.style.overflow = 'hidden'; }
+        document.body.style.touchAction = 'none';
+        document.body.style.overflow = 'hidden';
+    }
+    function unlockScrollForSort() {
+        const main = document.querySelector('.main-content');
+        if(main) { main.style.touchAction = ''; main.style.overflow = ''; }
+        document.body.style.touchAction = '';
+        document.body.style.overflow = '';
+    }
     let _swipeTargetPage = null;  // 滑動目標頁面 index
     let _swipeDirection = 0;      // 1=下一頁(向左滑), -1=上一頁(向右滑)
     
@@ -7208,6 +7781,7 @@
     function renderAssets() { 
         sortables.forEach(s=>s.destroy()); 
         sortables=[]; 
+        unlockScrollForSort(); // 確保切換頁面時解除滾動鎖定
         
         // 在桌面模式下，動態計算並對齊列表標題與圓餅圖中心
         if(window.matchMedia('(min-width: 768px)').matches) {
@@ -7406,61 +7980,40 @@
                         pnlHtml = `<div class="amount-pnl item-numbers">${formatPnL(item.pnl)}</div>`;
                     }
                     
-                    let categoryClick = isEditMode ? '' : `onclick="switchToPage(${PAGE_TYPES.indexOf(item.type)})"`;
-                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${categoryClick} data-id="category-${item.type}"><div class="item-icon ${item.iconClass}"><i class="fas ${item.icon}"></i></div><div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(item.sum)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers('category-${item.type}')" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
+                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" onclick="switchToPage(${PAGE_TYPES.indexOf(item.type)})" data-id="category-${item.type}"><div class="item-icon ${item.iconClass}"><i class="fas ${item.icon}"></i></div><div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(item.sum)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers('category-${item.type}')" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
                 });
                 
                 let pHtml = totalPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(totalPnL)}</span>` : '';
                 c.innerHTML = `<div class="group-header"><span>總覽</span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(totalSum)}</span>${pHtml}</div></div><div class="list-container" id="group-overview">${html}</div>`;
                 
-                // 設置總覽分頁的拖曳排序（類別卡片排序）
-                if(isEditMode) {
-                    let el = document.getElementById('group-overview');
-                    if(el) {
-                        sortables.push(Sortable.create(el, {
-                            animation: 150,
-                            onStart: function() {
-                                // 開始拖動時，禁用左右滑動
-                                isSorting = true;
-                            },
-                            onEnd: function(evt) { 
-                                // 結束拖動時，恢復左右滑動
-                                isSorting = false;
-                                
-                                // 獲取新的類別順序
-                                let newCategoryOrder = Array.from(evt.from.children).map(c => {
-                                    let dataId = c.getAttribute('data-id');
-                                    if(dataId && dataId.startsWith('category-')) {
-                                        return dataId.replace('category-', '');
-                                    }
-                                    return null;
-                                }).filter(id => id !== null);
-                                
-                                // 將類別順序轉換為分頁索引順序，更新 pageOrder
-                                const newPageOrder = [0]; // 總覽始終在第一位
-                                newCategoryOrder.forEach(type => {
-                                    const pageIndex = PAGE_TYPES.indexOf(type);
-                                    if(pageIndex > 0) {
-                                        newPageOrder.push(pageIndex);
-                                    }
-                                });
-                                
-                                // 更新 pageOrder
-                                pageOrder = newPageOrder;
-                                savePageOrder();
-                                
-                                // 重新排列 page-item 的 DOM 順序
-                                const domIndex = reorderPageItems();
-                                
-                                // 重新渲染界面以反映新的順序
-                                renderPageIndicator();
-                                renderPageVisibilitySettings();
-                                
-                                // 方案C：更新當前頁面顯示
-                                updateActivePageClass();
-                            }
-                        }));
-                    }
+                // 總覽類別卡片：長按可拖動排序
+                let elOverview = document.getElementById('group-overview');
+                if(elOverview) {
+                    sortables.push(Sortable.create(elOverview, {
+                        animation: 150,
+                        delay: 400,
+                        filter: '.item-eye-btn, button',
+                        onStart: function() { isSorting = true; lockScrollForSort(); },
+                        onEnd: function(evt) { 
+                            isSorting = false; unlockScrollForSort();
+                            let newCategoryOrder = Array.from(evt.from.children).map(c => {
+                                let dataId = c.getAttribute('data-id');
+                                if(dataId && dataId.startsWith('category-')) return dataId.replace('category-', '');
+                                return null;
+                            }).filter(id => id !== null);
+                            const newPageOrder = [0];
+                            newCategoryOrder.forEach(type => {
+                                const pageIndex = PAGE_TYPES.indexOf(type);
+                                if(pageIndex > 0) newPageOrder.push(pageIndex);
+                            });
+                            pageOrder = newPageOrder;
+                            savePageOrder();
+                            reorderPageItems();
+                            renderPageIndicator();
+                            renderPageVisibilitySettings();
+                            updateActivePageClass();
+                        }
+                    }));
                 }
             }
         }
@@ -7648,8 +8201,7 @@
                      htmlContent = `<div class="item-name">${acc.name}</div><div class="item-row">${tagHTML}</div>`;
                  }
                 
-                let hdl = isEditMode ? `<div class="drag-handle"><i class="fas fa-bars"></i></div>` : '';
-                let clk = isEditMode ? '' : `onclick="openDetailView(${acc.id})"`;
+                let clk = `onclick="openDetailView(${acc.id})"`;
                 let dailyPnL = acc.isAuto ? calculateDailyPnL(acc) : 0;
                 let costPnL = acc.isAuto ? calculateCostPnL(acc) : 0;
                 let pnlHtml = '';
@@ -7708,33 +8260,29 @@
                 }
                  // 美股、台股、加密貨幣使用新佈局：金額已內嵌在 item-name-row 中，不需要 item-amount-wrapper
                  if(acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto') {
-                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div>${hdl}</div>`;
+                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div></div>`;
                 } else {
                     // 其他分類（錢包等）：眼睛按鈕放在金額右邊
-                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div>${hdl}</div>`;
+                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
                 }
             });
             
             let pHtml = groupPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(groupPnL)}</span>` : '';
             c.innerHTML = `<div class="group-header"><span>${g.t}</span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(sum)}</span>${pHtml}</div></div><div class="list-container" id="group-${type}">${html}</div>`;
             
-            // 設置拖曳排序
-            if(isEditMode) {
-                let el = document.getElementById(`group-${type}`);
-                if(el) {
-                    sortables.push(Sortable.create(el, {
-                        animation: 150,
-                        onStart: function() {
-                            // 開始拖動時，禁用左右滑動
-                            isSorting = true;
-                        },
-                        onEnd: function(evt) {
-                            // 結束拖動時，恢復左右滑動
-                            isSorting = false;
-                            updateOrder(type, evt.from);
-                        }
-                    }));
-                }
+            // 資產細項：長按可拖動排序
+            let el = document.getElementById(`group-${type}`);
+            if(el) {
+                sortables.push(Sortable.create(el, {
+                    animation: 150,
+                    delay: 400,
+                    filter: '.item-eye-btn, button',
+                    onStart: function() { isSorting = true; lockScrollForSort(); },
+                    onEnd: function(evt) {
+                        isSorting = false; unlockScrollForSort();
+                        updateOrder(type, evt.from);
+                    }
+                }));
             }
         });
         
@@ -7779,7 +8327,7 @@
             // 顯示當前選擇的顯示幣別，而不是帳戶的原始幣別
             let displayCurrency = currentDisplayCurrency;
             
-            let debtClick = isEditMode ? '' : `onclick="openDetailView(${acc.id})"`;
+            let debtClick = `onclick="openDetailView(${acc.id})"`;
             html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${debtClick} data-id="${acc.id}"><div class="item-icon icon-debt"><i class="fas fa-hand-holding-usd"></i></div><div class="item-content"><div class="item-name">${acc.name}</div><div class="item-row">${displayCurrency}</div></div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val item-numbers amount-red">${formatAmount(val)}</div></div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div></div>`;
         });
         
@@ -7798,6 +8346,11 @@
         saveSettings();
         updateCurrencyButton();
         renderAssets();
+        // 折線圖需重新渲染以套用幣別
+        if(currentChartMode === 'line') {
+            hideLineChartPointTooltip();
+            renderAssetLineChart();
+        }
         // 只有在詳細視圖已經打開的情況下才更新詳細視圖，不要重新打開已關閉的視圖
         const detailView = document.getElementById('detailView');
         if(currentDetailAcc && detailView && detailView.classList.contains('active')) {
@@ -8063,6 +8616,18 @@
                         }
                     }
                 }
+                // 折線圖：視窗變化時重新渲染以符合顯示尺寸
+                if(assetHistoryLineChart && currentChartMode === 'line') {
+                    const lineWrapper = document.getElementById('lineChartWrapper');
+                    if(lineWrapper && lineWrapper.offsetParent !== null) {
+                        const w = lineWrapper.clientWidth;
+                        const h = lineWrapper.clientHeight;
+                        if(w > 0 && h > 0) {
+                            assetHistoryLineChart.setSize(w, h, false);
+                            assetHistoryLineChart.reflow();
+                        }
+                    }
+                }
             }, 200);
         };
         
@@ -8086,6 +8651,8 @@
         
         await updateRates(); 
         if(settings.apiKey||settings.fugleKey) fetchPrices();
+        // 啟動時記錄資產快照
+        setTimeout(() => { recordDailyAssetSnapshot(); }, 2000);
         setInterval(() => { refreshAllData(false); }, 5000);
         
         // 註冊 Service Worker（支援背景執行）
@@ -8365,7 +8932,7 @@
             const chartBtn = document.getElementById('calendarChartBtn');
             const settingsBtn = document.getElementById('calendarSettingsBtn');
             if(addBtn && !isEditMode) addBtn.style.display = 'block';
-            if(sortBtn) sortBtn.style.display = 'block';
+            if(sortBtn) sortBtn.style.display = 'none';
             // 在記帳頁面顯示切換按鈕
             if(chartBtn) chartBtn.style.display = 'flex';
             if(settingsBtn) settingsBtn.style.display = 'none';
@@ -14060,6 +14627,7 @@
             let firestoreFixedTransfers = [];
             let firestoreSettings = {};
             let firestoreDateNotes = {};
+            let firestoreAssetHistory = {};
             let hasFirestoreDataLoaded = false;
             
             if (userDataSnap.exists()) {
@@ -14069,6 +14637,7 @@
                 firestoreFixedTransfers = userData.fixedTransfers || [];
                 firestoreSettings = userData.settings || {};
                 firestoreDateNotes = userData.dateNotes || {};
+                firestoreAssetHistory = userData.assetHistory || {};
                 const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0 || Object.keys(firestoreSettings).length > 0 || Object.keys(firestoreDateNotes).length > 0;
                 hasFirestoreDataLoaded = true;
                 
@@ -14092,6 +14661,13 @@
                 // 同步日期記事（無論是否為空都同步，以 Firestore 為主）
                 if (firestoreDateNotes !== undefined) {
                     localStorage.setItem(userDateNotesKey, JSON.stringify(firestoreDateNotes));
+                }
+                
+                // 同步資產歷史快照（合併雲端和本地資料，取較新的值）
+                if (firestoreAssetHistory && Object.keys(firestoreAssetHistory).length > 0) {
+                    const localHistory = JSON.parse(localStorage.getItem(`my_assets_history_${resolvedCurrentUserId}`) || '{}');
+                    const merged = { ...localHistory, ...firestoreAssetHistory };
+                    localStorage.setItem(`my_assets_history_${resolvedCurrentUserId}`, JSON.stringify(merged));
                 }
                 
                 // 觸發資料載入事件，更新 UI
@@ -14291,6 +14867,7 @@
                     const firestoreSettings = userData.settings || {};
                     const firestoreFixedTransfers = userData.fixedTransfers || [];
                     const firestoreDateNotes = userData.dateNotes || {};
+                    const firestoreAssetHistoryRT = userData.assetHistory || {};
                     
                     // 使用變化的使用者 ID 來產生 Key
                     const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
@@ -14298,12 +14875,14 @@
                     const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${userId}`;
                     const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`;
                     const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${userId}`;
+                    const userAssetHistoryKey = `my_assets_history_${userId}`;
                     
                     const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                     const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
                     const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
                     const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
                     const localDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
+                    const localAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
                     
                     let hasChanges = false;
                     
@@ -14418,6 +14997,14 @@
                         // 如果當前正在顯示記帳分頁，更新日曆顯示
                         if (currentUserIdNow === userId && typeof renderCalendar === 'function') {
                             renderCalendar();
+                        }
+                    }
+                    
+                    // AssetHistory 同步邏輯（合併雲端和本地資料）
+                    if (firestoreAssetHistoryRT && Object.keys(firestoreAssetHistoryRT).length > 0) {
+                        const merged = { ...localAssetHistory, ...firestoreAssetHistoryRT };
+                        if (JSON.stringify(merged) !== JSON.stringify(localAssetHistory)) {
+                            localStorage.setItem(userAssetHistoryKey, JSON.stringify(merged));
                         }
                     }
                     
@@ -14840,6 +15427,25 @@
         }
     };
     
+    // 同步資產歷史快照到 Firestore
+    window.syncAssetHistoryToFirestore = async function(historyData) {
+        if (!currentFirebaseUser) return;
+        
+        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
+        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!currentUserIdFromStorage) return;
+        
+        try {
+            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
+            await setDoc(userDataRef, {
+                assetHistory: historyData,
+                updatedAt: Timestamp.now()
+            }, { merge: true });
+        } catch (err) {
+            console.error('同步 assetHistory 到 Firestore 失敗:', err);
+        }
+    };
+    
     // 一起同步 journal 和 accounts 到 Firestore（記帳後使用）
     window.syncJournalAndAccountsToFirestore = async function(journalRecords, accountsData) {
         if (!currentFirebaseUser) return;
@@ -14973,6 +15579,9 @@
             const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${targetUserId}`;
             const dateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             
+            // 讀取資產歷史快照
+            const assetHistory = JSON.parse(localStorage.getItem(`my_assets_history_${targetUserId}`) || '{}');
+            
             // 一次性同步所有資料
             const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", targetUserId);
             await setDoc(userDataRef, {
@@ -14981,6 +15590,7 @@
                 settings: settings,
                 fixedTransfers: fixedTransfers,
                 dateNotes: dateNotes,
+                assetHistory: assetHistory,
                 updatedAt: Timestamp.now()
             }, { merge: true });
             
@@ -15040,18 +15650,21 @@
                     const userJournalKey = `my_assets_journal_${user.id}`;
                     const userFixedTransfersKey = `my_assets_fixed_transfers_${user.id}`;
                     const userDateNotesKey = `my_assets_date_notes_${user.id}`;
+                    const userAssetHistoryKey = `my_assets_history_${user.id}`;
                     const userAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
                     const userSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
                     const userJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
                     const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
                     const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
+                    const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
                     allUsersData[user.id] = {
                         user: user,
                         data: userAccounts,
                         settings: userSettings,
                         journal: userJournal,
                         fixedTransfers: userFixedTransfers,
-                        dateNotes: userDateNotes
+                        dateNotes: userDateNotes,
+                        assetHistory: userAssetHistory
                     };
                 });
 
