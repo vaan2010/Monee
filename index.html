@@ -742,6 +742,23 @@
         #lineChartWrapper .highcharts-root,
         #lineChartWrapper svg { width: 100% !important; height: 100% !important; overflow: hidden !important; }
         #lineChartWrapper .highcharts-point { pointer-events: auto !important; cursor: pointer !important; }
+        
+        /* 折線圖載入中遮罩 */
+        #lineChartLoadingOverlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 150;
+            border-radius: 12px; color: var(--text-primary);
+        }
+        #lineChartLoadingOverlay .loading-text { font-size: 14px; margin-bottom: 12px; opacity: 0.9; }
+        #lineChartLoadingOverlay .loading-bar-wrap {
+            width: 80%; max-width: 200px; height: 6px; background: rgba(255,255,255,0.15);
+            border-radius: 3px; overflow: hidden;
+        }
+        #lineChartLoadingOverlay .loading-bar-fill {
+            height: 100%; background: #0a84ff; border-radius: 3px;
+            transition: width 0.15s ease-out; width: 0%;
+        }
         #lineChartWrapper .highcharts-plot-background,
         #lineChartWrapper .highcharts-series { pointer-events: auto !important; cursor: pointer !important; }
         
@@ -1269,6 +1286,10 @@
                     <!-- Line Chart Container -->
                     <div id="lineChartWrapper" style="display:none; width:100%; padding: 0 10px; box-sizing:border-box; position:relative;">
                         <div id="assetLineChart" style="width:100%; height:100%; min-height:280px;"></div>
+                        <div id="lineChartLoadingOverlay" style="display:none;">
+                            <span class="loading-text">載入中...</span>
+                            <div class="loading-bar-wrap"><div class="loading-bar-fill" id="lineChartLoadingBar"></div></div>
+                        </div>
                         <div id="lineChartPointTooltip" style="display:none; position:absolute; background:var(--card-bg); color:var(--text-primary); padding:10px 14px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.5); border:1px solid var(--border-color); z-index:300; font-size:13px; font-weight:600; white-space:nowrap; pointer-events:none;"></div>
                     </div>
                     
@@ -3439,7 +3460,7 @@
             } 
         } else { 
             let t=this; let ex=e; 
-            clickTimer=setTimeout(function(){ clickTimer=null; activeInactivePoints.clear(); if(t.sliced){ t.slice(false); t.setState('normal'); const prevPointEl = t.graphic?.element; if(prevPointEl) { prevPointEl.style.setProperty('opacity', '1', 'important'); } if(t.series.data) t.series.data.forEach(p=>{ if(p!==t) { p.setState('normal'); const pEl = p.graphic?.element; if(pEl) pEl.style.setProperty('opacity', '1', 'important'); } }); hideCustomTooltip(); } else { if(t.series.data) { t.series.data.forEach(p=>{ if(p!==t){ if(p.sliced) { p.slice(false); p.setState('inactive'); const pointEl = p.graphic?.element; if(pointEl) { const pointId = pointEl.getAttribute('data-highcharts-point-index') || pointEl.getAttribute('class') || `point-${p.index}`; activeInactivePoints.add(pointId); pointEl.style.setProperty('opacity', '0.3', 'important'); } } else { p.setState('inactive'); const pointEl = p.graphic?.element; if(pointEl) { const pointId = pointEl.getAttribute('data-highcharts-point-index') || pointEl.getAttribute('class') || `point-${p.index}`; activeInactivePoints.add(pointId); pointEl.style.setProperty('opacity', '0.3', 'important'); } } } }); } t.slice(true); t.setState('normal'); const newPointEl = t.graphic?.element; if(newPointEl) { newPointEl.style.setProperty('opacity', '1', 'important'); } showCustomTooltip(t, ex); } }, 250); 
+            clickTimer=setTimeout(function(){ clickTimer=null; activeInactivePoints.clear(); if(t.sliced){ if(typeof t.slice === 'function'){ t.slice(false); } t.setState('normal'); const prevPointEl = t.graphic?.element; if(prevPointEl) { prevPointEl.style.setProperty('opacity', '1', 'important'); } if(t.series.data) t.series.data.forEach(p=>{ if(p!==t) { p.setState('normal'); const pEl = p.graphic?.element; if(pEl) pEl.style.setProperty('opacity', '1', 'important'); } }); hideCustomTooltip(); } else { if(t.series.data) { t.series.data.forEach(p=>{ if(p!==t){ if(p.sliced) { if(typeof p.slice === 'function'){ p.slice(false); } p.setState('inactive'); const pointEl = p.graphic?.element; if(pointEl) { const pointId = pointEl.getAttribute('data-highcharts-point-index') || pointEl.getAttribute('class') || `point-${p.index}`; activeInactivePoints.add(pointId); pointEl.style.setProperty('opacity', '0.3', 'important'); } } else { p.setState('inactive'); const pointEl = p.graphic?.element; if(pointEl) { const pointId = pointEl.getAttribute('data-highcharts-point-index') || pointEl.getAttribute('class') || `point-${p.index}`; activeInactivePoints.add(pointId); pointEl.style.setProperty('opacity', '0.3', 'important'); } } } }); } if(typeof t.slice === 'function'){ t.slice(true); } t.setState('normal'); const newPointEl = t.graphic?.element; if(newPointEl) { newPointEl.style.setProperty('opacity', '1', 'important'); } showCustomTooltip(t, ex); } }, 250); 
         } 
     }
     
@@ -3725,7 +3746,7 @@
     
     function initChart() { 
         if(typeof Highcharts==='undefined')return; 
-        Highcharts.setOptions({chart:{style:{fontFamily:'sans-serif'},events:{click:function(e){if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}activeInactivePoints.clear();if(this.series[0]){this.series[0].points.forEach(p=>{p.slice(false);p.setState('normal');const pEl = p.graphic?.element;if(pEl) pEl.style.setProperty('opacity', '1', 'important');});}hideCustomTooltip();}}},title:{text:''},tooltip:{enabled:false},plotOptions:{pie:{states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0}},point:{states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0}}}}}}); 
+        Highcharts.setOptions({chart:{style:{fontFamily:'sans-serif'},events:{click:function(e){if(clickTimer){clearTimeout(clickTimer);clickTimer=null;}activeInactivePoints.clear();if(this.series[0]){this.series[0].points.forEach(p=>{if(typeof p.slice === 'function'){p.slice(false);}p.setState('normal');const pEl = p.graphic?.element;if(pEl) pEl.style.setProperty('opacity', '1', 'important');});}hideCustomTooltip();}}},title:{text:''},tooltip:{enabled:false},plotOptions:{pie:{states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0}},point:{states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0}}}}}}); 
         updateChartData(); 
         // 確保圖表在初始化時正確渲染，特別是手機模式
         setTimeout(() => {
@@ -3752,7 +3773,7 @@
                 }
             }
         }, 300); 
-        document.getElementById('chartWrapper').addEventListener('click',function(e){const t=e.target;if(t.tagName!=='path'&&!t.closest('.highcharts-point')&&chartInstance){if(clickTimer)clearTimeout(clickTimer);activeInactivePoints.clear();if(chartInstance.series[0]){chartInstance.series[0].points.forEach(p=>{p.slice(false);p.setState('normal');const pEl = p.graphic?.element;if(pEl) pEl.style.setProperty('opacity', '1', 'important');});}hideCustomTooltip();}}); 
+        document.getElementById('chartWrapper').addEventListener('click',function(e){const t=e.target;if(t.tagName!=='path'&&!t.closest('.highcharts-point')&&chartInstance){if(clickTimer)clearTimeout(clickTimer);activeInactivePoints.clear();if(chartInstance.series[0]){chartInstance.series[0].points.forEach(p=>{if(typeof p.slice === 'function'){p.slice(false);}p.setState('normal');const pEl = p.graphic?.element;if(pEl) pEl.style.setProperty('opacity', '1', 'important');});}hideCustomTooltip();}}); 
         // 只有點擊折線圖「外」的區域才隱藏標籤；點擊折線圖內會由 chart.events.click 顯示
         document.addEventListener('click', function(e) {
             const tooltipEl = document.getElementById('lineChartPointTooltip');
@@ -4780,21 +4801,81 @@
         renderAssetLineChart();
     }
     
+    // 折線圖載入遮罩：顯示/隱藏，durationMs 為進度條總時長（毫秒）
+    function showLineChartLoading(text, durationMs) {
+        const overlay = document.getElementById('lineChartLoadingOverlay');
+        const bar = document.getElementById('lineChartLoadingBar');
+        const textEl = overlay ? overlay.querySelector('.loading-text') : null;
+        if(overlay) {
+            if(textEl) textEl.textContent = text || '載入中...';
+            overlay.style.display = 'flex';
+            if(bar) bar.style.width = '0%';
+            const duration = durationMs || 800;
+            const interval = 50;
+            const step = (100 / duration) * interval;
+            let p = 0;
+            const tid = setInterval(() => {
+                p += step;
+                if(p >= 100) { p = 100; clearInterval(tid); }
+                if(bar) bar.style.width = Math.min(p, 100) + '%';
+            }, interval);
+            overlay._loadingTimer = tid;
+        }
+    }
+    function hideLineChartLoading() {
+        const overlay = document.getElementById('lineChartLoadingOverlay');
+        const bar = document.getElementById('lineChartLoadingBar');
+        if(overlay && overlay._loadingTimer) {
+            clearInterval(overlay._loadingTimer);
+            overlay._loadingTimer = null;
+        }
+        if(bar) bar.style.width = '100%';
+        setTimeout(() => {
+            if(overlay) overlay.style.display = 'none';
+            if(bar) bar.style.width = '0%';
+        }, 200);
+    }
+    
     // 渲染資產折線圖
     function renderAssetLineChart() {
         if(typeof Highcharts === 'undefined') return;
         
-        const history = loadAssetHistory();
-        const dates = Object.keys(history).sort();
+        let history = loadAssetHistory();
+        let dates = Object.keys(history).sort();
+        
+        // 若無歷史但有資產，先嘗試記錄今日快照（僅在此時顯示載入進度條，1秒）
+        if(dates.length === 0 && accounts && accounts.length > 0) {
+            showLineChartLoading('正在取得今日資產快照...', 1000);
+            recordDailyAssetSnapshot();
+            history = loadAssetHistory();
+            dates = Object.keys(history).sort();
+            setTimeout(() => {
+                hideLineChartLoading();
+                if(dates.length === 0) {
+                    const container = document.getElementById('assetLineChart');
+                    if(container) {
+                        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">尚無歷史資料<br><span style="font-size:12px;opacity:0.7;">資料會在每次更新價格時自動記錄</span></div>';
+                    }
+                } else {
+                    doRenderLineChart(history, dates);
+                }
+            }, 1000);
+            return;
+        }
         
         if(dates.length === 0) {
-            // 沒有歷史資料
             const container = document.getElementById('assetLineChart');
             if(container) {
                 container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">尚無歷史資料<br><span style="font-size:12px;opacity:0.7;">資料會在每次更新價格時自動記錄</span></div>';
             }
             return;
         }
+        
+        doRenderLineChart(history, dates);
+    }
+    
+    function doRenderLineChart(history, dates) {
+        if(typeof Highcharts === 'undefined') return;
         
         // 生成完整日期範圍（從 cutoff 到今天，每天）
         const today = new Date();
@@ -4879,20 +4960,29 @@
         const usdRate = settings.usdRate || 31;
         const toDisplayValue = (twdVal) => currentDisplayCurrency === 'USD' ? (twdVal / usdRate) : twdVal;
         
-        // 為每個系列準備數據：同 x 的 [0,0] 與 [0,value] 形成垂直線
+        // 為每個系列準備數據：每天一個點，使用 Highcharts step 繪製階梯效果
+        // 結構：[0,0], [0,firstValue] 形成起始垂直線，然後 [1,v1], [2,v2], ... 每天一個點
         const series = seriesConfig.map(cfg => {
             const dataPoints = [];
             
             if(chartDates.length > 0) {
                 const getVal = (dateStr) => (filledHistory[dateStr] || history[dateStr])?.[cfg.key] || 0;
+                
+                // 從0開始，形成垂直線
+                dataPoints.push([0, 0]);      // 起始點 y=0
+                
+                // 處理第一個值
                 const firstRaw = getVal(chartDates[0]);
                 const firstValue = toDisplayValue(firstRaw);
-                dataPoints.push([0, 0]);      // 起始點 y=0
-                dataPoints.push([0, firstValue]); // 與起始點同 x，形成垂直線
-                // 其餘日期（含延續前一天的數值）
+                if(firstValue !== 0) {
+                    dataPoints.push([0, firstValue]); // 與起始點同 x，形成垂直線
+                }
+                
+                // 每天一個點，不再使用階梯式雙點
                 for(let idx = 1; idx < chartDates.length; idx++) {
                     const raw = getVal(chartDates[idx]);
-                    dataPoints.push([idx, toDisplayValue(raw)]);
+                    const value = toDisplayValue(raw);
+                    dataPoints.push([idx, value]);
                 }
             }
             
@@ -5003,6 +5093,42 @@
         // 設定文字顏色
         const chartTextColor = getChartTextColor();
         
+        // 找到今天在 chartDates 中的索引位置（用於標記今日）
+        let todayIndex = -1;
+        for(let i = 0; i < chartDates.length; i++) {
+            if(chartDates[i] === todayStr) {
+                todayIndex = i;
+                break;
+            }
+        }
+        // 如果今天不在 chartDates 中，但今天在範圍內，使用最後一個索引
+        if(todayIndex === -1 && chartDates.length > 0) {
+            const lastDate = chartDates[chartDates.length - 1];
+            if(lastDate === todayStr || new Date(lastDate) >= new Date(todayStr)) {
+                todayIndex = chartDates.length - 1;
+            }
+        }
+        
+        // 準備今日標記的 plotLines（如果今天在圖表範圍內）
+        const todayPlotLine = todayIndex >= 0 ? {
+            value: todayIndex,
+            color: '#0a84ff',
+            width: 2,
+            dashStyle: 'Dash',
+            zIndex: 10,
+            label: {
+                text: '今日',
+                align: 'right',
+                x: -5,
+                style: {
+                    color: '#0a84ff',
+                    fontSize: '11px',
+                    fontWeight: '600'
+                },
+                rotation: 0
+            }
+        } : null;
+        
         // 銷毀舊圖表
         if(assetHistoryLineChart) {
             const oldContainer = assetHistoryLineChart.container;
@@ -5072,7 +5198,8 @@
                 crosshair: {
                     color: 'rgba(255,255,255,0.15)',
                     width: 1
-                }
+                },
+                plotLines: todayPlotLine ? [todayPlotLine] : []
             },
             yAxis: {
                 title: { text: '' },
@@ -5114,7 +5241,8 @@
             plotOptions: {
                 line: {
                     animation: { duration: 500 },
-                    connectNulls: true
+                    connectNulls: true,
+                    step: 'left'  // 階梯式折線：每天一個點，水平後垂直
                 }
             },
             series: series
@@ -5134,8 +5262,14 @@
             idx = Math.max(0, Math.min(idx, chartDates.length - 1));
             const series = chart.series[0];
             if(!series || !series.points) return;
-            const pointIndex = idx + 1;
-            const pt = series.points[pointIndex];
+            // 找到 x=idx 的點（取最後一個，因 x=0 時有兩個點）
+            let pt = null;
+            for(let i = series.points.length - 1; i >= 0; i--) {
+                if(Math.round(series.points[i].x) === idx) {
+                    pt = series.points[i];
+                    break;
+                }
+            }
             const value = pt ? pt.y : (series.points[1] ? series.points[1].y : 0);
             let dateStr = '開始';
             const d = chartDates[idx];
@@ -7434,7 +7568,7 @@
             alert(`已重新整理 ${updated}/${total} 個股票資訊`);
         }, 500);
     }
-    async function fetchPrices() { const autos=accounts.filter(a=>a.isAuto&&a.symbol); for(let acc of autos){ try{ if(acc.type==='twstock'){ if(!settings.fugleKey)continue; await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`,{headers:{'X-API-KEY':settings.fugleKey}}); const j=await res.json(); if(j){ const price=j.lastPrice||(j.trade&&j.trade.price)||(j.trades&&j.trades[0]&&j.trades[0].price)||0; const changePercent=j.changePercent||(j.trade&&j.trade.changePercent)||0; const prevClose=j.previousClose||(price&&changePercent?price/(1+changePercent/100):price)||price; acc.currentPrice=price; acc.dayChangePercent=changePercent||0; acc.dayChange=(price-prevClose)||0; } } else { if(!settings.apiKey)continue; let sym=acc.symbol; if(acc.type==='crypto'){ if(acc.symbol==='USDT'||acc.symbol==='USDC'){acc.currentPrice=1;acc.dayChange=0;acc.dayChangePercent=0;continue;} if(!sym.includes(':'))sym=`COINBASE:${sym}-USD`; } await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`); const j=await res.json(); if(j.c){ acc.currentPrice=j.c; acc.dayChange=j.d||0; acc.dayChangePercent=j.dp||0; } } }catch(e){} } saveData(); if(!isSorting){ renderAssets(); } }
+    async function fetchPrices() { const autos=accounts.filter(a=>a.isAuto&&a.symbol); for(let acc of autos){ try{ if(acc.type==='twstock'){ if(!settings.fugleKey)continue; await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`,{headers:{'X-API-KEY':settings.fugleKey}}); const j=await res.json(); if(j){ const price=j.lastPrice||(j.trade&&j.trade.price)||(j.trades&&j.trades[0]&&j.trades[0].price)||0; const changePercent=j.changePercent||(j.trade&&j.trade.changePercent)||0; const prevClose=j.previousClose||(price&&changePercent?price/(1+changePercent/100):price)||price; acc.currentPrice=price; acc.dayChangePercent=changePercent||0; acc.dayChange=(price-prevClose)||0; } } else { if(!settings.apiKey)continue; let sym=acc.symbol; if(acc.type==='crypto'){ if(acc.symbol==='USDT'||acc.symbol==='USDC'){acc.currentPrice=1;acc.dayChange=0;acc.dayChangePercent=0;continue;} if(!sym.includes(':'))sym=`COINBASE:${sym}-USD`; } await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`); const j=await res.json(); if(j.c){ acc.currentPrice=j.c; acc.dayChange=j.d||0; acc.dayChangePercent=j.dp||0; } } }catch(e){} } saveData(); recordDailyAssetSnapshot(); if(!isSorting){ renderAssets(); } }
     // Page Swiper Functions
     function switchToPage(pageIndex) {
         if(pageIndex < 0 || pageIndex >= PAGE_TYPES.length) return;
@@ -7517,7 +7651,7 @@
             chartInstance.series.forEach(series => {
                 if(series.points) {
                     series.points.forEach(point => {
-                        if(point.sliced) {
+                        if(point.sliced && typeof point.slice === 'function') {
                             point.slice(false);
                         }
                         point.setState('normal');
