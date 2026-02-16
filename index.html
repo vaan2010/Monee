@@ -729,6 +729,16 @@
             border-color: #0a84ff;
         }
         
+        /* 資產成長率顯示 */
+        #lineChartGrowthRate {
+            text-align: center; font-size: 13px; padding: 6px 0 4px 0;
+            color: var(--text-secondary);
+        }
+        #lineChartGrowthRate .growth-label { opacity: 0.8; margin-right: 6px; }
+        #lineChartGrowthRate .growth-value { font-weight: 600; }
+        #lineChartGrowthRate .growth-value.positive { color: var(--color-up); }
+        #lineChartGrowthRate .growth-value.negative { color: var(--color-down); }
+        
         /* Line Chart Wrapper - 實際大小=顯示大小，不裁切 */
         #lineChartWrapper {
             flex: 0 0 auto;
@@ -1306,6 +1316,7 @@
                         <button class="range-btn" data-range="365" onclick="changeLineChartRange(365)">1年</button>
                         <button class="range-btn" data-range="0" onclick="changeLineChartRange(0)">全部</button>
                     </div>
+                    <div id="lineChartGrowthRate" style="display:none;"></div>
                     
                     <!-- Currency Toggle Button -->
                     <button id="currencyToggleBtn" class="currency-toggle-btn" onclick="event.stopPropagation(); toggleCurrency();" title="切換幣別">
@@ -4752,6 +4763,8 @@
             pieWrapper.style.display = 'none';
             lineWrapper.style.display = 'block';
             rangeSelector.style.display = 'flex';
+            const growthEl = document.getElementById('lineChartGrowthRate');
+            if(growthEl) growthEl.style.display = 'block';
             // 同步時間範圍按鈕的 active 狀態
             document.querySelectorAll('#lineChartRangeSelector .range-btn').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.getAttribute('data-range')) === currentLineChartRange);
@@ -4768,6 +4781,8 @@
             pieWrapper.style.display = 'flex';
             lineWrapper.style.display = 'none';
             rangeSelector.style.display = 'none';
+            const growthEl = document.getElementById('lineChartGrowthRate');
+            if(growthEl) growthEl.style.display = 'none';
             hideLineChartPointTooltip();
             toggleBtn.classList.remove('active');
             toggleIcon.className = 'fas fa-chart-line';
@@ -4959,6 +4974,27 @@
         // 幣別轉換：assetHistory 存 TWD，USD 時需除以匯率
         const usdRate = settings.usdRate || 31;
         const toDisplayValue = (twdVal) => currentDisplayCurrency === 'USD' ? (twdVal / usdRate) : twdVal;
+        
+        // 計算資產成長率（依尺度顯示周/月/季度/年）
+        const growthKey = seriesConfig[0]?.key || 'total';
+        const getVal = (dateStr) => (filledHistory[dateStr] || history[dateStr])?.[growthKey] || 0;
+        const startRaw = getVal(chartDates[0]);
+        const endRaw = getVal(chartDates[chartDates.length - 1]);
+        const startVal = toDisplayValue(startRaw);
+        const endVal = toDisplayValue(endRaw);
+        let growthRate = 0;
+        if(startVal > 0) growthRate = ((endVal - startVal) / startVal) * 100;
+        let growthLabel = '年成長率';
+        if(currentLineChartRange === 7) growthLabel = '周成長率';
+        else if(currentLineChartRange === 30) growthLabel = '月成長率';
+        else if(currentLineChartRange === 90) growthLabel = '季度成長率';
+        else if(currentLineChartRange === 365 || currentLineChartRange === 0) growthLabel = '年成長率';
+        const growthEl = document.getElementById('lineChartGrowthRate');
+        if(growthEl) {
+            const sign = growthRate >= 0 ? '+' : '';
+            const cls = growthRate >= 0 ? 'positive' : 'negative';
+            growthEl.innerHTML = '<span class="growth-label">' + growthLabel + '</span><span class="growth-value ' + cls + '">' + sign + growthRate.toFixed(2) + '%</span>';
+        }
         
         // 為每個系列準備數據：每天一個點，使用 Highcharts step 繪製階梯效果
         // 結構：[0,0], [0,firstValue] 形成起始垂直線，然後 [1,v1], [2,v2], ... 每天一個點
