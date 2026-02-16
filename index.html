@@ -470,6 +470,7 @@
 
         .group-header { padding: 15px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); background-color: var(--bg-color); display: flex; justify-content: space-between; text-transform: uppercase; min-width: 0; gap: 8px; }
         .group-header > span:first-child { flex-shrink: 0; }
+        .group-header .drag-hint { display: block; font-size: 11px; text-transform: none; opacity: 0.6; margin-top: 2px; font-weight: normal; }
         .group-total-block { min-width: 0; text-align: right; flex-shrink: 1; overflow: hidden; }
         .group-total { color: var(--text-primary); font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .group-pnl { font-size: 11px; display: block; margin-top: 2px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .list-container { background-color: var(--card-bg); border-radius: 12px; margin: 0 16px 10px 16px; overflow: hidden; }
@@ -1231,6 +1232,14 @@
                 <div class="menu-section collapsed" id="menuSection-pnl">
                     <div class="menu-item" onclick="resetPnL(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">損益歸零</span></div>
                     <div class="menu-item" onclick="restorePnL(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">恢復損益</span></div>
+                </div>
+                <div class="menu-label collapsed" onclick="toggleMenuSection('linechart')">
+                    <span>折線圖記錄</span>
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                </div>
+                <div class="menu-section collapsed" id="menuSection-linechart">
+                    <div class="menu-item" onclick="resetAssetHistory(); toggleSidebar();"><i class="fas fa-trash-alt"></i><span class="menu-text">重置折線圖</span></div>
+                    <div class="menu-item" onclick="restoreAssetHistory(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">復原折線圖</span></div>
                 </div>
                 <div class="menu-label collapsed" onclick="toggleMenuSection('api')">
                     <span>API 設定</span>
@@ -4710,6 +4719,36 @@
         }
     }
     
+    // 折線圖記錄：重置（清空）與復原（依使用者分開儲存）
+    let _assetHistoryRestorePoint = {};
+    
+    function resetAssetHistory() {
+        if (!confirm('確定要重置折線圖記錄嗎？\n所有歷史資料將被清空，此操作可透過「復原」還原。')) return;
+        const history = loadAssetHistory();
+        const count = Object.keys(history).length;
+        if (count === 0) {
+            alert('目前沒有折線圖記錄可重置');
+            return;
+        }
+        _assetHistoryRestorePoint[currentUserId] = JSON.parse(JSON.stringify(history));
+        saveAssetHistory({});
+        if (currentChartMode === 'line') renderAssetLineChart();
+        alert('已重置折線圖記錄');
+    }
+    
+    function restoreAssetHistory() {
+        const backup = _assetHistoryRestorePoint[currentUserId];
+        if (!backup) {
+            alert('沒有可復原的折線圖記錄');
+            return;
+        }
+        if (!confirm('確定要復原折線圖記錄嗎？\n將還原至上一次重置前的狀態。')) return;
+        saveAssetHistory(backup);
+        delete _assetHistoryRestorePoint[currentUserId];
+        if (currentChartMode === 'line') renderAssetLineChart();
+        alert('已復原折線圖記錄');
+    }
+    
     // 記錄今日資產快照（每天只記錄一次，但會更新當天最新值）
     function recordDailyAssetSnapshot() {
         if (isUserSwitching) return;
@@ -8151,7 +8190,7 @@
                 });
                 
                 let pHtml = totalPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(totalPnL)}</span>` : '';
-                c.innerHTML = `<div class="group-header"><span>總覽</span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(totalSum)}</span>${pHtml}</div></div><div class="list-container" id="group-overview">${html}</div>`;
+                c.innerHTML = `<div class="group-header"><span>總覽<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(totalSum)}</span>${pHtml}</div></div><div class="list-container" id="group-overview">${html}</div>`;
                 
                 // 總覽類別卡片：長按可拖動排序
                 let elOverview = document.getElementById('group-overview');
@@ -8435,7 +8474,7 @@
             });
             
             let pHtml = groupPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(groupPnL)}</span>` : '';
-            c.innerHTML = `<div class="group-header"><span>${g.t}</span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(sum)}</span>${pHtml}</div></div><div class="list-container" id="group-${type}">${html}</div>`;
+            c.innerHTML = `<div class="group-header"><span>${g.t}<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(sum)}</span>${pHtml}</div></div><div class="list-container" id="group-${type}">${html}</div>`;
             
             // 資產細項：長按可拖動排序
             let el = document.getElementById(`group-${type}`);
