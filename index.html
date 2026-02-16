@@ -798,6 +798,178 @@
         @media (max-width: 767px) {
             .list-section.page-swiper { touch-action: auto; }
         }
+        /* 收支圓餅圖視圖下拉選單 */
+        .chart-view-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .chart-view-dropdown .dropdown-trigger {
+            background: var(--active-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 90px;
+            justify-content: space-between;
+        }
+        .chart-view-dropdown .dropdown-trigger:hover { background: var(--border-color); }
+        .chart-view-dropdown .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            min-width: 100%;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+        }
+        .chart-view-dropdown.open .dropdown-menu { display: block; }
+        .chart-view-dropdown .dropdown-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+        .chart-view-dropdown .dropdown-item:hover { background: var(--active-bg); }
+        .chart-view-dropdown .dropdown-item.active { background: rgba(10, 132, 255, 0.2); color: #0a84ff; }
+
+        /* 收支趨勢圖頂部：支出/收入各占一半，下拉勾選細項 */
+        /* 切換樣式：在 .linechart-header-row 加上 style-1 / style-2 / style-3 / style-4 */
+        .linechart-header-row {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+        }
+        .linechart-header-half {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+        }
+        .linechart-header-dropdown {
+            position: relative;
+            width: 100%;
+            padding: 12px 12px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        .linechart-header-dropdown span { flex: 1; text-align: center; }
+        .linechart-header-dropdown i { position: absolute; right: 12px; font-size: 12px; opacity: 0.7; }
+        .linechart-header-dropdown.expense { color: var(--color-down); }
+        .linechart-header-dropdown.income { color: var(--color-up); }
+        
+        /* 樣式1：簡約線框 - 透明背景 + 細邊框 */
+        .linechart-header-row.style-1 .linechart-header-dropdown {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        .linechart-header-row.style-1 .linechart-header-dropdown:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .linechart-header-row.style-1 .linechart-header-dropdown.expense { border-color: rgba(255,69,58,0.5); }
+        .linechart-header-row.style-1 .linechart-header-dropdown.expense:hover { border-color: var(--color-down); }
+        .linechart-header-row.style-1 .linechart-header-dropdown.income { border-color: rgba(48,209,88,0.5); }
+        .linechart-header-row.style-1 .linechart-header-dropdown.income:hover { border-color: var(--color-up); }
+        
+        /* 樣式2：膠囊分段 - 圓潤膠囊，柔和背景 */
+        .linechart-header-row.style-2 {
+            gap: 0;
+            background: var(--active-bg);
+            border-radius: 24px;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+        }
+        .linechart-header-row.style-2 .linechart-header-dropdown {
+            background: transparent;
+            border: none;
+            border-radius: 20px;
+        }
+        .linechart-header-row.style-2 .linechart-header-dropdown:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .linechart-header-row.style-2 .linechart-header-dropdown.open {
+            background: rgba(255,255,255,0.12);
+        }
+        
+        /* 樣式3：卡片分離 - 輕微間距，柔和陰影 */
+        .linechart-header-row.style-3 .linechart-header-dropdown {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .linechart-header-row.style-3 .linechart-header-dropdown:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+        
+        /* 樣式4：極簡底線 - 純文字 + 底部線條 */
+        .linechart-header-row.style-4 {
+            gap: 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .linechart-header-row.style-4 .linechart-header-dropdown {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+        .linechart-header-row.style-4 .linechart-header-dropdown:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .linechart-header-row.style-4 .linechart-header-dropdown.expense.open { border-bottom-color: var(--color-down); }
+        .linechart-header-row.style-4 .linechart-header-dropdown.income.open { border-bottom-color: var(--color-up); }
+        .linechart-header-dropdown .dropdown-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            padding: 6px 0;
+        }
+        .linechart-header-dropdown.open .dropdown-panel { display: block; }
+        .linechart-header-dropdown .dropdown-check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .linechart-header-dropdown .dropdown-check-item:hover { background: var(--active-bg); }
+        .linechart-header-dropdown .dropdown-check-item input { cursor: pointer; }
+        /* 收支趨勢圖下拉：分組標題 */
+        .linechart-dropdown-section { padding: 6px 14px 4px; font-size: 11px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .linechart-dropdown-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
+
         /* 收入支出細項清單：最多顯示5行，超過則清單內滾動 */
         .chart-detail-list {
             max-height: 255px;
@@ -967,6 +1139,81 @@
         .calendar-day.selected { background: rgba(10, 132, 255, 0.2); color: #0a84ff; font-weight: 600; }
         .calendar-day.has-event { position: relative; }
         .calendar-day.has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #30d158; }
+
+        /* 記帳視圖切換 FAB：右下角向上展開 */
+        /* 收合時 options 不佔空間(max-height:0)，避免覆蓋下方列表/圖表阻擋觸控 */
+        .journal-fab-wrapper {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: flex-end;
+            gap: 12px;
+            pointer-events: none; /* 讓觸控穿透，只有按鈕和選項可點 */
+        }
+        .journal-fab-main,
+        .journal-fab-option {
+            pointer-events: auto; /* 按鈕和選項恢復可點擊 */
+        }
+        .journal-fab-main {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .journal-fab-main:hover { background: rgba(58, 58, 60, 0.3) !important; }
+        .journal-fab-main i { font-size: 20px; transition: transform 0.3s; }
+        .journal-fab-wrapper.expanded .journal-fab-main i { transform: rotate(180deg); }
+        .journal-fab-options {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 8px;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: max-height 0.25s, opacity 0.25s, transform 0.25s, visibility 0.25s;
+        }
+        .journal-fab-wrapper.expanded .journal-fab-options {
+            max-height: 180px;
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .journal-fab-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .journal-fab-option:hover { background: var(--active-bg); transform: scale(1.02); }
+        .journal-fab-option:active { transform: scale(0.98); }
+        .journal-fab-option i { font-size: 18px; color: #0a84ff; }
+        @media (max-width: 767px) {
+            .journal-fab-wrapper { bottom: 90px; right: 15px; }
+        }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; transition: background 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
@@ -1375,17 +1622,60 @@
             <div id="calendarPage" style="display: none; padding: 10px 20px 20px 20px; overflow-y: visible; height: calc(100% - 60px); margin-top: 0; background: var(--bg-color); position: fixed; top: 60px; left: 0; right: 0; bottom: 60px;">
                 <div class="calendar-container">
                     <div class="calendar-header">
-                        <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <div class="calendar-month-year">
-                            <span id="calendarMonthYear">2025年11月</span>
-                            <i class="fas fa-chevron-down calendar-dropdown"></i>
+                        <!-- 日曆/圓餅圖模式：日期導航 -->
+                        <div id="calendarHeaderDate" class="calendar-header-inner" style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <div class="calendar-month-year">
+                                <span id="calendarMonthYear">2025年11月</span>
+                                <i class="fas fa-chevron-down calendar-dropdown"></i>
+                            </div>
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
                         </div>
-                        <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                        <!-- 收支趨勢圖模式：左支出 右收入，各占一半，可下拉勾選細項 -->
+                        <div id="calendarHeaderLinechart" class="calendar-header-inner" style="display: none; width: 100%; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <button type="button" class="calendar-nav-btn" onclick="changeLinechartYear(-1, event)" title="上一年"><i class="fas fa-chevron-left"></i></button>
+                                <span id="linechartYearDisplay" style="font-size: 18px; font-weight: 600; color: var(--text-primary);"></span>
+                                <button type="button" class="calendar-nav-btn" onclick="changeLinechartYear(1, event)" title="下一年"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                            <div class="linechart-header-row style-1" id="linechartHeaderRow">
+                                <div class="linechart-header-half">
+                                    <div id="linechartExpenseDropdown" class="linechart-header-dropdown expense" onclick="toggleLinechartDropdown('expense', event)">
+                                        <span id="linechartExpenseLabel">支出</span>
+                                        <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                        <div class="dropdown-panel" id="linechartExpensePanel" onclick="event.stopPropagation()"></div>
+                                    </div>
+                                </div>
+                                <div class="linechart-header-half">
+                                    <div id="linechartIncomeDropdown" class="linechart-header-dropdown income" onclick="toggleLinechartDropdown('income', event)">
+                                        <span id="linechartIncomeLabel">收入</span>
+                                        <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                        <div class="dropdown-panel" id="linechartIncomePanel" onclick="event.stopPropagation()"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <!-- 懸浮在右下角的切換按鈕（與台幣轉美元按鈕相同位置和樣式） -->
-                    <button id="calendarChartBtn" class="currency-toggle-btn" onclick="toggleJournalChartView()" style="display: none;" title="切換顯示模式">
-                        <i class="fas fa-chart-pie"></i>
-                    </button>
+                    <!-- 右下角向上展開的視圖切換 FAB（主按鈕在下，選項向上展開） -->
+                    <div id="journalFabWrapper" class="journal-fab-wrapper" style="display: none;">
+                        <button id="journalFabMain" class="journal-fab-main" onclick="toggleJournalFab()" title="切換顯示模式">
+                            <i class="fas fa-chevron-up" id="journalFabIcon"></i>
+                        </button>
+                        <div class="journal-fab-options">
+                            <div class="journal-fab-option" onclick="selectJournalView('linechart')" title="收支趨勢圖">
+                                <i class="fas fa-chart-line"></i>
+                                <span>收支趨勢圖</span>
+                            </div>
+                            <div class="journal-fab-option" onclick="selectJournalView('chart')" title="收支圓餅圖">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>收支圓餅圖</span>
+                            </div>
+                            <div class="journal-fab-option" onclick="selectJournalView('calendar')" title="日曆記帳趣">
+                                <i class="fas fa-calendar-check"></i>
+                                <span>日曆記帳趣</span>
+                            </div>
+                        </div>
+                    </div>
                     <div id="calendarTodayDate" style="display: none;"></div>
                     <div class="calendar-weekdays">
                         <div class="calendar-weekday">週日</div>
@@ -1406,9 +1696,17 @@
                             <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyExpenseChartPage">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">支出</div>
-                                    <button id="expenseChartToggleBtn" onclick="toggleExpenseChartView()" style="background: var(--active-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" title="切換顯示模式" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--active-bg)'">
-                                        <span id="expenseChartToggleText">總支出</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                                    </button>
+                                    <div id="expenseChartDropdown" class="chart-view-dropdown">
+                                        <div class="dropdown-trigger" onclick="toggleExpenseChartDropdown(event)">
+                                            <span id="expenseChartToggleText">總支出</span>
+                                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                        </div>
+                                        <div class="dropdown-menu" onclick="event.stopPropagation()">
+                                            <div class="dropdown-item active" data-view="total" onclick="selectExpenseChartView('total', event)">總支出</div>
+                                            <div class="dropdown-item" data-view="normal" onclick="selectExpenseChartView('normal', event)">原始支出</div>
+                                            <div class="dropdown-item" data-view="advance" onclick="selectExpenseChartView('advance', event)">代墊</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
                                     <!-- 總支出 -->
@@ -1438,9 +1736,17 @@
                             <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyIncomeChartPage">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
                                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">收入</div>
-                                    <button id="incomeChartToggleBtn" onclick="toggleIncomeChartView()" style="background: var(--active-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 12px; color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px;" title="切換顯示模式" onmouseover="this.style.background='var(--border-color)'" onmouseout="this.style.background='var(--active-bg)'">
-                                        <span id="incomeChartToggleText">總收入</span> <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                                    </button>
+                                    <div id="incomeChartDropdown" class="chart-view-dropdown">
+                                        <div class="dropdown-trigger" onclick="toggleIncomeChartDropdown(event)">
+                                            <span id="incomeChartToggleText">總收入</span>
+                                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                                        </div>
+                                        <div class="dropdown-menu" onclick="event.stopPropagation()">
+                                            <div class="dropdown-item active" data-view="total" onclick="selectIncomeChartView('total', event)">總收入</div>
+                                            <div class="dropdown-item" data-view="normal" onclick="selectIncomeChartView('normal', event)">原始收入</div>
+                                            <div class="dropdown-item" data-view="advance" onclick="selectIncomeChartView('advance', event)">代墊</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
                                     <!-- 總收入 -->
@@ -1468,6 +1774,14 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <!-- 收支趨勢圖容器 -->
+                <div id="journalMonthlyLineChartContainer" style="display: none; margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; width: 100%; box-sizing: border-box; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: visible;">
+                    <div style="position: relative; margin-bottom: 15px;">
+                        <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); text-align: center;">收支趨勢圖</div>
+                        <button type="button" onclick="resetLinechartSelections()" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); padding: 6px 12px; font-size: 12px; color: var(--text-secondary); background: var(--active-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer;" title="恢復預設顯示">預設</button>
+                    </div>
+                    <div id="journalMonthlyLineChart" style="width: 100%; height: 280px; box-sizing: border-box; overflow: visible;"></div>
                 </div>
                 <div id="calendarTransferDetails" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; display: none; width: 100%; box-sizing: border-box; overflow: visible;">
                     <div class="list-section page-swiper" id="journalSwiper" style="position: relative; width: 100%; overflow: hidden; touch-action: pan-x pan-y;">
@@ -9011,21 +9325,12 @@
             // 隱藏右上角的新增和排序按鈕，顯示圖表按鈕和新增按鈕
             const addBtn = document.getElementById('addBtn');
             const sortBtn = document.getElementById('sortBtn');
-            const chartBtn = document.getElementById('calendarChartBtn');
+            const fabWrapper = document.getElementById('journalFabWrapper');
             const settingsBtn = document.getElementById('calendarSettingsBtn');
             const floatingControls = document.getElementById('journalFloatingControls');
             if(addBtn) addBtn.style.display = 'none';
             if(sortBtn) sortBtn.style.display = 'none';
-            // 顯示切換按鈕
-            if(chartBtn) {
-                chartBtn.style.display = 'flex';
-                // 根據恢復的視圖模式設置按鈕圖標
-                if(journalViewMode === 'chart') {
-                    chartBtn.innerHTML = '<i class="fas fa-calendar"></i>';
-                } else {
-                    chartBtn.innerHTML = '<i class="fas fa-chart-pie"></i>';
-                }
-            }
+            if(fabWrapper) fabWrapper.style.display = 'flex';
             if(settingsBtn) {
                 settingsBtn.style.display = 'block';
             }
@@ -9050,7 +9355,10 @@
                 const calendarGrid = document.getElementById('calendarGrid');
                 const calendarWeekdays = document.querySelector('.calendar-weekdays');
                 const monthlyChartContainer = document.getElementById('monthlyChartContainer');
+                const journalLineChartContainer = document.getElementById('journalMonthlyLineChartContainer');
                 const calendarTransferDetails = document.getElementById('calendarTransferDetails');
+                const headerDate = document.getElementById('calendarHeaderDate');
+                const headerLinechart = document.getElementById('calendarHeaderLinechart');
                 if(calendarGrid) calendarGrid.style.display = 'none';
                 if(calendarWeekdays) calendarWeekdays.style.display = 'none';
                 if(monthlyChartContainer) {
@@ -9058,14 +9366,45 @@
                     renderMonthlyCharts();
                     initMonthlyChartSwipe();
                 }
+                if(journalLineChartContainer) journalLineChartContainer.style.display = 'none';
+                if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
+                if(headerDate) headerDate.style.display = 'flex';
+                if(headerLinechart) headerLinechart.style.display = 'none';
+            } else if(journalViewMode === 'linechart') {
+                const calendarGrid = document.getElementById('calendarGrid');
+                const calendarWeekdays = document.querySelector('.calendar-weekdays');
+                const monthlyChartContainer = document.getElementById('monthlyChartContainer');
+                const journalLineChartContainer = document.getElementById('journalMonthlyLineChartContainer');
+                const calendarTransferDetails = document.getElementById('calendarTransferDetails');
+                const headerDate = document.getElementById('calendarHeaderDate');
+                const headerLinechart = document.getElementById('calendarHeaderLinechart');
+                if(calendarGrid) calendarGrid.style.display = 'none';
+                if(calendarWeekdays) calendarWeekdays.style.display = 'none';
+                if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
+                if(headerDate) headerDate.style.display = 'none';
+                if(headerLinechart) headerLinechart.style.display = 'flex';
+                if(journalLineChartContainer) {
+                    journalLineChartContainer.style.display = 'block';
+                    journalLinechartYear = new Date().getFullYear();
+                    const yearEl = document.getElementById('linechartYearDisplay');
+                    if(yearEl) yearEl.textContent = journalLinechartYear + '年';
+                    buildJournalLinechartCheckboxes();
+                    renderJournalMonthlyLineChart();
+                }
                 if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
             } else {
                 const calendarGrid = document.getElementById('calendarGrid');
                 const calendarWeekdays = document.querySelector('.calendar-weekdays');
                 const monthlyChartContainer = document.getElementById('monthlyChartContainer');
+                const journalLineChartContainer = document.getElementById('journalMonthlyLineChartContainer');
+                const headerDate = document.getElementById('calendarHeaderDate');
+                const headerLinechart = document.getElementById('calendarHeaderLinechart');
                 if(calendarGrid) calendarGrid.style.display = 'grid';
-                if(calendarWeekdays) calendarWeekdays.style.display = 'grid';  // 使用 grid 而不是 flex，與日曆網格對齊
+                if(calendarWeekdays) calendarWeekdays.style.display = 'grid';
                 if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
+                if(journalLineChartContainer) journalLineChartContainer.style.display = 'none';
+                if(headerDate) headerDate.style.display = 'flex';
+                if(headerLinechart) headerLinechart.style.display = 'none';
                 renderCalendar();
             }
             // 不顯示今日日期
@@ -9130,27 +9469,26 @@
             if(navbarTitle) {
                 navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">Monee';
             }
-            // 顯示右上角的新增和排序按鈕，隱藏圖表按鈕和新增按鈕
+            // 顯示右上角的新增和排序按鈕，隱藏記帳 FAB（因在資產頁）
             const addBtn = document.getElementById('addBtn');
             const sortBtn = document.getElementById('sortBtn');
-            const chartBtn = document.getElementById('calendarChartBtn');
+            const fabWrapper = document.getElementById('journalFabWrapper');
             const settingsBtn = document.getElementById('calendarSettingsBtn');
             if(addBtn && !isEditMode) addBtn.style.display = 'block';
             if(sortBtn) sortBtn.style.display = 'none';
-            // 在記帳頁面顯示切換按鈕
-            if(chartBtn) chartBtn.style.display = 'flex';
+            if(fabWrapper) fabWrapper.style.display = 'none';
             if(settingsBtn) settingsBtn.style.display = 'none';
         }
     }
     function changeCalendarMonth(delta) {
-        // 只在日曆模式下才能切換月份
         if(journalViewMode !== 'calendar') {
-            // 如果在圖表模式下，切換月份並重新渲染圓餅圖
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
-            // 保存日期狀態
             saveJournalPageState();
-            renderMonthlyCharts();
-            // 更新月份顯示
+            if(journalViewMode === 'chart') {
+                renderMonthlyCharts();
+            } else if(journalViewMode === 'linechart') {
+                renderJournalMonthlyLineChart();
+            }
             const monthYear = document.getElementById('calendarMonthYear');
             if(monthYear) {
                 const year = currentCalendarDate.getFullYear();
@@ -9551,7 +9889,7 @@
     
     // 當前記帳詳情的分頁索引（0: 支出, 1: 收入, 2: 轉帳）
     let currentJournalPageIndex = 0;
-    // 記帳顯示模式：'calendar' 或 'chart'
+    // 記帳顯示模式：'calendar' 日曆記帳趣 | 'chart' 收支圓餅圖 | 'linechart' 收支趨勢圖
     let journalViewMode = 'calendar';
     // 月份圓餅圖當前分頁索引（0: 支出, 1: 收入）
     let currentMonthlyChartIndex = 0;
@@ -9559,66 +9897,60 @@
     let currentExpenseChartView = 'total';
     // 收入圖表當前視圖（'total': 總收入, 'normal': 原始收入, 'advance': 代墊）
     let currentIncomeChartView = 'total';
+    // 收支趨勢圖勾選
+    let journalLinechartExpenseTotal = true;
+    let journalLinechartExpenseNormal = false;   // 原始支出
+    let journalLinechartExpenseAdvance = false;  // 代墊
+    let journalLinechartIncomeTotal = true;
+    let journalLinechartIncomeNormal = false;    // 原始收入
+    let journalLinechartIncomeAdvance = false;   // 代墊
+    let journalLinechartExpenseCategories = {};  // { 房租: true, 食物: true }
+    let journalLinechartIncomeCategories = {};
+    let journalLinechartYear = new Date().getFullYear();  // 收支趨勢圖顯示年份
     // 記帳日程圖表動畫引擎
     let monthlyExpenseChartAnimationEngine = null;
     let monthlyExpenseAdvanceChartAnimationEngine = null;
     let monthlyIncomeChartAnimationEngine = null;
     let monthlyIncomeAdvanceChartAnimationEngine = null;
     
-    // 切換記帳顯示模式（日曆/圓餅圖）
-    function toggleJournalChartView() {
-        journalViewMode = journalViewMode === 'calendar' ? 'chart' : 'calendar';
-        
-        // 保存視圖模式狀態
+    // 切換 FAB 展開/收合
+    function toggleJournalFab() {
+        const wrapper = document.getElementById('journalFabWrapper');
+        if(wrapper) wrapper.classList.toggle('expanded');
+    }
+    
+    // 選擇記帳視圖模式：calendar 日曆記帳趣 | chart 收支圓餅圖 | linechart 收支趨勢圖
+    function selectJournalView(mode) {
+        journalViewMode = mode;
         saveJournalPageState();
         
-        // 更新按鈕圖標
-        const chartBtn = document.getElementById('calendarChartBtn');
-        if(chartBtn) {
-            if(journalViewMode === 'chart') {
-                chartBtn.innerHTML = '<i class="fas fa-calendar"></i>';
-            } else {
-                chartBtn.innerHTML = '<i class="fas fa-chart-pie"></i>';
-            }
-            // 確保按鈕在記帳頁面時顯示
-            chartBtn.style.display = 'flex';
-        }
+        const fabWrapper = document.getElementById('journalFabWrapper');
+        if(fabWrapper) fabWrapper.classList.remove('expanded');
         
-        // 切換日曆和圓餅圖的顯示
-        const calendarContainer = document.querySelector('.calendar-container');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const calendarWeekdays = document.querySelector('.calendar-weekdays');
         const monthlyChartContainer = document.getElementById('monthlyChartContainer');
+        const journalLineChartContainer = document.getElementById('journalMonthlyLineChartContainer');
         const calendarTransferDetails = document.getElementById('calendarTransferDetails');
         
-        if(journalViewMode === 'chart') {
-            // 顯示圓餅圖，隱藏日曆網格和詳情，但保留月份切換按鈕
-            const calendarGrid = document.getElementById('calendarGrid');
-            const calendarWeekdays = document.querySelector('.calendar-weekdays');
-            if(calendarGrid) calendarGrid.style.display = 'none';
-            if(calendarWeekdays) calendarWeekdays.style.display = 'none';
-            if(monthlyChartContainer) {
-                monthlyChartContainer.style.display = 'block';
-                renderMonthlyCharts();
-                initMonthlyChartSwipe();
-            }
-            if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
-        } else {
-            // 顯示日曆，隱藏圓餅圖
-            const calendarGrid = document.getElementById('calendarGrid');
-            const calendarWeekdays = document.querySelector('.calendar-weekdays');
+        const headerDate = document.getElementById('calendarHeaderDate');
+        const headerLinechart = document.getElementById('calendarHeaderLinechart');
+        
+        if(mode === 'calendar') {
             if(calendarGrid) calendarGrid.style.display = 'grid';
-            if(calendarWeekdays) calendarWeekdays.style.display = 'grid';  // 使用 grid 與日曆網格對齊
+            if(calendarWeekdays) calendarWeekdays.style.display = 'grid';
             if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
-            
-            // 切換到日曆模式時，重置所有圓餅圖高亮
+            if(journalLineChartContainer) journalLineChartContainer.style.display = 'none';
+            if(calendarTransferDetails) calendarTransferDetails.style.display = 'block';
+            if(headerDate) headerDate.style.display = 'flex';
+            if(headerLinechart) headerLinechart.style.display = 'none';
             resetPieChartHighlight('monthlyExpenseTotalChart');
             resetPieChartHighlight('monthlyExpenseChart');
             resetPieChartHighlight('monthlyExpenseAdvanceChart');
             resetPieChartHighlight('monthlyIncomeTotalChart');
             resetPieChartHighlight('monthlyIncomeChart');
             resetPieChartHighlight('monthlyIncomeAdvanceChart');
-            
             renderCalendar();
-            // 如果有選中日期，顯示詳情；否則自動選中今天
             if(selectedDate) {
                 showFixedTransferDetailsForDate(selectedDate);
             } else {
@@ -9628,6 +9960,33 @@
                 renderCalendar();
                 showFixedTransferDetailsForDate(today);
             }
+        } else if(mode === 'chart') {
+            if(calendarGrid) calendarGrid.style.display = 'none';
+            if(calendarWeekdays) calendarWeekdays.style.display = 'none';
+            if(monthlyChartContainer) {
+                monthlyChartContainer.style.display = 'block';
+                renderMonthlyCharts();
+                initMonthlyChartSwipe();
+            }
+            if(journalLineChartContainer) journalLineChartContainer.style.display = 'none';
+            if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
+            if(headerDate) headerDate.style.display = 'flex';
+            if(headerLinechart) headerLinechart.style.display = 'none';
+        } else if(mode === 'linechart') {
+            if(calendarGrid) calendarGrid.style.display = 'none';
+            if(calendarWeekdays) calendarWeekdays.style.display = 'none';
+            if(monthlyChartContainer) monthlyChartContainer.style.display = 'none';
+            if(journalLineChartContainer) {
+                journalLineChartContainer.style.display = 'block';
+                journalLinechartYear = new Date().getFullYear();
+                const yearEl = document.getElementById('linechartYearDisplay');
+                if(yearEl) yearEl.textContent = journalLinechartYear + '年';
+                buildJournalLinechartCheckboxes();
+                renderJournalMonthlyLineChart();
+            }
+            if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
+            if(headerDate) headerDate.style.display = 'none';
+            if(headerLinechart) headerLinechart.style.display = 'flex';
         }
     }
     
@@ -9737,11 +10096,312 @@
                     // 重新渲染所有圓餅圖以應用新的響應式配置
                     if(journalViewMode === 'chart') {
                         renderMonthlyCharts();
+                    } else if(journalViewMode === 'linechart') {
+                        renderJournalMonthlyLineChart();
                     }
                 }, 300); // 防抖處理
             };
             window.addEventListener('resize', window.monthlyChartResizeHandler);
         }
+    }
+    
+    // 收支趨勢圖：切換下拉開關
+    function toggleLinechartDropdown(type, e) {
+        e.stopPropagation();
+        const expenseDd = document.getElementById('linechartExpenseDropdown');
+        const incomeDd = document.getElementById('linechartIncomeDropdown');
+        if(type === 'expense') {
+            expenseDd?.classList.toggle('open');
+            incomeDd?.classList.remove('open');
+        } else {
+            incomeDd?.classList.toggle('open');
+            expenseDd?.classList.remove('open');
+        }
+    }
+    
+    // 點擊頁面關閉趨勢圖下拉
+    document.addEventListener('click', function() {
+        document.getElementById('linechartExpenseDropdown')?.classList.remove('open');
+        document.getElementById('linechartIncomeDropdown')?.classList.remove('open');
+    });
+    
+    // 收支趨勢圖：建立支出/收入細項勾選清單（分層分組：總覽 + 細項）
+    function buildJournalLinechartCheckboxes() {
+        const records = loadJournalRecords();
+        const expenseCats = new Set();
+        const incomeCats = new Set();
+        records.forEach(r => {
+            const cat = r.category || '其他';
+            if(r.type === 'expense') expenseCats.add(cat);
+            else if(r.type === 'income') incomeCats.add(cat);
+        });
+        
+        const expensePanel = document.getElementById('linechartExpensePanel');
+        const incomePanel = document.getElementById('linechartIncomePanel');
+        if(!expensePanel || !incomePanel) return;
+        
+        expensePanel.innerHTML = '';
+        // 總覽：總支出、原始支出、代墊
+        const expOverviewTitle = document.createElement('div');
+        expOverviewTitle.className = 'linechart-dropdown-section';
+        expOverviewTitle.textContent = '總覽';
+        expensePanel.appendChild(expOverviewTitle);
+        ['總支出','原始支出','代墊'].forEach(key => {
+            const checked = key === '總支出' ? journalLinechartExpenseTotal : (key === '原始支出' ? journalLinechartExpenseNormal : journalLinechartExpenseAdvance);
+            const div = document.createElement('div');
+            div.className = 'dropdown-check-item';
+            div.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} data-cat="${key}" onchange="updateLinechartCategory('expense', this.dataset.cat, this.checked, this)"><label>${key}</label>`;
+            expensePanel.appendChild(div);
+        });
+        const expDivider = document.createElement('div');
+        expDivider.className = 'linechart-dropdown-divider';
+        expensePanel.appendChild(expDivider);
+        const expDetailTitle = document.createElement('div');
+        expDetailTitle.className = 'linechart-dropdown-section';
+        expDetailTitle.textContent = '細項';
+        expensePanel.appendChild(expDetailTitle);
+        [...expenseCats].sort().forEach(cat => {
+            const checked = journalLinechartExpenseCategories[cat] || false;
+            const div = document.createElement('div');
+            div.className = 'dropdown-check-item';
+            div.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} data-cat="${(cat || '').replace(/"/g,'&quot;')}" onchange="updateLinechartCategory('expense', this.dataset.cat, this.checked, this)"><label>${cat}</label>`;
+            expensePanel.appendChild(div);
+        });
+        
+        incomePanel.innerHTML = '';
+        const incOverviewTitle = document.createElement('div');
+        incOverviewTitle.className = 'linechart-dropdown-section';
+        incOverviewTitle.textContent = '總覽';
+        incomePanel.appendChild(incOverviewTitle);
+        ['總收入','原始收入','代墊'].forEach(key => {
+            const checked = key === '總收入' ? journalLinechartIncomeTotal : (key === '原始收入' ? journalLinechartIncomeNormal : journalLinechartIncomeAdvance);
+            const div = document.createElement('div');
+            div.className = 'dropdown-check-item';
+            div.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} data-cat="${key}" onchange="updateLinechartCategory('income', this.dataset.cat, this.checked, this)"><label>${key}</label>`;
+            incomePanel.appendChild(div);
+        });
+        const incDivider = document.createElement('div');
+        incDivider.className = 'linechart-dropdown-divider';
+        incomePanel.appendChild(incDivider);
+        const incDetailTitle = document.createElement('div');
+        incDetailTitle.className = 'linechart-dropdown-section';
+        incDetailTitle.textContent = '細項';
+        incomePanel.appendChild(incDetailTitle);
+        [...incomeCats].sort().forEach(cat => {
+            const checked = journalLinechartIncomeCategories[cat] || false;
+            const div = document.createElement('div');
+            div.className = 'dropdown-check-item';
+            div.innerHTML = `<input type="checkbox" ${checked ? 'checked' : ''} data-cat="${(cat || '').replace(/"/g,'&quot;')}" onchange="updateLinechartCategory('income', this.dataset.cat, this.checked, this)"><label>${cat}</label>`;
+            incomePanel.appendChild(div);
+        });
+        
+        updateLinechartSelectionLabel('expense');
+        updateLinechartSelectionLabel('income');
+    }
+    
+    // 收支趨勢圖：更新勾選狀態（至少須勾選一項，否則不允許取消）
+    function updateLinechartCategory(type, key, checked, checkboxEl) {
+        if(!checked) {
+            const hasExp = () => journalLinechartExpenseTotal || journalLinechartExpenseNormal || journalLinechartExpenseAdvance || Object.values(journalLinechartExpenseCategories).some(Boolean);
+            const hasInc = () => journalLinechartIncomeTotal || journalLinechartIncomeNormal || journalLinechartIncomeAdvance || Object.values(journalLinechartIncomeCategories).some(Boolean);
+            const wouldExp = () => {
+                if(type !== 'expense') return hasExp();
+                if(key === '總支出') return journalLinechartExpenseNormal || journalLinechartExpenseAdvance || Object.values(journalLinechartExpenseCategories).some(Boolean);
+                if(key === '原始支出') return journalLinechartExpenseTotal || journalLinechartExpenseAdvance || Object.values(journalLinechartExpenseCategories).some(Boolean);
+                if(key === '代墊') return journalLinechartExpenseTotal || journalLinechartExpenseNormal || Object.values(journalLinechartExpenseCategories).some(Boolean);
+                return journalLinechartExpenseTotal || journalLinechartExpenseNormal || journalLinechartExpenseAdvance || Object.keys(journalLinechartExpenseCategories).some(k => k !== key && journalLinechartExpenseCategories[k]);
+            };
+            const wouldInc = () => {
+                if(type !== 'income') return hasInc();
+                if(key === '總收入') return journalLinechartIncomeNormal || journalLinechartIncomeAdvance || Object.values(journalLinechartIncomeCategories).some(Boolean);
+                if(key === '原始收入') return journalLinechartIncomeTotal || journalLinechartIncomeAdvance || Object.values(journalLinechartIncomeCategories).some(Boolean);
+                if(key === '代墊') return journalLinechartIncomeTotal || journalLinechartIncomeNormal || Object.values(journalLinechartIncomeCategories).some(Boolean);
+                return journalLinechartIncomeTotal || journalLinechartIncomeNormal || journalLinechartIncomeAdvance || Object.keys(journalLinechartIncomeCategories).some(k => k !== key && journalLinechartIncomeCategories[k]);
+            };
+            if(!wouldExp() && !wouldInc()) {
+                if(checkboxEl) checkboxEl.checked = true;
+                if(typeof toast === 'function') toast('請至少勾選一項支出或收入');
+                else alert('請至少勾選一項支出或收入');
+                return;
+            }
+        }
+        if(type === 'expense') {
+            if(key === '總支出') journalLinechartExpenseTotal = checked;
+            else if(key === '原始支出') journalLinechartExpenseNormal = checked;
+            else if(key === '代墊') journalLinechartExpenseAdvance = checked;
+            else journalLinechartExpenseCategories[key] = checked;
+        } else {
+            if(key === '總收入') journalLinechartIncomeTotal = checked;
+            else if(key === '原始收入') journalLinechartIncomeNormal = checked;
+            else if(key === '代墊') journalLinechartIncomeAdvance = checked;
+            else journalLinechartIncomeCategories[key] = checked;
+        }
+        updateLinechartSelectionLabel(type);
+        renderJournalMonthlyLineChart();
+    }
+    
+    // 收支趨勢圖：按鈕固定顯示「支出」「收入」，不隨勾選變動
+    function updateLinechartSelectionLabel(type) {
+        const label = document.getElementById(type === 'expense' ? 'linechartExpenseLabel' : 'linechartIncomeLabel');
+        if(label) label.textContent = type === 'expense' ? '支出' : '收入';
+    }
+    
+    // 收支趨勢圖：切換年份（防連點）
+    function changeLinechartYear(delta, e) {
+        if(e) { e.preventDefault(); e.stopPropagation(); }
+        const now = Date.now();
+        if(changeLinechartYear._lastClick && now - changeLinechartYear._lastClick < 400) return;
+        changeLinechartYear._lastClick = now;
+        journalLinechartYear += delta;
+        const el = document.getElementById('linechartYearDisplay');
+        if(el) el.textContent = journalLinechartYear + '年';
+        renderJournalMonthlyLineChart();
+    }
+    
+    // 收支趨勢圖：恢復預設顯示（總支出 + 總收入）
+    function resetLinechartSelections() {
+        journalLinechartExpenseTotal = true;
+        journalLinechartExpenseNormal = false;
+        journalLinechartExpenseAdvance = false;
+        journalLinechartExpenseCategories = {};
+        journalLinechartIncomeTotal = true;
+        journalLinechartIncomeNormal = false;
+        journalLinechartIncomeAdvance = false;
+        journalLinechartIncomeCategories = {};
+        buildJournalLinechartCheckboxes();
+        renderJournalMonthlyLineChart();
+    }
+    
+    // 渲染記帳收支趨勢圖（選定年份 1–12 月）- 勾選選項疊加為多條折線
+    function renderJournalMonthlyLineChart() {
+        const chartContainer = document.getElementById('journalMonthlyLineChart');
+        if(!chartContainer || typeof Highcharts === 'undefined') return;
+        const yearEl = document.getElementById('linechartYearDisplay');
+        if(yearEl) yearEl.textContent = journalLinechartYear + '年';
+        
+        const records = loadJournalRecords();
+        const year = journalLinechartYear;
+        const monthLabels = [];
+        
+        const colorDown = getComputedStyle(document.documentElement).getPropertyValue('--color-down').trim() || '#ff453a';
+        const colorUp = getComputedStyle(document.documentElement).getPropertyValue('--color-up').trim() || '#30d158';
+        const allColors = [colorDown, colorUp, '#ff9500', '#ffcc00', '#34c759', '#5ac8fa', '#007aff', '#5856d6', '#af52de', '#ff2d55', '#0a84ff', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#f97316', '#eab308'];
+        
+        const expenseSeries = [];
+        if(journalLinechartExpenseTotal) expenseSeries.push({ name: '總支出', filter: r => r.type === 'expense' });
+        if(journalLinechartExpenseNormal) expenseSeries.push({ name: '原始支出', filter: r => r.type === 'expense' && !r.isAdvance });
+        if(journalLinechartExpenseAdvance) expenseSeries.push({ name: '代墊', filter: r => r.type === 'expense' && r.isAdvance });
+        Object.keys(journalLinechartExpenseCategories).filter(k => journalLinechartExpenseCategories[k]).forEach(cat => {
+            expenseSeries.push({ name: cat, filter: r => r.type === 'expense' && (r.category || '其他') === cat });
+        });
+        
+        const incomeSeries = [];
+        if(journalLinechartIncomeTotal) incomeSeries.push({ name: '總收入', filter: r => r.type === 'income' });
+        if(journalLinechartIncomeNormal) incomeSeries.push({ name: '原始收入', filter: r => r.type === 'income' && !r.isAdvance });
+        if(journalLinechartIncomeAdvance) incomeSeries.push({ name: '代墊', filter: r => r.type === 'income' && r.isAdvance });
+        Object.keys(journalLinechartIncomeCategories).filter(k => journalLinechartIncomeCategories[k]).forEach(cat => {
+            incomeSeries.push({ name: cat, filter: r => r.type === 'income' && (r.category || '其他') === cat });
+        });
+        
+        const allSeries = [];
+        expenseSeries.forEach((s, i) => {
+            const data = [];
+            for(let j = 0; j < 12; j++) {
+                const d = new Date(year, j, 1);
+                const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+                const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                monthStart.setHours(0, 0, 0, 0);
+                monthEnd.setHours(23, 59, 59, 999);
+                const monthRecords = records.filter(r => {
+                    if(!r.date) return false;
+                    const rd = new Date(r.date);
+                    rd.setHours(0, 0, 0, 0);
+                    return rd >= monthStart && rd <= monthEnd;
+                });
+                const sum = monthRecords.filter(s.filter).reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+                data.push(Math.round(sum));
+            }
+            allSeries.push({ name: s.name, data: data, color: allColors[allSeries.length % allColors.length] });
+        });
+        incomeSeries.forEach((s, i) => {
+            const data = [];
+            for(let j = 0; j < 12; j++) {
+                const d = new Date(year, j, 1);
+                const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
+                const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                monthStart.setHours(0, 0, 0, 0);
+                monthEnd.setHours(23, 59, 59, 999);
+                const monthRecords = records.filter(r => {
+                    if(!r.date) return false;
+                    const rd = new Date(r.date);
+                    rd.setHours(0, 0, 0, 0);
+                    return rd >= monthStart && rd <= monthEnd;
+                });
+                const sum = monthRecords.filter(s.filter).reduce((a, r) => a + (parseFloat(r.amount) || 0), 0);
+                data.push(Math.round(sum));
+            }
+            allSeries.push({ name: s.name, data: data, color: allColors[allSeries.length % allColors.length] });
+        });
+        
+        for(let i = 0; i < 12; i++) {
+            monthLabels.push(`${i + 1}月`);
+        }
+        
+        const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || '#fff';
+        
+        if(chartContainer.chartInstance) {
+            chartContainer.chartInstance.destroy();
+            chartContainer.chartInstance = null;
+        }
+        
+        chartContainer.chartInstance = Highcharts.chart('journalMonthlyLineChart', {
+            chart: { type: 'line', backgroundColor: 'transparent', height: 280 },
+            title: { text: '' },
+            credits: { enabled: false },
+            legend: {
+                enabled: true,
+                align: 'center',
+                verticalAlign: 'top',
+                itemStyle: { color: chartTextColor, fontSize: '12px' }
+            },
+            xAxis: {
+                categories: monthLabels,
+                labels: { style: { color: chartTextColor, fontSize: '11px' } },
+                lineColor: 'rgba(255,255,255,0.1)',
+                tickColor: 'rgba(255,255,255,0.1)'
+            },
+            yAxis: {
+                title: { text: '' },
+                labels: {
+                    style: { color: chartTextColor },
+                    formatter: function() {
+                        const v = this.value;
+                        if(Math.abs(v) >= 10000) return (v/10000).toFixed(0) + '萬';
+                        return v.toLocaleString();
+                    }
+                },
+                gridLineColor: 'rgba(255,255,255,0.05)',
+                lineColor: 'rgba(255,255,255,0.1)'
+            },
+            tooltip: {
+                enabled: true,
+                shared: false,
+                useHTML: true,
+                stickOnContact: true,
+                backgroundColor: 'rgba(30,30,30,0.95)',
+                borderColor: 'rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                style: { color: '#fff', fontSize: '13px' },
+                formatter: function() {
+                    const p = this.point;
+                    return `<b>分類：${p.series.name}</b><br/>月份：${year}年${p.category}<br/>金額：$${(p.y||0).toLocaleString()}`;
+                }
+            },
+            plotOptions: {
+                line: { marker: { radius: 4 }, lineWidth: 2 }
+            },
+            series: allSeries
+        });
     }
     
     // 獲取響應式圓餅圖配置（根據螢幕寬度）
@@ -10004,69 +10664,72 @@
         renderMonthlyChartList(type, chartDataWithColors, chartId);
     }
     
-    // 切換支出圖表視圖（總支出、原始支出、代墊）
-    function toggleExpenseChartView() {
-        const views = ['total', 'normal', 'advance'];
-        const viewNames = ['總支出', '原始支出', '代墊'];
-        const currentIndex = views.indexOf(currentExpenseChartView);
-        const nextIndex = (currentIndex + 1) % views.length;
-        currentExpenseChartView = views[nextIndex];
+    // 支出圖表下拉選單：切換開關
+    function toggleExpenseChartDropdown(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('expenseChartDropdown');
+        const incomeDd = document.getElementById('incomeChartDropdown');
+        if(incomeDd) incomeDd.classList.remove('open');
+        if(dd) dd.classList.toggle('open');
+    }
+    
+    // 收入圖表下拉選單：切換開關
+    function toggleIncomeChartDropdown(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('incomeChartDropdown');
+        const expenseDd = document.getElementById('expenseChartDropdown');
+        if(expenseDd) expenseDd.classList.remove('open');
+        if(dd) dd.classList.toggle('open');
+    }
+    
+    // 點擊頁面時關閉所有下拉選單
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.chart-view-dropdown.open').forEach(el => el.classList.remove('open'));
+    });
+    
+    // 選擇支出圖表視圖（總支出、原始支出、代墊）
+    function selectExpenseChartView(view, e) {
+        if(e) e.stopPropagation();
+        const viewNames = { total: '總支出', normal: '原始支出', advance: '代墊' };
+        currentExpenseChartView = view;
         
-        // 隱藏所有視圖
-        document.getElementById('expenseTotalView').style.display = 'none';
-        document.getElementById('expenseNormalView').style.display = 'none';
-        document.getElementById('expenseAdvanceView').style.display = 'none';
+        document.getElementById('expenseTotalView').style.display = view === 'total' ? 'block' : 'none';
+        document.getElementById('expenseNormalView').style.display = view === 'normal' ? 'block' : 'none';
+        document.getElementById('expenseAdvanceView').style.display = view === 'advance' ? 'block' : 'none';
         
-        // 顯示當前視圖
-        if(currentExpenseChartView === 'total') {
-            document.getElementById('expenseTotalView').style.display = 'block';
-        } else if(currentExpenseChartView === 'normal') {
-            document.getElementById('expenseNormalView').style.display = 'block';
-        } else if(currentExpenseChartView === 'advance') {
-            document.getElementById('expenseAdvanceView').style.display = 'block';
-        }
-        
-        // 更新按鈕文字
         const toggleText = document.getElementById('expenseChartToggleText');
-        if(toggleText) {
-            toggleText.textContent = viewNames[nextIndex];
+        if(toggleText) toggleText.textContent = viewNames[view];
+        
+        const dd = document.getElementById('expenseChartDropdown');
+        if(dd) {
+            dd.querySelectorAll('.dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+            dd.classList.remove('open');
         }
         
-        // 切換視圖時恢復圓餅圖高亮
         resetPieChartHighlight('monthlyExpenseTotalChart');
         resetPieChartHighlight('monthlyExpenseChart');
         resetPieChartHighlight('monthlyExpenseAdvanceChart');
     }
     
-    // 切換收入圖表視圖（總收入、原始收入、代墊）
-    function toggleIncomeChartView() {
-        const views = ['total', 'normal', 'advance'];
-        const viewNames = ['總收入', '原始收入', '代墊'];
-        const currentIndex = views.indexOf(currentIncomeChartView);
-        const nextIndex = (currentIndex + 1) % views.length;
-        currentIncomeChartView = views[nextIndex];
+    // 選擇收入圖表視圖（總收入、原始收入、代墊）
+    function selectIncomeChartView(view, e) {
+        if(e) e.stopPropagation();
+        const viewNames = { total: '總收入', normal: '原始收入', advance: '代墊' };
+        currentIncomeChartView = view;
         
-        // 隱藏所有視圖
-        document.getElementById('incomeTotalView').style.display = 'none';
-        document.getElementById('incomeNormalView').style.display = 'none';
-        document.getElementById('incomeAdvanceView').style.display = 'none';
+        document.getElementById('incomeTotalView').style.display = view === 'total' ? 'block' : 'none';
+        document.getElementById('incomeNormalView').style.display = view === 'normal' ? 'block' : 'none';
+        document.getElementById('incomeAdvanceView').style.display = view === 'advance' ? 'block' : 'none';
         
-        // 顯示當前視圖
-        if(currentIncomeChartView === 'total') {
-            document.getElementById('incomeTotalView').style.display = 'block';
-        } else if(currentIncomeChartView === 'normal') {
-            document.getElementById('incomeNormalView').style.display = 'block';
-        } else if(currentIncomeChartView === 'advance') {
-            document.getElementById('incomeAdvanceView').style.display = 'block';
-        }
-        
-        // 更新按鈕文字
         const toggleText = document.getElementById('incomeChartToggleText');
-        if(toggleText) {
-            toggleText.textContent = viewNames[nextIndex];
+        if(toggleText) toggleText.textContent = viewNames[view];
+        
+        const dd = document.getElementById('incomeChartDropdown');
+        if(dd) {
+            dd.querySelectorAll('.dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+            dd.classList.remove('open');
         }
         
-        // 切換視圖時恢復圓餅圖高亮
         resetPieChartHighlight('monthlyIncomeTotalChart');
         resetPieChartHighlight('monthlyIncomeChart');
         resetPieChartHighlight('monthlyIncomeAdvanceChart');
