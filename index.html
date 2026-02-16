@@ -10109,17 +10109,34 @@
         }
     }
     
-    // 收支趨勢圖：切換下拉開關
+    // 收支趨勢圖：切換下拉開關（手機版：快速滑動後切換時，延遲開啟新選單以釋放 touch 捲動鎖定）
+    let _linechartSwitchTimer = null;
     function toggleLinechartDropdown(type, e) {
         e.stopPropagation();
+        if(_linechartSwitchTimer) { clearTimeout(_linechartSwitchTimer); _linechartSwitchTimer = null; }
         const expenseDd = document.getElementById('linechartExpenseDropdown');
         const incomeDd = document.getElementById('linechartIncomeDropdown');
-        if(type === 'expense') {
-            expenseDd?.classList.toggle('open');
-            incomeDd?.classList.remove('open');
-        } else {
-            incomeDd?.classList.toggle('open');
+        const expenseOpen = expenseDd?.classList.contains('open');
+        const incomeOpen = incomeDd?.classList.contains('open');
+        const isSwitching = (type === 'expense' && incomeOpen) || (type === 'income' && expenseOpen);
+        if(isSwitching) {
             expenseDd?.classList.remove('open');
+            incomeDd?.classList.remove('open');
+            const openTarget = type === 'expense' ? expenseDd : incomeDd;
+            const panel = type === 'expense' ? document.getElementById('linechartExpensePanel') : document.getElementById('linechartIncomePanel');
+            _linechartSwitchTimer = setTimeout(function() {
+                _linechartSwitchTimer = null;
+                openTarget?.classList.add('open');
+                if(panel) { panel.scrollTop = 0; }
+            }, 50);
+        } else {
+            if(type === 'expense') {
+                expenseDd?.classList.toggle('open');
+                incomeDd?.classList.remove('open');
+            } else {
+                incomeDd?.classList.toggle('open');
+                expenseDd?.classList.remove('open');
+            }
         }
     }
     
