@@ -952,6 +952,8 @@
             overflow-y: auto;
             display: none;
             padding: 6px 0;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
         }
         .linechart-header-dropdown.open .dropdown-panel { display: block; }
         .linechart-header-dropdown .dropdown-check-item {
@@ -9389,6 +9391,7 @@
                     const yearEl = document.getElementById('linechartYearDisplay');
                     if(yearEl) yearEl.textContent = journalLinechartYear + '年';
                     buildJournalLinechartCheckboxes();
+                    initLinechartDropdownTouch();
                     renderJournalMonthlyLineChart();
                 }
                 if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
@@ -9982,6 +9985,7 @@
                 const yearEl = document.getElementById('linechartYearDisplay');
                 if(yearEl) yearEl.textContent = journalLinechartYear + '年';
                 buildJournalLinechartCheckboxes();
+                initLinechartDropdownTouch();
                 renderJournalMonthlyLineChart();
             }
             if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
@@ -10124,6 +10128,18 @@
         document.getElementById('linechartExpenseDropdown')?.classList.remove('open');
         document.getElementById('linechartIncomeDropdown')?.classList.remove('open');
     });
+    
+    // 收支趨勢圖：防止下拉選單捲動時被父層 touch 攔截
+    function initLinechartDropdownTouch() {
+        const panels = [document.getElementById('linechartExpensePanel'), document.getElementById('linechartIncomePanel')];
+        const stopTouch = (e) => e.stopPropagation();
+        panels.forEach(p => {
+            if(!p || p._linechartTouchInit) return;
+            p._linechartTouchInit = true;
+            p.addEventListener('touchstart', stopTouch, { passive: true });
+            p.addEventListener('touchmove', stopTouch, { passive: true });
+        });
+    }
     
     // 收支趨勢圖：建立支出/收入細項勾選清單（分層分組：總覽 + 細項）
     function buildJournalLinechartCheckboxes() {
