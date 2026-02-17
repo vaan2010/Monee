@@ -1408,6 +1408,23 @@
             border-radius: 2px;
         }
         .tx-no-data { text-align: center; color: var(--text-secondary); padding: 30px 0; font-size: 14px; }
+        
+        /* 使用教學：圈選 spotlight */
+        #spotlightOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; pointer-events: none; }
+        #spotlightOverlay.show { display: block; pointer-events: auto; animation: spotlightFadeIn 0.3s ease; }
+        @keyframes spotlightFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #spotlightOverlay * { pointer-events: none; }
+        #spotlightOverlay .spotlight-tooltip,
+        #spotlightOverlay .spotlight-actions,
+        #spotlightOverlay .spotlight-actions button { pointer-events: auto; cursor: pointer; }
+        .spotlight-hole { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.78); transition: all 0.35s ease; border: 2px solid rgba(10, 132, 255, 0.9); }
+        .spotlight-tooltip { position: fixed; left: 16px; right: 16px; width: auto; max-width: none; margin: 0; background: var(--card-bg); border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.4); border: 1px solid var(--border-color); }
+        .spotlight-tooltip .spotlight-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .spotlight-tooltip .spotlight-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+        .spotlight-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .spotlight-actions button { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .spotlight-skip { background: transparent; color: var(--text-secondary); }
+        .spotlight-next { background: #0a84ff; color: #fff; }
     </style>
 </head>
 <body>
@@ -1420,6 +1437,19 @@
             </div>
             <div class="loading-spinner"></div>
             <div class="loading-text">讀取中...</div>
+        </div>
+    </div>
+    
+    <!-- 使用教學：圈選實際畫面上的區塊 -->
+    <div id="spotlightOverlay" onclick="event.target.id === 'spotlightOverlay' && closeSpotlightTutorial()">
+        <div class="spotlight-hole" id="spotlightHole"></div>
+        <div class="spotlight-tooltip" id="spotlightTooltip">
+            <div class="spotlight-title" id="spotlightTitle"></div>
+            <div class="spotlight-desc" id="spotlightDesc"></div>
+            <div class="spotlight-actions">
+                <button class="spotlight-skip" onclick="closeSpotlightTutorial()">跳過</button>
+                <button class="spotlight-next" id="spotlightNextBtn" onclick="nextSpotlightStep()">下一步</button>
+            </div>
         </div>
     </div>
     
@@ -1506,6 +1536,8 @@
                 <div class="menu-section collapsed" id="menuSection-pages">
                     <div id="pageVisibilitySettings"></div>
                 </div>
+                <div class="menu-item" onclick="openTutorialAssets(); toggleSidebar();"><i class="fas fa-wallet"></i><span class="menu-text">資產介紹</span></div>
+                <div class="menu-item" onclick="openTutorialJournal(); toggleSidebar();"><i class="fas fa-book"></i><span class="menu-text">記帳介紹</span></div>
                 <div class="menu-item" onclick="toggleTheme(); toggleSidebar();"><i class="fas fa-moon" id="themeIcon"></i><span class="menu-text" id="themeText">深色模式</span></div>
             </div>
         </div>
@@ -4208,6 +4240,124 @@
 
     // --- UI ---
     function toggleSidebar() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(s.classList.contains('active')){s.classList.remove('active');o.classList.remove('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('collapsed');} initMenuSections();}else{s.classList.add('active');o.classList.add('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('collapsed');}} }
+    
+    // 使用教學：圈選畫面上的區塊（資產 / 記帳分開）
+    const ASSET_TUTORIAL_STEPS = [
+        { selector: '.navbar .hamburger-btn', title: '功能選單', desc: '點這裡可開啟側邊選單：匯出備份、雲端設定、API 設定、使用教學等。' },
+        { selector: '.summary-card', title: '總淨資產', desc: '這裡顯示你的總淨資產。可點旁邊眼睛圖示隱藏/顯示數字。' },
+        { selector: '#addBtn', title: '新增資產', desc: '點 + 可新增錢包、美股、台股、加密貨幣或負債。' },
+        { selector: '#chartWrapper', title: '資產分佈圖', desc: '圓餅圖顯示各類資產佔比。可點圖切換圓餅/折線圖。' },
+        { selector: '.page-indicator', title: '分頁切換', desc: '總覽、錢包、美股、台股、加密貨幣，左右滑動或點分頁切換。' },
+        { selector: '.tab-bar', title: '資產 / 記帳', desc: '切換到「記帳」可查看日曆與收支紀錄。' }
+    ];
+    const JOURNAL_TUTORIAL_STEPS = [
+        { selector: '.tab-bar', title: '記帳分頁', desc: '你現在在記帳頁。點「資產」可回到資產總覽。' },
+        { selector: '#calendarHeaderDate', title: '月份切換', desc: '左右箭頭可切換月份，點中間可選月份。' },
+        { selector: '#calendarGrid', title: '日曆', desc: '點選日期可查看當天收支詳情。有記帳的日期底下會顯示藍色標記。' },
+        { selector: '#calendarSettingsBtn', title: '新增記帳', desc: '在記帳頁點右上角 + 可新增收入、支出或轉帳。' },
+        { selector: '#journalFabWrapper', title: '視圖切換', desc: '可切換「日曆記帳趣」、「收支圓餅圖」、「收支趨勢圖」。' },
+        { selector: '#calendarTransferDetails', title: '當日詳情', desc: '選日期後這裡會顯示當天的收入、支出、轉帳，可編輯或刪除。' }
+    ];
+    let spotlightSteps = [];
+    let spotlightIndex = 0;
+    const SPOTLIGHT_PADDING = 10;
+
+    function openTutorialAssets() {
+        if(typeof switchToCalendarPage === 'function') switchToCalendarPage(false);
+        setTimeout(function() {
+            spotlightSteps = ASSET_TUTORIAL_STEPS.slice();
+            spotlightIndex = 0;
+            startSpotlightTutorial();
+        }, 100);
+    }
+    function openTutorialJournal() {
+        if(typeof switchToCalendarPage === 'function') switchToCalendarPage(true);
+        setTimeout(function() {
+            spotlightSteps = JOURNAL_TUTORIAL_STEPS.slice();
+            spotlightIndex = 0;
+            startSpotlightTutorial();
+        }, 350);
+    }
+    function startSpotlightTutorial() {
+        const overlay = document.getElementById('spotlightOverlay');
+        if(!overlay) return;
+        overlay.classList.add('show');
+        overlay.style.display = 'block';
+        positionSpotlight();
+    }
+    function closeSpotlightTutorial() {
+        const overlay = document.getElementById('spotlightOverlay');
+        if(overlay) {
+            overlay.classList.remove('show');
+            overlay.style.display = 'none';
+        }
+        localStorage.setItem('monee_tutorial_seen', '1');
+    }
+    function nextSpotlightStep() {
+        spotlightIndex++;
+        if(spotlightIndex >= spotlightSteps.length) {
+            closeSpotlightTutorial();
+            return;
+        }
+        const btn = document.getElementById('spotlightNextBtn');
+        if(btn) btn.textContent = spotlightIndex === spotlightSteps.length - 1 ? '完成' : '下一步';
+        positionSpotlight();
+    }
+    function positionSpotlight() {
+        const hole = document.getElementById('spotlightHole');
+        const tooltip = document.getElementById('spotlightTooltip');
+        const titleEl = document.getElementById('spotlightTitle');
+        const descEl = document.getElementById('spotlightDesc');
+        const nextBtn = document.getElementById('spotlightNextBtn');
+        if(!hole || !tooltip || !spotlightSteps.length) return;
+
+        const step = spotlightSteps[spotlightIndex];
+        if(!step) { closeSpotlightTutorial(); return; }
+
+        const el = document.querySelector(step.selector);
+        if(titleEl) titleEl.textContent = step.title;
+        if(descEl) descEl.textContent = step.desc;
+        if(nextBtn) nextBtn.textContent = spotlightIndex === spotlightSteps.length - 1 ? '完成' : '下一步';
+
+        void tooltip.offsetHeight;
+        var tooltipH = Math.max(60, tooltip.getBoundingClientRect().height);
+
+        var boxBottom = 0, boxTop = 0;
+        if(!el) {
+            hole.style.left = '50%';
+            hole.style.top = '40%';
+            hole.style.width = '200px';
+            hole.style.height = '80px';
+            hole.style.transform = 'translate(-50%, -50%)';
+        } else {
+            el.scrollIntoView({ block: 'center', behavior: 'auto' });
+            const r = el.getBoundingClientRect();
+            boxBottom = r.bottom + SPOTLIGHT_PADDING;
+            boxTop = r.top - SPOTLIGHT_PADDING;
+            hole.style.left = (r.left - SPOTLIGHT_PADDING) + 'px';
+            hole.style.top = (r.top - SPOTLIGHT_PADDING) + 'px';
+            hole.style.width = (r.width + SPOTLIGHT_PADDING * 2) + 'px';
+            hole.style.height = (r.height + SPOTLIGHT_PADDING * 2) + 'px';
+            hole.style.transform = 'none';
+        }
+
+        if(!el) {
+            void hole.offsetHeight;
+            const holeRect = hole.getBoundingClientRect();
+            boxBottom = holeRect.bottom;
+            boxTop = holeRect.top;
+        }
+        const viewportH = window.innerHeight;
+        const gap = 12;
+        const marginBottom = 24;
+        tooltip.style.bottom = '';
+        tooltip.style.top = '';
+        var tooltipTop = boxBottom + gap;
+        if(tooltipTop + tooltipH > viewportH - marginBottom) {
+            tooltipTop = Math.max(20, boxTop - gap - tooltipH);
+        }
+        tooltip.style.top = tooltipTop + 'px';
+    }
     function toggleSidebarCollapse() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); const isCollapsed=s.classList.contains('collapsed'); if(isCollapsed){s.classList.remove('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('active'); o.classList.add('active');} localStorage.setItem('sidebarCollapsed','false');}else{s.classList.add('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('active'); o.classList.remove('active');} localStorage.setItem('sidebarCollapsed','true');} }
     function initSidebarState() { if(window.matchMedia('(min-width: 768px)').matches){ const collapsed=localStorage.getItem('sidebarCollapsed')==='true'; const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(collapsed){s.classList.add('collapsed'); s.classList.remove('active'); o.classList.remove('active');}else{s.classList.remove('collapsed'); s.classList.add('active'); o.classList.add('active');} } }
     function toggleEditMode() { isEditMode=!isEditMode; document.getElementById('sortBtn').classList.toggle('active', isEditMode); document.getElementById('addBtn').style.display=isEditMode?'none':'block'; renderAssets(); }
@@ -5136,6 +5286,7 @@
         // 計算各分類總值（TWD）
         let totals = { bank: 0, stock: 0, twstock: 0, crypto: 0, total: 0, debt: 0 };
         accounts.forEach(acc => {
+            if(acc.type === 'bank' && acc.bankTag === '信用卡') return; // 信用卡僅供紀錄，不計入總資產
             let val = calculateTWD(acc);
             if(acc.type === 'debt') {
                 totals.debt += val;
@@ -8404,6 +8555,7 @@
                     if(acc.type === 'crypto' && !pageVisibility['crypto']) return;
                 }
                 let val = calculateValue(acc);
+                if(acc.type === 'bank' && acc.bankTag === '信用卡') return; // 信用卡僅供紀錄，不計入總資產
                 if(acc.type === 'debt') displayAmount -= val;
                 else displayAmount += val;
                 if(acc.isAuto) totalDailyPnL += calculateDailyPnL(acc);
@@ -8413,6 +8565,7 @@
             const currentType = PAGE_TYPES[currentPage];
             accounts.forEach(acc => {
                 if(acc.type === currentType) {
+                    if(acc.type === 'bank' && acc.bankTag === '信用卡') return; // 信用卡僅供紀錄，不計入
                     let val = calculateValue(acc);
                     displayAmount += val;
                     if(acc.isAuto) totalDailyPnL += calculateDailyPnL(acc);
@@ -8532,6 +8685,7 @@
                     let sum = 0;
                     let groupPnL = 0;
                     items.forEach(acc => {
+                        if(type === 'bank' && acc.bankTag === '信用卡') return; // 信用卡僅供紀錄，不計入
                         let val = calculateValue(acc);
                         sum += val;
                         groupPnL += calculatePnL(acc);
@@ -8637,12 +8791,14 @@
             let groupPnL = 0;
             let html = '';
             
-            // 直接顯示所有帳戶，不按銀行分組
+            // 直接顯示所有帳戶，不按銀行分組（信用卡僅供紀錄，不計入錢包總額）
             items.forEach(acc => {
                 let val = calculateValue(acc);
                 let pnl = calculatePnL(acc);
-                sum += val;
-                groupPnL += pnl;
+                if(acc.bankTag !== '信用卡') {
+                    sum += val;
+                    groupPnL += pnl;
+                }
                 
                 let htmlContent = '';
                 let color = (acc.type === 'bank' && acc.bankTag === '信用卡') ? 'amount-red' : 'amount-green';
@@ -9319,6 +9475,10 @@
                 // 完全隱藏後移除元素（可選，如果想保留 DOM 可以註解掉）
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
+                    // 首次使用顯示教學（若未看過）
+                    if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
+                        openTutorialAssets();
+                    }
                 }, 300); // 等待淡出動畫完成
             }, 1000); // 等待 Monee 字樣動畫完成（1s 動畫）
         }
