@@ -12888,46 +12888,37 @@
         statusEl.textContent = `讀取 ${files.length} 張圖片中...`;
         statusEl.style.color = 'var(--text-secondary)';
         try {
-            const prompt = `分析這張支出/消費紀錄截圖。圖片可能包含多筆交易，每筆通常有：日期(如 2026/02/10)、類別(如 消費店家、交通/運輸)、標題/店家名稱、金額(TWD)。請提取每筆紀錄。類別請對應到以下其一：飲食、交通、購物、娛樂、醫療、教育、房租、水電、其他支出。（消費店家→購物，交通/運輸→交通）回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或店家名","amount":數字}]}。若只有一筆也請用 records 陣列。`;
-            const allRecords = [];
-            for(let i = 0; i < files.length; i++) {
-                const file = files[i];
-                statusEl.textContent = `AI 分析中 (${i + 1}/${files.length})...`;
-                statusEl.style.color = '#0a84ff';
-                const base64 = await new Promise((res, rej) => {
-                    const r = new FileReader();
-                    r.onload = e => res(e.target.result.split(',')[1]);
-                    r.onerror = rej;
-                    r.readAsDataURL(file);
-                });
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: file.type, data: base64 } }
-                            ]
-                        }]
-                    })
-                });
-                const data = await resp.json();
-                if(data.error) throw new Error(data.error.message);
-                if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
-                const txt = data.candidates[0].content.parts[0].text;
-                const match = txt.match(/\{[\s\S]*\}/);
-                if(!match) throw new Error('AI 未辨識到有效資料');
-                let parsed;
-                try {
-                    parsed = JSON.parse(match[0]);
-                } catch(e) {
-                    const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    parsed = JSON.parse(cleaned);
-                }
-                const records = parsed.records || (parsed.record ? [parsed.record] : []);
-                allRecords.push(...records);
+            statusEl.textContent = `讀取圖片中...`;
+            const imageParts = await Promise.all(files.map((file) => new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = e => res({ inlineData: { mimeType: file.type, data: e.target.result.split(',')[1] } });
+                r.onerror = rej;
+                r.readAsDataURL(file);
+            })));
+            const prompt = `分析以下多張支出/消費紀錄截圖。每張圖片可能包含多筆交易，每筆通常有：日期(如 2026/02/10)、類別(如 消費店家、交通/運輸)、標題/店家名稱、金額(TWD)。請提取「所有圖片」中的每筆紀錄，合併成一個清單。類別請對應到以下其一：飲食、交通、購物、娛樂、醫療、教育、房租、水電、其他支出。（消費店家→購物，交通/運輸→交通）回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或店家名","amount":數字}, ...]}。若只有一筆也請用 records 陣列。`;
+            statusEl.textContent = `AI 分析中 (${files.length} 張)...`;
+            statusEl.style.color = '#0a84ff';
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }, ...imageParts] }]
+                })
+            });
+            const data = await resp.json();
+            if(data.error) throw new Error(data.error.message);
+            if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
+            const txt = data.candidates[0].content.parts[0].text;
+            const match = txt.match(/\{[\s\S]*\}/);
+            if(!match) throw new Error('AI 未辨識到有效資料');
+            let parsed;
+            try {
+                parsed = JSON.parse(match[0]);
+            } catch(e) {
+                const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                parsed = JSON.parse(cleaned);
             }
+            const allRecords = parsed.records || (parsed.record ? [parsed.record] : []);
             if(allRecords.length === 0) throw new Error('未辨識到支出紀錄');
             batchExpenseRecords = allRecords;
             batchExpenseAccountId = null;
@@ -13073,46 +13064,37 @@
         statusEl.textContent = `讀取 ${files.length} 張圖片中...`;
         statusEl.style.color = 'var(--text-secondary)';
         try {
-            const prompt = `分析這張收入紀錄截圖。圖片可能包含多筆收入，每筆通常有：日期(如 2026/02/10)、類別(如 工資、獎金、投資收益)、標題/來源、金額(TWD)。請提取每筆紀錄。類別請對應到以下其一：工資、獎金、投資收益、其他收入。回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或來源","amount":數字}]}。若只有一筆也請用 records 陣列。`;
-            const allRecords = [];
-            for(let i = 0; i < files.length; i++) {
-                const file = files[i];
-                statusEl.textContent = `AI 分析中 (${i + 1}/${files.length})...`;
-                statusEl.style.color = '#30d158';
-                const base64 = await new Promise((res, rej) => {
-                    const r = new FileReader();
-                    r.onload = e => res(e.target.result.split(',')[1]);
-                    r.onerror = rej;
-                    r.readAsDataURL(file);
-                });
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: file.type, data: base64 } }
-                            ]
-                        }]
-                    })
-                });
-                const data = await resp.json();
-                if(data.error) throw new Error(data.error.message);
-                if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
-                const txt = data.candidates[0].content.parts[0].text;
-                const match = txt.match(/\{[\s\S]*\}/);
-                if(!match) throw new Error('AI 未辨識到有效資料');
-                let parsed;
-                try {
-                    parsed = JSON.parse(match[0]);
-                } catch(e) {
-                    const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
-                    parsed = JSON.parse(cleaned);
-                }
-                const records = parsed.records || (parsed.record ? [parsed.record] : []);
-                allRecords.push(...records);
+            statusEl.textContent = `讀取圖片中...`;
+            const imageParts = await Promise.all(files.map((file) => new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = e => res({ inlineData: { mimeType: file.type, data: e.target.result.split(',')[1] } });
+                r.onerror = rej;
+                r.readAsDataURL(file);
+            })));
+            const prompt = `分析以下多張收入紀錄截圖。每張圖片可能包含多筆收入，每筆通常有：日期(如 2026/02/10)、類別(如 工資、獎金、投資收益)、標題/來源、金額(TWD)。請提取「所有圖片」中的每筆紀錄，合併成一個清單。類別請對應到以下其一：工資、獎金、投資收益、其他收入。回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或來源","amount":數字}, ...]}。若只有一筆也請用 records 陣列。`;
+            statusEl.textContent = `AI 分析中 (${files.length} 張)...`;
+            statusEl.style.color = '#30d158';
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }, ...imageParts] }]
+                })
+            });
+            const data = await resp.json();
+            if(data.error) throw new Error(data.error.message);
+            if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
+            const txt = data.candidates[0].content.parts[0].text;
+            const match = txt.match(/\{[\s\S]*\}/);
+            if(!match) throw new Error('AI 未辨識到有效資料');
+            let parsed;
+            try {
+                parsed = JSON.parse(match[0]);
+            } catch(e) {
+                const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
+                parsed = JSON.parse(cleaned);
             }
+            const allRecords = parsed.records || (parsed.record ? [parsed.record] : []);
             if(allRecords.length === 0) throw new Error('未辨識到收入紀錄');
             batchIncomeRecords = allRecords;
             batchIncomeAccountId = null;
