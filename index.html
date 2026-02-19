@@ -11684,6 +11684,7 @@
     // 初始化月份圓餅圖滑動手勢
     let monthlyChartTouchStartX = null;
     let monthlyChartTouchStartY = null;
+    let monthlyChartTouchTarget = null;
     let monthlyChartIsSwiping = false;
     let monthlyChartCurrentTransform = 0;
     
@@ -11703,6 +11704,7 @@
     function handleMonthlyChartTouchStart(e) {
         monthlyChartTouchStartX = e.touches[0].clientX;
         monthlyChartTouchStartY = e.touches[0].clientY;
+        monthlyChartTouchTarget = e.target;
         monthlyChartIsSwiping = false;
         const container = document.getElementById('monthlyChartPageContainer');
         if(container) {
@@ -11751,12 +11753,20 @@
         if(!monthlyChartTouchStartX || monthlyChartTouchStartY === null) {
             monthlyChartTouchStartX = null;
             monthlyChartTouchStartY = null;
+            monthlyChartTouchTarget = null;
             monthlyChartIsSwiping = false;
             return;
         }
         if(!monthlyChartIsSwiping) {
+            // 剛才是內層細項捲動：短暫放開內層觸控，讓下一次滑動可被外層接收
+            const scrollable = monthlyChartTouchTarget && monthlyChartTouchTarget.closest && monthlyChartTouchTarget.closest('#monthlyChartSwiper .page-item, #monthlyChartSwiper .chart-detail-list');
             monthlyChartTouchStartX = null;
             monthlyChartTouchStartY = null;
+            monthlyChartTouchTarget = null;
+            if(scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
+                scrollable.style.pointerEvents = 'none';
+                setTimeout(function() { scrollable.style.pointerEvents = ''; }, 80);
+            }
             return;
         }
         
@@ -11766,6 +11776,7 @@
         const diffY = monthlyChartTouchStartY - currentY;
         monthlyChartTouchStartX = null;
         monthlyChartTouchStartY = null;
+        monthlyChartTouchTarget = null;
         monthlyChartIsSwiping = false;
         
         if(Math.abs(diffY) > Math.abs(diffX)) return;
