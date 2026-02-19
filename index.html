@@ -1920,7 +1920,7 @@
             <div class="detail-subtitle" id="dSymbol">NVIDIA Corp</div>
             <div class="detail-stats">
                 <div class="stat-item"><span class="stat-val" id="dQty">0</span><span class="stat-lbl">持有股數</span></div>
-                <div class="stat-item"><span class="stat-val" id="dPrice">0</span><span class="stat-lbl">現價 (USD)</span></div>
+                <div class="stat-item"><span class="stat-val" id="dPrice">0</span><span class="stat-lbl" id="dPriceLbl">現價 (USD)</span></div>
                 <div class="stat-item"><span class="stat-val" id="dVal">0</span><span class="stat-lbl">參考市值</span></div>
             </div>
             <div style="margin-top: 15px; text-align: center;">
@@ -4933,6 +4933,8 @@
                     document.getElementById('dQty').innerText = currentDetailAcc.balance;
                     let price = currentDetailAcc.currentPrice || 0;
                     document.getElementById('dPrice').innerText = `${price.toLocaleString()}`;
+                    var dPriceLblEl = document.getElementById('dPriceLbl');
+                    if(dPriceLblEl) dPriceLblEl.textContent = currentDetailAcc.type === 'twstock' ? '現價 (台幣)' : '現價 (USD)';
                     let val = calculateValue(currentDetailAcc);
                     document.getElementById('dVal').innerText = formatAmount(val);
                     let cost = currentDetailAcc.cost || 0;
@@ -7649,7 +7651,10 @@
         document.getElementById('dSymbol').innerText = ''; // 清空代碼內容
         document.getElementById('dSymbol').style.display = 'none'; // 隱藏代碼
         document.getElementById('dQty').innerText = currentDetailAcc.balance;
-        let price = currentDetailAcc.currentPrice || 0; let priceUnit = currentDetailAcc.type === 'twstock' ? 'TWD' : 'USD'; document.getElementById('dPrice').innerText = `${price.toLocaleString()}`;
+        let price = currentDetailAcc.currentPrice || 0;
+        document.getElementById('dPrice').innerText = `${price.toLocaleString()}`;
+        var dPriceLbl = document.getElementById('dPriceLbl');
+        if(dPriceLbl) dPriceLbl.textContent = currentDetailAcc.type === 'twstock' ? '現價 (台幣)' : '現價 (USD)';
         let val = calculateValue(currentDetailAcc); document.getElementById('dVal').innerText = formatAmount(val);
         let cost = currentDetailAcc.cost || 0; let fee = settings.feeRate || 0.1;
         
