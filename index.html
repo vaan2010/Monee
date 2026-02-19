@@ -1212,7 +1212,8 @@
         }
         .journal-fab-option:hover { background: var(--active-bg); transform: scale(1.02); }
         .journal-fab-option:active { transform: scale(0.98); }
-        .journal-fab-option i { font-size: 18px; color: #0a84ff; }
+        .journal-fab-option i { font-size: 18px; color: #0a84ff; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .journal-fab-option span { line-height: 1.25; display: inline-flex; align-items: center; }
         @media (max-width: 767px) {
             .journal-fab-wrapper { bottom: 90px; right: 15px; }
         }
@@ -1462,7 +1463,7 @@
     </div>
     
     <!-- 使用教學：圈選實際畫面上的區塊 -->
-    <div id="spotlightOverlay" onclick="event.target.id === 'spotlightOverlay' && closeSpotlightTutorial()">
+    <div id="spotlightOverlay">
         <div class="spotlight-hole" id="spotlightHole"></div>
         <div class="spotlight-tooltip" id="spotlightTooltip">
             <div class="spotlight-title" id="spotlightTitle"></div>
@@ -4453,12 +4454,61 @@
         { selector: '#calendarHeaderDate', title: '月份切換', desc: '左右箭頭可切換月份，點中間可選月份。' },
         { selector: '#calendarGrid', title: '日曆', desc: '點選日期可查看當天收支詳情。有記帳的日期底下會顯示藍色標記。' },
         { selector: '#calendarSettingsBtn', title: '新增記帳', desc: '在記帳頁點右上角 + 可新增收入、支出或轉帳。' },
-        { selector: '#journalFabWrapper', title: '視圖切換', desc: '可切換「日曆記帳趣」、「收支圓餅圖」、「收支趨勢圖」。' },
+        { selector: '#journalFabWrapper', title: '視圖切換', desc: '點右下角可展開選單：日曆記帳趣（按日期查看與新增收支）、收支圓餅圖（當月支出／收入占比）、收支趨勢圖（整年收支趨勢）。' },
         { selector: '#calendarTransferDetails', title: '當日詳情', desc: '選日期後這裡會顯示當天的收入、支出、轉帳，可編輯或刪除。' }
     ];
     let spotlightSteps = [];
     let spotlightIndex = 0;
     const SPOTLIGHT_PADDING = 10;
+    let tutorialSampleChartInstance = null;
+
+    function destroyTutorialSampleChart() {
+        if (tutorialSampleChartInstance) {
+            try { tutorialSampleChartInstance.destroy(); } catch (e) {}
+            tutorialSampleChartInstance = null;
+        }
+        const sampleEl = document.getElementById('assetChartTutorialSample');
+        if (sampleEl) sampleEl.remove();
+    }
+
+    function showTutorialSamplePieIfEmpty() {
+        const wrapper = document.getElementById('chartWrapper');
+        if (!wrapper || typeof Highcharts === 'undefined') return;
+        var chartEmpty = !chartInstance || !chartInstance.series || !chartInstance.series[0] || !chartInstance.series[0].points || chartInstance.series[0].points.length === 0;
+        if (!chartEmpty) return;
+        destroyTutorialSampleChart();
+        var sampleDiv = document.createElement('div');
+        sampleDiv.id = 'assetChartTutorialSample';
+        sampleDiv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;min-height:200px;z-index:5;';
+        wrapper.style.position = 'relative';
+        wrapper.appendChild(sampleDiv);
+        var chartTextColor = typeof getChartTextColor === 'function' ? getChartTextColor() : '#fff';
+        var sampleData = [
+            { name: (typeof TYPE_NAMES !== 'undefined' && TYPE_NAMES.bank) ? TYPE_NAMES.bank : '錢包', y: 40, color: (typeof OVERVIEW_COLORS !== 'undefined' && OVERVIEW_COLORS.bank) ? OVERVIEW_COLORS.bank : '#6bb5ff' },
+            { name: (typeof TYPE_NAMES !== 'undefined' && TYPE_NAMES.stock) ? TYPE_NAMES.stock : '美股', y: 30, color: (typeof OVERVIEW_COLORS !== 'undefined' && OVERVIEW_COLORS.stock) ? OVERVIEW_COLORS.stock : '#d9a8f8' },
+            { name: (typeof TYPE_NAMES !== 'undefined' && TYPE_NAMES.twstock) ? TYPE_NAMES.twstock : '台股', y: 20, color: (typeof OVERVIEW_COLORS !== 'undefined' && OVERVIEW_COLORS.twstock) ? OVERVIEW_COLORS.twstock : '#7ee58f' },
+            { name: (typeof TYPE_NAMES !== 'undefined' && TYPE_NAMES.crypto) ? TYPE_NAMES.crypto : '加密貨幣', y: 10, color: (typeof OVERVIEW_COLORS !== 'undefined' && OVERVIEW_COLORS.crypto) ? OVERVIEW_COLORS.crypto : '#ffcc80' }
+        ];
+        tutorialSampleChartInstance = Highcharts.chart('assetChartTutorialSample', {
+            chart: { type: 'pie', backgroundColor: 'transparent', spacing: [30, 20, 20, 20], height: '100%', width: null, reflow: true, margin: [30, 20, 20, 20] },
+            title: { text: '', style: { color: chartTextColor, fontSize: '14px' }, align: 'center', verticalAlign: 'middle', y: 10 },
+            credits: { enabled: false },
+            tooltip: { enabled: false },
+            plotOptions: { pie: { innerSize: '55%', size: '90%', center: ['50%', '50%'], borderWidth: 0, slicedOffset: 8, animation: { duration: 400 }, dataLabels: { enabled: true, distance: 3, format: '{point.name}<br><span style="opacity:0.7">{point.percentage:.1f}%</span>', style: { color: chartTextColor, textOutline: 'none', fontWeight: 'normal', fontSize: '12px', width: 80, textOverflow: 'none' }, connectorColor: '#666', softConnector: true }, states: { hover: { enabled: false }, inactive: { opacity: 0.3 } } } },
+            series: [{ name: '資產', data: sampleData }]
+        });
+        var w = wrapper.clientWidth;
+        var h = wrapper.clientHeight;
+        if (w > 0 && h > 0) {
+            tutorialSampleChartInstance.setSize(w, h, false);
+            tutorialSampleChartInstance.reflow();
+            setTimeout(function() {
+                if (tutorialSampleChartInstance) {
+                    tutorialSampleChartInstance.reflow();
+                }
+            }, 100);
+        }
+    }
 
     function openTutorialAssets() {
         if(typeof switchToCalendarPage === 'function') switchToCalendarPage(false);
@@ -4470,6 +4520,7 @@
     }
     function openTutorialJournal() {
         if(typeof switchToCalendarPage === 'function') switchToCalendarPage(true);
+        if(typeof selectJournalView === 'function') selectJournalView('calendar');
         setTimeout(function() {
             spotlightSteps = JOURNAL_TUTORIAL_STEPS.slice();
             spotlightIndex = 0;
@@ -4484,6 +4535,9 @@
         positionSpotlight();
     }
     function closeSpotlightTutorial() {
+        destroyTutorialSampleChart();
+        var jFab = document.getElementById('journalFabWrapper');
+        if(jFab) jFab.classList.remove('expanded');
         const overlay = document.getElementById('spotlightOverlay');
         if(overlay) {
             overlay.classList.remove('show');
@@ -4502,6 +4556,9 @@
         positionSpotlight();
     }
     function positionSpotlight() {
+        destroyTutorialSampleChart();
+        var jFab = document.getElementById('journalFabWrapper');
+        if(jFab) jFab.classList.remove('expanded');
         const hole = document.getElementById('spotlightHole');
         const tooltip = document.getElementById('spotlightTooltip');
         const titleEl = document.getElementById('spotlightTitle');
@@ -4516,6 +4573,8 @@
         if(titleEl) titleEl.textContent = step.title;
         if(descEl) descEl.textContent = step.desc;
         if(nextBtn) nextBtn.textContent = spotlightIndex === spotlightSteps.length - 1 ? '完成' : '下一步';
+        if(step.selector === '#chartWrapper') showTutorialSamplePieIfEmpty();
+        if(step.selector === '#journalFabWrapper' && jFab) jFab.classList.add('expanded');
 
         void tooltip.offsetHeight;
         var tooltipH = Math.max(60, tooltip.getBoundingClientRect().height);
@@ -4529,14 +4588,46 @@
             hole.style.transform = 'translate(-50%, -50%)';
         } else {
             el.scrollIntoView({ block: 'center', behavior: 'auto' });
-            const r = el.getBoundingClientRect();
-            boxBottom = r.bottom + SPOTLIGHT_PADDING;
-            boxTop = r.top - SPOTLIGHT_PADDING;
-            hole.style.left = (r.left - SPOTLIGHT_PADDING) + 'px';
-            hole.style.top = (r.top - SPOTLIGHT_PADDING) + 'px';
-            hole.style.width = (r.width + SPOTLIGHT_PADDING * 2) + 'px';
-            hole.style.height = (r.height + SPOTLIGHT_PADDING * 2) + 'px';
-            hole.style.transform = 'none';
+            if(step.selector === '#journalFabWrapper') {
+                setTimeout(function() {
+                    if(!hole || !tooltip) return;
+                    var stepNow = spotlightSteps[spotlightIndex];
+                    if(!stepNow || stepNow.selector !== '#journalFabWrapper') return;
+                    var w = document.getElementById('journalFabWrapper');
+                    if(!w) return;
+                    var r2 = w.getBoundingClientRect();
+                    var opts2 = w.querySelector('.journal-fab-options');
+                    if(opts2) {
+                        var ro2 = opts2.getBoundingClientRect();
+                        var left2 = Math.min(r2.left, ro2.left);
+                        var top2 = Math.min(r2.top, ro2.top);
+                        var right2 = Math.max(r2.right, ro2.right);
+                        var bottom2 = Math.max(r2.bottom, ro2.bottom);
+                        r2 = { left: left2, top: top2, width: right2 - left2, height: bottom2 - top2 };
+                    }
+                    hole.style.left = (r2.left - SPOTLIGHT_PADDING) + 'px';
+                    hole.style.top = (r2.top - SPOTLIGHT_PADDING) + 'px';
+                    hole.style.width = (r2.width + SPOTLIGHT_PADDING * 2) + 'px';
+                    hole.style.height = (r2.height + SPOTLIGHT_PADDING * 2) + 'px';
+                    var boxBottom2 = r2.top + r2.height + SPOTLIGHT_PADDING;
+                    var boxTop2 = r2.top - SPOTLIGHT_PADDING;
+                    var tooltipH2 = Math.max(60, tooltip.getBoundingClientRect().height);
+                    var viewportH2 = window.innerHeight;
+                    var gap = 12, marginBottom = 24;
+                    var tooltipTop2 = boxBottom2 + gap;
+                    if(tooltipTop2 + tooltipH2 > viewportH2 - marginBottom) tooltipTop2 = Math.max(20, boxTop2 - gap - tooltipH2);
+                    tooltip.style.top = tooltipTop2 + 'px';
+                }, 260);
+            } else {
+                var r = el.getBoundingClientRect();
+                boxBottom = r.bottom + SPOTLIGHT_PADDING;
+                boxTop = r.top - SPOTLIGHT_PADDING;
+                hole.style.left = (r.left - SPOTLIGHT_PADDING) + 'px';
+                hole.style.top = (r.top - SPOTLIGHT_PADDING) + 'px';
+                hole.style.width = (r.width + SPOTLIGHT_PADDING * 2) + 'px';
+                hole.style.height = (r.height + SPOTLIGHT_PADDING * 2) + 'px';
+                hole.style.transform = 'none';
+            }
         }
 
         if(!el) {
@@ -4545,16 +4636,18 @@
             boxBottom = holeRect.bottom;
             boxTop = holeRect.top;
         }
-        const viewportH = window.innerHeight;
-        const gap = 12;
-        const marginBottom = 24;
-        tooltip.style.bottom = '';
-        tooltip.style.top = '';
-        var tooltipTop = boxBottom + gap;
-        if(tooltipTop + tooltipH > viewportH - marginBottom) {
-            tooltipTop = Math.max(20, boxTop - gap - tooltipH);
+        if(step.selector !== '#journalFabWrapper') {
+            const viewportH = window.innerHeight;
+            const gap = 12;
+            const marginBottom = 24;
+            tooltip.style.bottom = '';
+            tooltip.style.top = '';
+            var tooltipTop = boxBottom + gap;
+            if(tooltipTop + tooltipH > viewportH - marginBottom) {
+                tooltipTop = Math.max(20, boxTop - gap - tooltipH);
+            }
+            tooltip.style.top = tooltipTop + 'px';
         }
-        tooltip.style.top = tooltipTop + 'px';
     }
     function toggleSidebarCollapse() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); const isCollapsed=s.classList.contains('collapsed'); if(isCollapsed){s.classList.remove('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('active'); o.classList.add('active');} localStorage.setItem('sidebarCollapsed','false');}else{s.classList.add('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('active'); o.classList.remove('active');} localStorage.setItem('sidebarCollapsed','true');} }
     function initSidebarState() { if(window.matchMedia('(min-width: 768px)').matches){ const collapsed=localStorage.getItem('sidebarCollapsed')==='true'; const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(collapsed){s.classList.add('collapsed'); s.classList.remove('active'); o.classList.remove('active');}else{s.classList.remove('collapsed'); s.classList.add('active'); o.classList.add('active');} } }
@@ -4768,6 +4861,24 @@
                             openExpenseModal(null, pendingJournalFormData);
                         } else if(modalType === 'transferFrom' || modalType === 'transferTo') {
                             openTransferModal(null, pendingJournalFormData);
+                        } else if(modalType === 'batchExpense' && window.pendingNewAccountForBatch) {
+                            // 批量支出且剛新增完帳戶：自動帶入新帳戶並重新顯示 AI 辨識結果
+                            const newAcc = window.pendingNewAccountForBatch;
+                            window.pendingNewAccountForBatch = null;
+                            batchExpenseAccountId = newAcc.id;
+                            const label = document.getElementById('batchExpenseAccountLabel');
+                            if(label) { label.textContent = newAcc.name || '選擇帳戶'; label.style.color = 'var(--text-primary)'; }
+                            const batchModal = document.getElementById('batchExpenseModal');
+                            if(batchModal) batchModal.style.display = 'block';
+                        } else if(modalType === 'batchIncome' && window.pendingNewAccountForBatch) {
+                            // 批量收入且剛新增完帳戶：自動帶入新帳戶並重新顯示 AI 辨識結果
+                            const newAcc = window.pendingNewAccountForBatch;
+                            window.pendingNewAccountForBatch = null;
+                            batchIncomeAccountId = newAcc.id;
+                            const label = document.getElementById('batchIncomeAccountLabel');
+                            if(label) { label.textContent = newAcc.name || '選擇帳戶'; label.style.color = 'var(--text-primary)'; }
+                            const batchModal = document.getElementById('batchIncomeModal');
+                            if(batchModal) batchModal.style.display = 'block';
                         } else if(modalType === 'from' || modalType === 'to') {
                             // 固定轉帳的情況，重新打開固定轉帳模態框
                             const fixedTransferModal = document.getElementById('fixedTransferModal');
@@ -5137,7 +5248,9 @@
         document.getElementById('rowBankTag').style.display=(t==='bank')?'flex':'none'; 
         document.getElementById('rowBankName').style.display='none'; 
         document.getElementById('aiArea').style.display=auto?'block':'none'; 
-        document.getElementById('lblBalance').innerText=(t==='crypto')?'數量':(auto?'股數':'金額'); 
+        document.getElementById('lblBalance').innerText=(t==='crypto')?'數量':(auto?'股數':'金額');
+        const symInput = document.getElementById('inpSymbol');
+        if(symInput) symInput.placeholder = (t==='twstock') ? '例如: 台積電 或 2330' : '例如: NVDA';
         if(auto) { 
             updateBrokerOptions(); 
             syncNameFromSymbol(); 
@@ -5271,21 +5384,49 @@
     }
     function updateAIButtonState() { const btnAI=document.getElementById('btnAI'); if(btnAI) btnAI.disabled=false; }
     let nameQueryTimer = null;
+    let twStockTickersCache = null;
+    async function fetchTWStockTickers() {
+        if(!settings.fugleKey) return [];
+        if(twStockTickersCache && twStockTickersCache.length) return twStockTickersCache;
+        try {
+            const [r1, r2] = await Promise.all([
+                fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/tickers?type=EQUITY&exchange=TWSE&isNormal=true`, { headers: {'X-API-KEY': settings.fugleKey} }),
+                fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/tickers?type=EQUITY&exchange=TPEx&isNormal=true`, { headers: {'X-API-KEY': settings.fugleKey} })
+            ]);
+            const j1 = r1.ok ? await r1.json() : { data: [] };
+            const j2 = r2.ok ? await r2.json() : { data: [] };
+            const list = (j1.data || []).concat(j2.data || []);
+            twStockTickersCache = list;
+            return list;
+        } catch(e) {
+            console.error('Failed to fetch TW tickers:', e);
+            return [];
+        }
+    }
+    /** 依名稱或代碼搜尋台股，回傳 { symbol, name } 或 null */
+    async function searchTWStockByKeyword(keyword) {
+        if(!keyword || !settings.fugleKey) return null;
+        const k = String(keyword).trim();
+        if(/^\d{4}$/.test(k)) {
+            const name = await fetchTWStockName(k);
+            return name ? { symbol: k, name: name } : null;
+        }
+        const list = await fetchTWStockTickers();
+        const match = list.find(function(item) {
+            return (item.name && item.name.indexOf(k) !== -1) || (item.symbol === k);
+        });
+        return match ? { symbol: match.symbol, name: match.name || match.symbol } : null;
+    }
     async function fetchTWStockName(symbol) {
         if(!settings.fugleKey || !symbol) return null;
-        // 驗證台股代號格式（通常是4位數字）
         if(!/^\d{4}$/.test(symbol)) return null;
         try {
-            // 使用 Fugle quote 端點獲取股票基本資料
             const res = await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${symbol}`, {
                 headers: {'X-API-KEY': settings.fugleKey}
             });
             if (!res.ok) return null;
             const j = await res.json();
-            // 根據參考代碼，回應中直接有 name 欄位
-            if(j && j.name) {
-                return j.name;
-            }
+            if(j && j.name) return j.name;
             return null;
         } catch(e) {
             console.error('Failed to fetch stock name:', e);
@@ -5343,20 +5484,22 @@
             const s=document.getElementById('inpSymbol').value.trim().toUpperCase(); 
             if(s) { 
                 if(t==='twstock') {
-                    // 台股：先顯示代號
                     document.getElementById('inpName').value = s;
-                    // 清除之前的計時器
                     if(nameQueryTimer) clearTimeout(nameQueryTimer);
-                    // 驗證代號格式（4位數字）才查詢
-                    if(/^\d{4}$/.test(s)) {
-                        // 延遲查詢，避免頻繁請求（增加到800ms，確保輸入完成）
-                        nameQueryTimer = setTimeout(async () => {
-                            const companyName = await fetchTWStockName(s);
-                            if(companyName) {
-                                document.getElementById('inpName').value = companyName;
+                    // 支援代碼（4位數字）或名稱（如台積電）查詢
+                    nameQueryTimer = setTimeout(async () => {
+                        const raw = document.getElementById('inpSymbol').value.trim();
+                        if(/^\d{4}$/.test(raw)) {
+                            const companyName = await fetchTWStockName(raw);
+                            if(companyName) document.getElementById('inpName').value = companyName;
+                        } else {
+                            const found = await searchTWStockByKeyword(raw);
+                            if(found) {
+                                document.getElementById('inpSymbol').value = found.symbol;
+                                document.getElementById('inpName').value = found.name;
                             }
-                        }, 800);
-                    }
+                        }
+                    }, 800);
                 } else if(t==='stock') { 
                     // 美股：先顯示代號
                     document.getElementById('inpName').value = s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT','');
@@ -5389,7 +5532,8 @@
             } 
         } 
     }
-    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; let newA; if(!editingId && (t==='stock'||t==='twstock')){ const existingSame=accounts.find(x=>x.type===t&&String(x.symbol||'').trim().toUpperCase()===s); if(existingSame){ const oldBal=parseFloat(existingSame.balance)||0; const oldCost=parseFloat(existingSame.cost)||0; const newBal=oldBal+b; const mergedCost=newBal>0?(oldBal*oldCost+b*cost)/newBal:cost; const mergedTx=(existingSame.transactions||[]).concat(window.tempTransactions||[]); existingSame.balance=newBal; existingSame.cost=mergedCost; existingSame.transactions=mergedTx; if(logoUrl)existingSame.logo=logoUrl; newA=existingSame; } } if(!newA){ newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); } saveData(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
+    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; let newA; if(!editingId && (t==='stock'||t==='twstock')){ const existingSame=accounts.find(x=>x.type===t&&String(x.symbol||'').trim().toUpperCase()===s); if(existingSame){ const oldBal=parseFloat(existingSame.balance)||0; const oldCost=parseFloat(existingSame.cost)||0; const newBal=oldBal+b; const mergedCost=newBal>0?(oldBal*oldCost+b*cost)/newBal:cost; const mergedTx=(existingSame.transactions||[]).concat(window.tempTransactions||[]); existingSame.balance=newBal; existingSame.cost=mergedCost; existingSame.transactions=mergedTx; if(logoUrl)existingSame.logo=logoUrl; newA=existingSame; } } if(!newA){ newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); } saveData(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; if(pendingJournalModalType === 'batchExpense' || pendingJournalModalType === 'batchIncome') window.pendingNewAccountForBatch = newA;
+        closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
     function deleteAccount() { 
         const acc = accounts.find(x => x.id === editingId);
         if (!acc) return;
@@ -10062,12 +10206,28 @@
     
     // ========== 記帳類型選擇器（必須在 openNewExpenseFromCalendar 之前定義）==========
     function openJournalTypeSelector() {
-        // 直接打開支出表單，而不是顯示選擇器
-        openNewExpense();
+        // 依上次使用的分頁打開對應表單，避免按鈕顯示收入卻開出支出
+        if (currentJournalType === 'income') {
+            openNewIncome();
+        } else if (currentJournalType === 'transfer') {
+            openNewTransfer();
+        } else {
+            openNewExpense();
+        }
     }
     
     // 切換記帳表單分頁（在表單上方）
     function switchJournalFormTab(tab) {
+        // 切換分頁時立即隱藏日期選擇器，避免閃一下日期頁面
+        if (typeof closeDatePicker === 'function') closeDatePicker(true);
+        // 轉帳／固定轉帳需至少兩個帳戶，一按就檢查，不切換分頁、不關閉頁面
+        if (tab === 'transfer' || tab === 'fixed') {
+            const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+            if (availableAccounts.length < 2) {
+                alert(tab === 'transfer' ? '使用轉帳功能需要至少兩個帳戶，請先至「新增」建立兩個以上的帳戶後再試，謝謝您。' : '使用固定轉帳需要至少兩個帳戶，請先至「新增」建立兩個以上的帳戶後再試，謝謝您。');
+                return;
+            }
+        }
         // 檢查是否已經在當前分頁
         if (tab === 'expense' && currentJournalType === 'expense') return;
         if (tab === 'income' && currentJournalType === 'income') return;
@@ -10102,12 +10262,13 @@
             allModals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if(modal) {
-                    // 如果不是當前要顯示的模態框，則隱藏它
-                    if (modalId !== currentModalId) {
+                    if (modalId === currentModalId) {
+                        modal.style.display = 'block';
+                    } else {
+                        // 如果不是當前要顯示的模態框，則隱藏它
                         modal.style.display = 'none';
                         const modalWrapper = modal.querySelector('.modal-content-wrapper');
                         if(modalWrapper) {
-                            // 重置位置，以免下次打開時動畫異常
                             modalWrapper.style.transform = 'translateX(100%)';
                         }
                     }
@@ -12511,6 +12672,11 @@
     // 修改 openIncomeModal 以支持編輯模式
     function openIncomeModal(record = null, savedFormData = null) {
         currentJournalType = 'income';
+        // 重新開啟時清除過時的 AI 批量匯入狀態文字
+        const incomeStatus = document.getElementById('incomeAiStatus');
+        const expenseStatus = document.getElementById('expenseAiStatus');
+        if(incomeStatus) { incomeStatus.textContent = ''; }
+        if(expenseStatus) { expenseStatus.textContent = ''; }
         
         if(record) {
             // 編輯模式
@@ -12629,23 +12795,30 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
-        // 重新顯示 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'flex';
-        }
+        // 先不隱藏其他 modal，等本 modal 滑入後再隱藏，避免露出底層日期/日曆頁造成閃爍
         requestAnimationFrame(() => {
             setTimeout(() => {
-                if(modalWrapper) {
-                    modalWrapper.style.transform = 'translateX(0)';
-                }
+                if(modalWrapper) modalWrapper.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    ['expenseModal', 'transferModal', 'fixedTransferListModal'].forEach(id => {
+                        const other = document.getElementById(id);
+                        if(other) other.style.display = 'none';
+                    });
+                }, 50);
             }, 10);
         });
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) fabButton.style.display = 'flex';
     }
     
     // 修改 openExpenseModal 以支持編輯模式
     function openExpenseModal(record = null, savedFormData = null) {
         currentJournalType = 'expense';
+        // 重新開啟時清除過時的 AI 批量匯入狀態文字
+        const incomeStatus = document.getElementById('incomeAiStatus');
+        const expenseStatus = document.getElementById('expenseAiStatus');
+        if(incomeStatus) { incomeStatus.textContent = ''; }
+        if(expenseStatus) { expenseStatus.textContent = ''; }
         
         if(record) {
             // 編輯模式
@@ -12748,18 +12921,20 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
-        // 重新顯示 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'flex';
-        }
+        // 先不隱藏其他 modal，等本 modal 滑入後再隱藏，避免露出底層日期/日曆頁造成閃爍
         requestAnimationFrame(() => {
             setTimeout(() => {
-                if(modalWrapper) {
-                    modalWrapper.style.transform = 'translateX(0)';
-                }
+                if(modalWrapper) modalWrapper.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    ['incomeModal', 'transferModal', 'fixedTransferListModal'].forEach(id => {
+                        const other = document.getElementById(id);
+                        if(other) other.style.display = 'none';
+                    });
+                }, 50);
             }, 10);
         });
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) fabButton.style.display = 'flex';
     }
     
     // 獲取指定日期的記帳記錄
@@ -13099,11 +13274,14 @@
     function closeExpenseModal() {
         const modal = document.getElementById('expenseModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        // 立即隱藏 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'none';
-        }
+        // 立即隱藏所有記帳 modal 的 FAB（固定支出、固定收入、固定轉帳）
+        ['expenseModal', 'incomeModal', 'transferModal'].forEach(function(id) {
+            var m = document.getElementById(id);
+            if(m) {
+                var fab = m.querySelector('button[onclick*="openFixedExpenseListFromJournal"], button[onclick*="openFixedIncomeListFromJournal"], button[onclick*="openFixedTransferListFromJournal"]');
+                if(fab) fab.style.display = 'none';
+            }
+        });
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -13248,11 +13426,14 @@
         openJournalAccountSelector('batchExpense');
     }
     
-    function closeBatchExpenseModal() {
+    /** @param {boolean} preserveRecords - 若為 true 僅隱藏 modal，不清空辨識結果（用於無帳戶時先跳轉新增，新增完再帶回） */
+    function closeBatchExpenseModal(preserveRecords) {
         const modal = document.getElementById('batchExpenseModal');
         if(modal) modal.style.display = 'none';
-        batchExpenseRecords = [];
-        batchExpenseAccountId = null;
+        if(!preserveRecords) {
+            batchExpenseRecords = [];
+            batchExpenseAccountId = null;
+        }
     }
     
     function renderBatchExpenseList() {
@@ -13424,11 +13605,14 @@
         openJournalAccountSelector('batchIncome');
     }
     
-    function closeBatchIncomeModal() {
+    /** @param {boolean} preserveRecords - 若為 true 僅隱藏 modal，不清空辨識結果（用於無帳戶時先跳轉新增，新增完再帶回） */
+    function closeBatchIncomeModal(preserveRecords) {
         const modal = document.getElementById('batchIncomeModal');
         if(modal) modal.style.display = 'none';
-        batchIncomeRecords = [];
-        batchIncomeAccountId = null;
+        if(!preserveRecords) {
+            batchIncomeRecords = [];
+            batchIncomeAccountId = null;
+        }
     }
     
     function renderBatchIncomeList() {
@@ -13560,11 +13744,14 @@
     function closeIncomeModal() {
         const modal = document.getElementById('incomeModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        // 立即隱藏 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'none';
-        }
+        // 立即隱藏所有記帳 modal 的 FAB（固定支出、固定收入、固定轉帳）
+        ['expenseModal', 'incomeModal', 'transferModal'].forEach(function(id) {
+            var m = document.getElementById(id);
+            if(m) {
+                var fab = m.querySelector('button[onclick*="openFixedExpenseListFromJournal"], button[onclick*="openFixedIncomeListFromJournal"], button[onclick*="openFixedTransferListFromJournal"]');
+                if(fab) fab.style.display = 'none';
+            }
+        });
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -13612,6 +13799,12 @@
     
     // 修改 openTransferModal 以支持編輯模式
     function openTransferModal(record = null, savedFormData = null) {
+        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+        // 新增轉帳時需至少兩個帳戶；編輯已有記錄時不擋
+        if(!record && availableAccounts.length < 2) {
+            alert('使用轉帳功能需要至少兩個帳戶，請先至「新增」建立兩個以上的帳戶後再試，謝謝您。');
+            return;
+        }
         currentJournalType = 'transfer';
         
         if(record) {
@@ -13718,28 +13911,33 @@
         }
         modal.style.display = 'block';
         modal.style.background = 'transparent';
-        // 重新顯示 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'flex';
-        }
+        // 先不隱藏其他 modal，等本 modal 滑入後再隱藏，避免露出底層日期/日曆頁造成閃爍
         requestAnimationFrame(() => {
             setTimeout(() => {
-                if(modalWrapper) {
-                    modalWrapper.style.transform = 'translateX(0)';
-                }
+                if(modalWrapper) modalWrapper.style.transform = 'translateX(0)';
+                setTimeout(() => {
+                    ['expenseModal', 'incomeModal', 'fixedTransferListModal'].forEach(id => {
+                        const other = document.getElementById(id);
+                        if(other) other.style.display = 'none';
+                    });
+                }, 50);
             }, 10);
         });
+        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
+        if(fabButton) fabButton.style.display = 'flex';
     }
     
     function closeTransferModal() {
         const modal = document.getElementById('transferModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        // 立即隱藏 FAB 按鈕
-        const fabButton = modal.querySelector('button[onclick*="openFixedTransferListFromJournal"]');
-        if(fabButton) {
-            fabButton.style.display = 'none';
-        }
+        // 立即隱藏所有記帳 modal 的 FAB（固定支出、固定收入、固定轉帳）
+        ['expenseModal', 'incomeModal', 'transferModal'].forEach(function(id) {
+            var m = document.getElementById(id);
+            if(m) {
+                var fab = m.querySelector('button[onclick*="openFixedExpenseListFromJournal"], button[onclick*="openFixedIncomeListFromJournal"], button[onclick*="openFixedTransferListFromJournal"]');
+                if(fab) fab.style.display = 'none';
+            }
+        });
         if(modalWrapper) {
             modalWrapper.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -13766,6 +13964,11 @@
     
     // 從日記本模態框打開固定轉帳列表
     function openFixedTransferListFromJournal() {
+        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+        if(availableAccounts.length < 2) {
+            alert('使用固定轉帳需要至少兩個帳戶，請先至「新增」建立兩個以上的帳戶後再試，謝謝您。');
+            return;
+        }
         // 直接打開固定轉帳列表，不關閉當前模態框，讓過渡更順暢
         const modal = document.getElementById('fixedTransferListModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
@@ -14213,9 +14416,7 @@
     
     // 記帳用的帳戶選擇器
     function openJournalAccountSelector(type) {
-        // 先關閉可能打開的其他選擇器
         closeCategorySelector();
-        
         currentAccountSelectorType = type;
         const modal = document.getElementById('accountSelectorModal');
         if(!modal) return;
@@ -14223,6 +14424,34 @@
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
         const title = document.getElementById('accountSelectorTitle');
         const list = document.getElementById('accountSelectorList');
+        
+        // 過濾出錢包和負債類型的帳戶
+        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+        
+        // 沒有帳戶時：不顯示選擇器，直接跳轉錢包新增（收入、固定收入、支出、批量支出同此邏輯）
+        if(availableAccounts.length === 0) {
+            const isExpenseOrIncome = ['income', 'expense', 'batchExpense', 'batchIncome'].indexOf(type) !== -1;
+            if(isExpenseOrIncome) alert('目前未有帳戶資訊，將跳轉到新增帳戶');
+            pendingJournalModalType = type;
+            closeAccountSelector();
+            closeIncomeModal();
+            closeExpenseModal();
+            closeTransferModal();
+            closeFixedTransferModal();
+            closeFixedExpenseModal();
+            closeFixedIncomeModal();
+            if(type === 'batchExpense') closeBatchExpenseModal(true);
+            if(type === 'batchIncome') closeBatchIncomeModal(true);
+            currentAccountSelectorType = null;
+            editingId = null;
+            editingFromDetail = false;
+            openModal();
+            const typeSelect = document.getElementById('inpType');
+            if(typeSelect) { typeSelect.value = 'bank'; handleTypeChange(); }
+            if(document.getElementById('inpBankTag')) document.getElementById('inpBankTag').value = '現金';
+            if(document.getElementById('inpType').value === 'bank') handleBankTagChange();
+            return;
+        }
         
         // 設置標題
         if(title) {
@@ -14235,95 +14464,10 @@
             }
         }
         
-        // 過濾出錢包和負債類型的帳戶
-        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
-        
         // 生成帳戶列表
         if(list) {
             list.innerHTML = '';
-            if(availableAccounts.length === 0) {
-                // 沒有帳戶時顯示「+」號按鈕
-                const addAccountBtn = document.createElement('div');
-                addAccountBtn.style.cssText = 'cursor: pointer; padding: 20px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px; text-align: center; border: 2px dashed var(--border-color);';
-                addAccountBtn.onclick = () => {
-                    // 記錄來源頁面類型
-                    pendingJournalModalType = type;
-                    
-                    // 保存當前記帳頁面的表單數據
-                    if(type === 'income') {
-                        const incomeModal = document.getElementById('incomeModal');
-                        if(incomeModal && incomeModal.style.display === 'block') {
-                            pendingJournalFormData = {
-                                type: 'income',
-                                amount: document.getElementById('incomeAmount').value || '',
-                                category: currentJournalCategory,
-                                accountId: currentJournalAccountId,
-                                date: currentJournalDate ? new Date(currentJournalDate) : null
-                            };
-                        }
-                    } else if(type === 'expense') {
-                        const expenseModal = document.getElementById('expenseModal');
-                        if(expenseModal && expenseModal.style.display === 'block') {
-                            pendingJournalFormData = {
-                                type: 'expense',
-                                amount: document.getElementById('expenseAmount').value || '',
-                                category: currentJournalCategory,
-                                accountId: currentJournalAccountId,
-                                date: currentJournalDate ? new Date(currentJournalDate) : null
-                            };
-                        }
-                    } else if(type === 'transferFrom' || type === 'transferTo') {
-                        const transferModal = document.getElementById('transferModal');
-                        if(transferModal && transferModal.style.display === 'block') {
-                            pendingJournalFormData = {
-                                type: 'transfer',
-                                amount: document.getElementById('transferAmount').value || '',
-                                fromAccountId: currentTransferFromAccountId,
-                                toAccountId: currentTransferToAccountId,
-                                date: currentJournalDate ? new Date(currentJournalDate) : null
-                            };
-                        }
-                    }
-                    
-                    // 立即關閉帳戶選擇器
-                    const selectorModal = document.getElementById('accountSelectorModal');
-                    const selectorModalWrapper = selectorModal ? selectorModal.querySelector('.modal-content-wrapper') : null;
-                    if(selectorModalWrapper) {
-                        selectorModalWrapper.style.transform = 'translateY(100%)';
-                    }
-                    if(selectorModal) {
-                        selectorModal.style.display = 'none';
-                    }
-                    currentAccountSelectorType = null;
-                    
-                    // 關閉可能打開的其他模態框
-                    closeIncomeModal();
-                    closeExpenseModal();
-                    closeTransferModal();
-                    closeFixedTransferModal();
-                    
-                    // 延遲一下確保模態框已關閉
-                    setTimeout(() => {
-                        // 設置為新增錢包帳戶
-                        editingId = null;
-                        editingFromDetail = false;
-                        const typeSelect = document.getElementById('inpType');
-                        if(typeSelect) {
-                            typeSelect.value = 'bank';
-                            handleTypeChange();
-                        }
-                        openModal();
-                    }, 350);
-                };
-                addAccountBtn.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <i class="fas fa-plus" style="color: #0a84ff; font-size: 24px;"></i>
-                        <div style="color: var(--text-primary); font-size: 16px; font-weight: 500;">新增帳戶</div>
-                    </div>
-                `;
-                list.appendChild(addAccountBtn);
-            } else {
-                availableAccounts.forEach(acc => {
+            availableAccounts.forEach(acc => {
                     const accountItem = document.createElement('div');
                     accountItem.style.cssText = 'cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;';
                     accountItem.onclick = () => selectJournalAccount(acc, type);
@@ -14341,8 +14485,7 @@
                         </div>
                     `;
                     list.appendChild(accountItem);
-                });
-            }
+            });
         }
         
         // 確保模態框初始狀態正確
@@ -14878,6 +15021,11 @@
     }
     
     function openFixedTransferList() {
+        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+        if(availableAccounts.length < 2) {
+            alert('使用固定轉帳需要至少兩個帳戶，請先至「新增」建立兩個以上的帳戶後再試，謝謝您。');
+            return;
+        }
         closeCalendarSettingsModal();
         setTimeout(() => {
             const modal = document.getElementById('fixedTransferListModal');
@@ -15549,6 +15697,36 @@
         const title = document.getElementById('accountSelectorTitle');
         const list = document.getElementById('accountSelectorList');
         
+        // 過濾出錢包和負債類型的帳戶
+        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
+        
+        // 沒有帳戶時：不顯示選擇器，直接跳轉到錢包新增畫面（收入、固定收入、支出、固定支出同此邏輯）
+        if(availableAccounts.length === 0) {
+            const isExpenseOrIncome = ['fixedExpenseAccount', 'fixedIncomeAccount'].indexOf(type) !== -1;
+            if(isExpenseOrIncome) alert('目前未有帳戶資訊，將跳轉到新增帳戶');
+            pendingJournalModalType = type;
+            closeIncomeModal();
+            closeExpenseModal();
+            closeTransferModal();
+            closeFixedTransferModal();
+            closeFixedExpenseModal();
+            closeFixedIncomeModal();
+            closeAccountSelector();
+            currentAccountSelectorType = null;
+            editingId = null;
+            editingFromDetail = false;
+            // 僅批量支出：先隱藏 AI 辨識結果（保留紀錄），新增帳戶結束後會自動帶回並選中新帳戶
+            if(type === 'batchExpense') closeBatchExpenseModal(true);
+            if(type === 'batchIncome') closeBatchIncomeModal(true);
+            openModal();
+            // 強制為錢包類型（避免被 openModal 依 currentPage 覆寫）
+            const typeSelect = document.getElementById('inpType');
+            if(typeSelect) { typeSelect.value = 'bank'; handleTypeChange(); }
+            if(document.getElementById('inpBankTag')) document.getElementById('inpBankTag').value = '現金';
+            if(document.getElementById('inpType').value === 'bank') handleBankTagChange();
+            return;
+        }
+        
         // 確保模態框顯示在最上層
         modal.style.zIndex = '2020';
         
@@ -15559,59 +15737,10 @@
             else title.textContent = type === 'from' ? '選擇從帳戶' : '選擇到帳戶';
         }
         
-        // 過濾出錢包和負債類型的帳戶
-        const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
-        
         // 生成帳戶列表（固定支出/收入用同一個列表）
         if(list) {
             list.innerHTML = '';
-            if(availableAccounts.length === 0 && type !== 'fixedExpenseAccount' && type !== 'fixedIncomeAccount') {
-                // 沒有帳戶時顯示「+」號按鈕
-                const addAccountBtn = document.createElement('div');
-                addAccountBtn.style.cssText = 'cursor: pointer; padding: 20px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px; text-align: center; border: 2px dashed var(--border-color);';
-                addAccountBtn.onclick = () => {
-                    // 記錄來源頁面類型
-                    pendingJournalModalType = type;
-                    
-                    // 立即關閉帳戶選擇器
-                    const selectorModal = document.getElementById('accountSelectorModal');
-                    const selectorModalWrapper = selectorModal ? selectorModal.querySelector('.modal-content-wrapper') : null;
-                    if(selectorModalWrapper) {
-                        selectorModalWrapper.style.transform = 'translateY(100%)';
-                    }
-                    if(selectorModal) {
-                        selectorModal.style.display = 'none';
-                    }
-                    currentAccountSelectorType = null;
-                    
-                    // 關閉可能打開的其他模態框
-                    closeIncomeModal();
-                    closeExpenseModal();
-                    closeTransferModal();
-                    closeFixedTransferModal();
-                    
-                    // 延遲一下確保模態框已關閉
-                    setTimeout(() => {
-                        // 設置為新增錢包帳戶
-                        editingId = null;
-                        editingFromDetail = false;
-                        const typeSelect = document.getElementById('inpType');
-                        if(typeSelect) {
-                            typeSelect.value = 'bank';
-                            handleTypeChange();
-                        }
-                        openModal();
-                    }, 350);
-                };
-                addAccountBtn.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <i class="fas fa-plus" style="color: #0a84ff; font-size: 24px;"></i>
-                        <div style="color: var(--text-primary); font-size: 16px; font-weight: 500;">新增帳戶</div>
-                    </div>
-                `;
-                list.appendChild(addAccountBtn);
-            } else {
-                availableAccounts.forEach(acc => {
+            availableAccounts.forEach(acc => {
                     const accountItem = document.createElement('div');
                     accountItem.style.cssText = 'cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;';
                     accountItem.onclick = () => selectAccountForTransfer(acc);
@@ -15630,7 +15759,6 @@
                     `;
                     list.appendChild(accountItem);
                 });
-            }
         }
         
         // 打開模態框 - 立即顯示
@@ -16090,17 +16218,21 @@
         }
     }
     
-    function closeDatePicker() {
+    /** @param {boolean} immediate - 若為 true 則立即隱藏（用於切換分頁時避免日期頁閃爍） */
+    function closeDatePicker(immediate) {
         const modal = document.getElementById('datePickerModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
+        if(immediate) {
+            if(modal) modal.style.display = 'none';
+            if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        } else if(modalWrapper) {
             modalWrapper.style.transform = 'translateY(100%)';
             setTimeout(() => {
                 modal.style.display = 'none';
                 modalWrapper.style.transform = 'translateY(100%)';
             }, 300);
         } else {
-            modal.style.display = 'none';
+            if(modal) modal.style.display = 'none';
         }
         currentDatePickerType = null;
     }
