@@ -113,9 +113,9 @@
         .main-content::-webkit-scrollbar-thumb { display: none !important; background: transparent !important; }
         
         /* Sidebar */
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(2px); }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: opacity 0.15s, visibility 0.15s; backdrop-filter: blur(2px); }
         .sidebar-overlay.active { opacity: 1; visibility: visible; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 15px rgba(0,0,0,0.5); padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.12s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 15px rgba(0,0,0,0.5); padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
         .sidebar.active { left: 0; }
         @media (min-width: 768px) {
             .sidebar-overlay { display: block !important; }
@@ -224,7 +224,7 @@
             .sidebar.collapsed ~ .main-content .sidebar-toggle-btn-navbar { display: block !important; position: absolute; top: 50%; transform: translateY(-50%); left: 20px; z-index: 1001; }
             .navbar .btn-group { margin-left: 50px; }
         }
-        .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.3s; display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; }
         .sidebar-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); flex: 1; }
         .user-avatar-container { position: relative; cursor: pointer; }
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid #0a84ff; object-fit: cover; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: var(--border-color); font-size: 24px; }
@@ -247,14 +247,15 @@
             cursor: pointer; 
             user-select: none;
         }
-        .menu-label:hover { color: var(--text-primary); }
+        .menu-label:hover,
+        .menu-label:active { color: var(--text-secondary); }
         .menu-label .collapse-icon { 
             font-size: 12px; 
-            transition: transform 0.3s; 
+            transition: transform 0.1s ease-out; 
             margin-left: 10px;
         }
         .menu-label.collapsed .collapse-icon { transform: rotate(-90deg); }
-        .menu-section { overflow: hidden; transition: max-height 0.3s ease-out; }
+        .menu-section { overflow: hidden; transition: max-height 0.12s ease-out; }
         .menu-section.collapsed { max-height: 0; }
         .menu-section:not(.collapsed) { max-height: 1000px; }
         .page-visibility-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); }
@@ -1192,13 +1193,15 @@
         .journal-fab-options {
             display: flex;
             flex-direction: column-reverse;
+            align-items: stretch;
+            width: max-content;
             gap: 8px;
             max-height: 0;
             overflow: hidden;
             opacity: 0;
             visibility: hidden;
             transform: translateY(10px);
-            transition: max-height 0.25s, opacity 0.25s, transform 0.25s, visibility 0.25s;
+            transition: max-height 0.15s, opacity 0.15s, transform 0.15s, visibility 0.15s;
         }
         .journal-fab-wrapper.expanded .journal-fab-options {
             max-height: 180px;
@@ -1211,6 +1214,8 @@
             align-items: center;
             gap: 10px;
             padding: 10px 16px;
+            min-width: 0;
+            box-sizing: border-box;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -1224,7 +1229,7 @@
         }
         .journal-fab-option:hover { background: var(--active-bg); transform: scale(1.02); }
         .journal-fab-option:active { transform: scale(0.98); }
-        .journal-fab-option i { font-size: 18px; color: #0a84ff; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .journal-fab-option i { font-size: 18px; color: #0a84ff; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.125em; min-width: 1.125em; text-align: center; }
         .journal-fab-option span { line-height: 1.25; display: inline-flex; align-items: center; }
         @media (max-width: 767px) {
             .journal-fab-wrapper { bottom: 90px; right: 15px; }
@@ -1877,7 +1882,7 @@
                 </div>
                 <div id="calendarTransferDetails" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; display: none; width: 100%; box-sizing: border-box; overflow: visible;">
                     <div class="list-section page-swiper" id="journalSwiper" style="position: relative; width: 100%; overflow: hidden; touch-action: pan-x pan-y;">
-                        <div class="page-container" id="journalPageContainer" style="display: flex; transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); width: 300%;">
+                        <div class="page-container" id="journalPageContainer" style="display: flex; transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); width: 300%;">
                             <!-- 支出分頁 -->
                             <div class="page-item" data-journal-page="expense" style="width: 33.333%; flex-shrink: 0; min-width: 0; padding: 0; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column;" id="journalExpensePage">
                                 <div style="display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; color: var(--text-primary); padding: 15px 15px 10px 15px; position: sticky; top: 0; background: var(--card-bg); z-index: 10; border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
@@ -2013,7 +2018,7 @@
     <!-- Calendar Journal Modal (新增支出/收入) -->
     
     <div id="calendarJournalModal" class="modal" style="z-index: 2003;" onclick="event.target.id === 'calendarJournalModal' && closeCalendarJournalModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0;">
                 <div class="modal-tab journal-tab active" onclick="switchJournalTab('expense')" id="journalTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">支出</div>
                 <div class="modal-tab journal-tab" onclick="switchJournalTab('income')" id="journalTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--border-color); cursor: pointer;">收入</div>
@@ -2071,7 +2076,7 @@
 
     <!-- Calendar Settings Menu Modal (保留用於固定轉帳) -->
     <div id="calendarSettingsModal" class="modal" style="z-index: 2003;" onclick="event.target.id === 'calendarSettingsModal' && closeCalendarSettingsModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">設定</div>
                 <div style="cursor: pointer; padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px;" onclick="openFixedTransferList()">
@@ -2089,7 +2094,7 @@
 
     <!-- Fixed Transfer List Modal -->
     <div id="fixedTransferListModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferListModal' && closeFixedTransferListModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <!-- 頂部導航欄已移除 -->
             
             <div style="padding: 0 20px 20px 20px; position: relative;">
@@ -2108,7 +2113,7 @@
 
     <!-- 固定支出列表（與固定轉帳相同 UI） -->
     <div id="fixedExpenseListModal" class="modal" style="z-index: 2005;" onclick="event.target.id === 'fixedExpenseListModal' && closeFixedExpenseListModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 0 20px 20px 20px; position: relative;">
                 <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px; padding-top: 20px;">
                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定支出</div>
@@ -2123,7 +2128,7 @@
 
     <!-- 固定收入列表（與固定轉帳相同 UI） -->
     <div id="fixedIncomeListModal" class="modal" style="z-index: 2005;" onclick="event.target.id === 'fixedIncomeListModal' && closeFixedIncomeListModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 0 20px 20px 20px; position: relative;">
                 <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px; padding-top: 20px;">
                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定收入</div>
@@ -2138,7 +2143,7 @@
 
     <!-- Repeat Selector Modal -->
     <div id="repeatSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'repeatSelectorModal' && closeRepeatSelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇重複頻率</div>
                 <div id="repeatSelectorList" style="max-height: 60vh; overflow-y: auto;">
@@ -2161,7 +2166,7 @@
 
     <!-- Date Picker Modal -->
     <div id="datePickerModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'datePickerModal' && closeDatePicker()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 60vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 60vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="datePickerTitle">選擇日期</div>
                 <div style="display: flex; justify-content: space-around; margin-bottom: 20px; height: 200px; overflow: hidden; position: relative;">
@@ -2188,7 +2193,7 @@
 
     <!-- Tag Color Selector Modal -->
     <div id="tagColorSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'tagColorSelectorModal' && closeTagColorSelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇標籤顏色</div>
                 <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; max-height: 60vh; overflow-y: auto;">
@@ -2211,7 +2216,7 @@
 
     <!-- Holiday Adjust Selector Modal -->
     <div id="holidayAdjustSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'holidayAdjustSelectorModal' && closeHolidayAdjustSelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;">選擇假日調整</div>
                 <div id="holidayAdjustSelectorList" style="max-height: 60vh; overflow-y: auto;">
@@ -2231,7 +2236,7 @@
     
     <!-- 日期記事編輯模態框 -->
     <div id="dateNoteModal" class="modal" style="z-index: 2011;" onclick="event.target.id === 'dateNoteModal' && closeDateNoteEditor()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="dateNoteTitle">記事</div>
                 <div style="margin-bottom: 15px;">
@@ -2248,7 +2253,7 @@
 
     <!-- Account Selector Modal -->
     <div id="accountSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'accountSelectorModal' && closeAccountSelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="accountSelectorTitle">選擇帳戶</div>
                 <div id="accountSelectorList" style="max-height: 60vh; overflow-y: auto;">
@@ -2653,7 +2658,7 @@
 
     <!-- Category Selector Modal -->
     <div id="categorySelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'categorySelectorModal' && closeCategorySelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: #1c1c1e; position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: #1c1c1e; position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
                 <div id="categorySelectorList" style="max-height: 60vh; overflow-y: auto;">
@@ -4455,7 +4460,7 @@
     }
 
     // --- UI ---
-    function toggleSidebar() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(s.classList.contains('active')){s.classList.remove('active');o.classList.remove('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('collapsed');} initMenuSections();}else{s.classList.add('active');o.classList.add('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('collapsed');}} }
+    function toggleSidebar() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(s.classList.contains('active')){s.classList.remove('active');o.classList.remove('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('collapsed');} setTimeout(function(){initMenuSections();},0);}else{s.classList.add('active');o.classList.add('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('collapsed');}} }
     
     // 使用教學：圈選畫面上的區塊（資產 / 記帳分開）
     const ASSET_TUTORIAL_STEPS = [
@@ -5923,26 +5928,14 @@
             growthEl.innerHTML = '<span class="growth-label">' + growthLabel + '</span><span class="growth-value ' + cls + '">' + sign + growthRate.toFixed(2) + '%</span>';
         }
         
-        // 為每個系列準備數據：每天一個點，使用 Highcharts step 繪製階梯效果
-        // 結構：[0,0], [0,firstValue] 形成起始垂直線，然後 [1,v1], [2,v2], ... 每天一個點
+        // 為每個系列準備數據：每天一個點，使用 Highcharts step 繪製階梯效果（起始日不再畫垂直線）
         const series = seriesConfig.map(cfg => {
             const dataPoints = [];
             
             if(chartDates.length > 0) {
                 const getVal = (dateStr) => (filledHistory[dateStr] || history[dateStr])?.[cfg.key] || 0;
                 
-                // 從0開始，形成垂直線
-                dataPoints.push([0, 0]);      // 起始點 y=0
-                
-                // 處理第一個值
-                const firstRaw = getVal(chartDates[0]);
-                const firstValue = toDisplayValue(firstRaw);
-                if(firstValue !== 0) {
-                    dataPoints.push([0, firstValue]); // 與起始點同 x，形成垂直線
-                }
-                
-                // 每天一個點，不再使用階梯式雙點
-                for(let idx = 1; idx < chartDates.length; idx++) {
+                for(let idx = 0; idx < chartDates.length; idx++) {
                     const raw = getVal(chartDates[idx]);
                     const value = toDisplayValue(raw);
                     dataPoints.push([idx, value]);
@@ -6225,15 +6218,15 @@
             idx = Math.max(0, Math.min(idx, chartDates.length - 1));
             const series = chart.series[0];
             if(!series || !series.points) return;
-            // 找到 x=idx 的點（取最後一個，因 x=0 時有兩個點）
+            // 找到 x=idx 的點
             let pt = null;
-            for(let i = series.points.length - 1; i >= 0; i--) {
+            for(let i = 0; i < series.points.length; i++) {
                 if(Math.round(series.points[i].x) === idx) {
                     pt = series.points[i];
                     break;
                 }
             }
-            const value = pt ? pt.y : (series.points[1] ? series.points[1].y : 0);
+            const value = pt ? pt.y : (series.points[idx] != null ? series.points[idx].y : 0);
             let dateStr = '開始';
             const d = chartDates[idx];
             if(d) {
@@ -10533,27 +10526,24 @@
                 dayBtn.style.boxSizing = 'border-box';
             }
             
-            // 使用計時器區分單擊和雙擊
+            // 使用計時器區分單擊和雙擊（縮短延遲以提升點擊反應）
             let clickTimer = null;
             let clickCount = 0;
             dayBtn.addEventListener('click', (e) => {
                 clickCount++;
                 if(clickCount === 1) {
+                    // 立即視覺回饋：先標示選中狀態
+                    grid.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
+                    dayBtn.classList.add('selected');
                     clickTimer = setTimeout(() => {
-                        // 單擊：選中日期
                         selectDate(date);
                         clickCount = 0;
-                    }, 300); // 300ms 內沒有第二次點擊，視為單擊
+                    }, 180);
                 } else if(clickCount === 2) {
-                    // 雙擊：打開記事編輯
                     clearTimeout(clickTimer);
                     e.stopPropagation();
-                    // 先選中該日期
                     selectDate(date);
-                    // 然後打開記事編輯
-                    setTimeout(() => {
-                        openDateNoteEditor(date);
-                    }, 100);
+                    setTimeout(() => openDateNoteEditor(date), 50);
                     clickCount = 0;
                 }
             });
@@ -10565,9 +10555,8 @@
         selectedDate.setHours(0, 0, 0, 0); // 確保時間部分為 00:00:00
         renderCalendar();
         console.log('Selected date:', selectedDate.toLocaleDateString('zh-TW'));
-        
-        // 顯示該日期的固定轉帳詳情
-        showFixedTransferDetailsForDate(date);
+        // 下一幀再更新詳情區，讓日曆先完成繪製，操作更順暢
+        requestAnimationFrame(() => { showFixedTransferDetailsForDate(date); });
     }
     
     // 當前記帳詳情的分頁索引（0: 支出, 1: 收入, 2: 轉帳）
@@ -11892,11 +11881,10 @@
         switchJournalPage(currentJournalPageIndex);
         
         // 確保滑動手勢已初始化
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             initJournalSwipe();
-            // 再次更新高度，確保正確
             updateJournalDetailsHeight();
-        }, 100);
+        });
     }
     
     // 更新記帳詳情區域的高度
