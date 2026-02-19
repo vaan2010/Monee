@@ -10069,6 +10069,7 @@
             saveJournalPageState();
             if(journalViewMode === 'chart') {
                 renderMonthlyCharts();
+                initMonthlyChartSwipe();
             } else if(journalViewMode === 'linechart') {
                 renderJournalMonthlyLineChart();
             }
@@ -11721,10 +11722,13 @@
         const absDiffX = Math.abs(diffX);
         const absDiffY = Math.abs(diffY);
         
+        // 明確為垂直滑動時不攔截，讓內層 .page-item 可上下捲動
         if(absDiffY > absDiffX) return;
-        if(absDiffX > 5) e.preventDefault();
+        // 門檻提高：僅在明顯為水平滑動時才 preventDefault，避免誤攔垂直捲動導致後續無法滑
+        const isClearlyHorizontal = absDiffX > 14 && absDiffX > absDiffY * 1.2;
+        if(isClearlyHorizontal) e.preventDefault();
         
-        if(absDiffX > 5) {
+        if(isClearlyHorizontal) {
             monthlyChartIsSwiping = true;
             const container = document.getElementById('monthlyChartPageContainer');
             const swiper = document.getElementById('monthlyChartSwiper');
@@ -11744,7 +11748,13 @@
     }
     
     function handleMonthlyChartTouchEnd(e) {
-        if(!monthlyChartTouchStartX || monthlyChartTouchStartY === null || !monthlyChartIsSwiping) {
+        if(!monthlyChartTouchStartX || monthlyChartTouchStartY === null) {
+            monthlyChartTouchStartX = null;
+            monthlyChartTouchStartY = null;
+            monthlyChartIsSwiping = false;
+            return;
+        }
+        if(!monthlyChartIsSwiping) {
             monthlyChartTouchStartX = null;
             monthlyChartTouchStartY = null;
             return;
@@ -11756,6 +11766,8 @@
         const diffY = monthlyChartTouchStartY - currentY;
         monthlyChartTouchStartX = null;
         monthlyChartTouchStartY = null;
+        monthlyChartIsSwiping = false;
+        
         if(Math.abs(diffY) > Math.abs(diffX)) return;
         const swiper = document.getElementById('monthlyChartSwiper');
         const container = document.getElementById('monthlyChartPageContainer');
@@ -11765,18 +11777,14 @@
             
             if(Math.abs(diffX) > threshold) {
                 if(diffX > 0 && currentMonthlyChartIndex < 1) {
-                    // 向右滑動，切換到下一個
                     currentMonthlyChartIndex++;
                 } else if(diffX < 0 && currentMonthlyChartIndex > 0) {
-                    // 向左滑動，切換到上一個
                     currentMonthlyChartIndex--;
                 }
             }
             
             switchMonthlyChartPage(currentMonthlyChartIndex);
         }
-        
-        monthlyChartIsSwiping = false;
     }
     
     function switchMonthlyChartPage(index) {
@@ -11785,6 +11793,16 @@
             container.classList.remove('swiping');
             const transform = -index * 50;
             container.style.transform = `translateX(${transform}%)`;
+            
+            // 切換後解除內層捲動鎖定：強制重設可見 .page-item 的 overflow，避免換頁後上下滑動失效
+            const pageItems = document.querySelectorAll('#monthlyChartSwiper .page-item');
+            pageItems.forEach((el, i) => {
+                const isVisible = (i === 0 && index === 0) || (i === 1 && index === 1);
+                if(isVisible && el.scrollHeight > el.clientHeight) {
+                    el.style.overflowY = 'hidden';
+                    requestAnimationFrame(() => { el.style.overflowY = 'auto'; });
+                }
+            });
             
             // 切換頁面時恢復所有圓餅圖高亮
             resetPieChartHighlight('monthlyExpenseTotalChart');
