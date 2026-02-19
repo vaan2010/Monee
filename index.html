@@ -1425,6 +1425,27 @@
         .spotlight-actions button { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .spotlight-skip { background: transparent; color: var(--text-secondary); }
         .spotlight-next { background: #0a84ff; color: #fff; }
+
+        /* 支出 AI 匯入教學範例 */
+        #expenseAiTutorialOverlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; animation: spotlightFadeIn 0.25s ease; }
+        #expenseAiTutorialOverlay.show { display: flex; }
+        #expenseAiTutorialModal { background: var(--card-bg); border-radius: 16px; max-width: 400px; width: 100%; max-height: 90vh; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+        #expenseAiTutorialModal .tutorial-title { font-size: 18px; font-weight: 700; color: var(--text-primary); padding: 16px 20px 8px; text-align: center; }
+        #expenseAiTutorialModal .tutorial-sub { font-size: 13px; color: var(--text-secondary); padding: 0 20px 12px; text-align: center; }
+        .expense-ai-carousel { position: relative; background: #0c0c0e; }
+        .expense-ai-carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        .expense-ai-carousel-arrow:hover { background: #fff; }
+        .expense-ai-carousel-arrow.prev { left: 8px; }
+        .expense-ai-carousel-arrow.next { right: 8px; }
+        .expense-ai-carousel-inner { display: flex; transition: transform 0.35s ease; }
+        .expense-ai-carousel-slide { min-width: 100%; padding: 12px 20px; box-sizing: border-box; }
+        .expense-ai-carousel-slide img { width: 100%; height: auto; border-radius: 12px; display: block; vertical-align: top; max-height: 50vh; object-fit: contain; background: #1c1c1e; }
+        .expense-ai-carousel-slide .slide-label { font-size: 14px; font-weight: 600; color: #0a84ff; text-align: center; margin-top: 10px; }
+        .expense-ai-carousel-dots { display: flex; justify-content: center; gap: 8px; padding: 12px; }
+        .expense-ai-carousel-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-color); cursor: pointer; transition: background 0.2s; }
+        .expense-ai-carousel-dots span.active { background: #0a84ff; }
+        #expenseAiTutorialModal .tutorial-close { padding: 12px 20px 20px; text-align: center; }
+        #expenseAiTutorialModal .tutorial-close button { padding: 10px 32px; border-radius: 10px; border: none; background: #0a84ff; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -1450,6 +1471,25 @@
                 <button class="spotlight-skip" onclick="closeSpotlightTutorial()">跳過</button>
                 <button class="spotlight-next" id="spotlightNextBtn" onclick="nextSpotlightStep()">下一步</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 支出 AI 匯入教學範例（發票怪獸 / 財政部發票存摺 / 國泰信用卡） -->
+    <div id="expenseAiTutorialOverlay" onclick="if(event.target.id==='expenseAiTutorialOverlay')closeExpenseAiTutorial()">
+        <div id="expenseAiTutorialModal" onclick="event.stopPropagation()">
+            <div class="tutorial-title">AI 批量匯入支援的截圖範例</div>
+            <div class="tutorial-sub">發票怪獸、財政部發票存摺、國泰信用卡</div>
+            <div class="expense-ai-carousel">
+                <button type="button" class="expense-ai-carousel-arrow prev" onclick="event.stopPropagation(); expenseAiCarouselPrev()" aria-label="上一張"><i class="fas fa-chevron-left"></i></button>
+                <button type="button" class="expense-ai-carousel-arrow next" onclick="event.stopPropagation(); expenseAiCarouselNext()" aria-label="下一張"><i class="fas fa-chevron-right"></i></button>
+                <div class="expense-ai-carousel-inner" id="expenseAiCarouselInner">
+                    <div class="expense-ai-carousel-slide"><img id="expenseAiSlideImg0" src="./expense-ai-tutorial/1.png" alt="發票怪獸範例"><div class="slide-label">發票怪獸</div></div>
+                    <div class="expense-ai-carousel-slide"><img id="expenseAiSlideImg1" src="./expense-ai-tutorial/2.png" alt="財政部發票存摺範例"><div class="slide-label">財政部發票存摺</div></div>
+                    <div class="expense-ai-carousel-slide"><img id="expenseAiSlideImg2" src="./expense-ai-tutorial/3.png" alt="國泰信用卡範例"><div class="slide-label">國泰信用卡</div></div>
+                </div>
+                <div class="expense-ai-carousel-dots" id="expenseAiCarouselDots"></div>
+            </div>
+            <div class="tutorial-close"><button type="button" onclick="closeExpenseAiTutorial()">知道了</button></div>
         </div>
     </div>
     
@@ -2048,6 +2088,36 @@
         </div>
     </div>
 
+    <!-- 固定支出列表（與固定轉帳相同 UI） -->
+    <div id="fixedExpenseListModal" class="modal" style="z-index: 2005;" onclick="event.target.id === 'fixedExpenseListModal' && closeFixedExpenseListModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+            <div style="padding: 0 20px 20px 20px; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px; padding-top: 20px;">
+                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定支出</div>
+                </div>
+                <div id="fixedExpenseListContainer" style="max-height: 60vh; overflow-y: auto; padding-bottom: 80px;"></div>
+                <button onclick="openFixedExpenseModal()" style="position: absolute; bottom: 20px; right: 20px; width: 48px; height: 48px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 固定收入列表（與固定轉帳相同 UI） -->
+    <div id="fixedIncomeListModal" class="modal" style="z-index: 2005;" onclick="event.target.id === 'fixedIncomeListModal' && closeFixedIncomeListModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+            <div style="padding: 0 20px 20px 20px; position: relative;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px; padding-top: 20px;">
+                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">固定收入</div>
+                </div>
+                <div id="fixedIncomeListContainer" style="max-height: 60vh; overflow-y: auto; padding-bottom: 80px;"></div>
+                <button onclick="openFixedIncomeModal()" style="position: absolute; bottom: 20px; right: 20px; width: 48px; height: 48px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Repeat Selector Modal -->
     <div id="repeatSelectorModal" class="modal" style="z-index: 2020;" onclick="event.target.id === 'repeatSelectorModal' && closeRepeatSelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
@@ -2172,10 +2242,10 @@
 
     <!-- Income Modal (收入) -->
     <div id="incomeModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'incomeModal' && closeIncomeModal()">
-        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
-        <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
-            <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
-            <span>固定轉帳</span>
+        <!-- 右下角浮動按鈕 (固定收入：僅帳戶) -->
+        <button onclick="event.stopPropagation(); openFixedIncomeListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+            <i class="fas fa-piggy-bank" style="font-size: 18px;"></i>
+            <span>固定收入</span>
         </button>
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
@@ -2295,10 +2365,10 @@
 
     <!-- Expense Modal (支出) -->
     <div id="expenseModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'expenseModal' && closeExpenseModal()">
-        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
-        <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
-            <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
-            <span>固定轉帳</span>
+        <!-- 右下角浮動按鈕 (固定支出：僅帳戶) -->
+        <button onclick="event.stopPropagation(); openFixedExpenseListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
+            <i class="fas fa-wallet" style="font-size: 18px;"></i>
+            <span>固定支出</span>
         </button>
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
@@ -2317,10 +2387,16 @@
                 <div style="margin-bottom: 20px; padding-top: 10px;">
                     <h1 style="font-size: 34px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">新增支出</h1>
                     <div id="expenseDate" style="font-size: 15px; color: var(--text-secondary); font-weight: 400;"></div>
-                    <button type="button" onclick="triggerExpenseImageUpload()" style="margin-top: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.4); border-radius: 10px; color: #0a84ff; font-size: 15px; font-weight: 600; cursor: pointer;">
-                        <i class="fas fa-camera"></i>
-                        <span>AI 批量匯入</span>
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
+                        <button type="button" onclick="triggerExpenseImageUpload()" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.4); border-radius: 10px; color: #0a84ff; font-size: 15px; font-weight: 600; cursor: pointer;">
+                            <i class="fas fa-camera"></i>
+                            <span>AI 批量匯入</span>
+                        </button>
+                        <button type="button" onclick="openExpenseAiTutorial()" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: transparent; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-secondary); font-size: 13px; cursor: pointer;">
+                            <i class="fas fa-info-circle"></i>
+                            <span>教學範例</span>
+                        </button>
+                    </div>
                     <input type="file" id="expenseImgUpload" accept="image/*" multiple style="display:none" onchange="handleExpenseImageUpload(this)">
                     <div id="expenseAiStatus" style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);"></div>
                 </div>
@@ -2466,7 +2542,7 @@
 
     <!-- Transfer Modal (轉帳) -->
     <div id="transferModal" class="modal" style="z-index: 2007;" onclick="event.target.id === 'transferModal' && closeTransferModal()">
-        <!-- 右下角浮動按鈕 (進入固定轉帳) -->
+        <!-- 右下角浮動按鈕 (固定轉帳：從帳戶到帳戶) -->
         <button onclick="event.stopPropagation(); openFixedTransferListFromJournal()" style="position: fixed; bottom: 30px; right: 20px; width: auto; min-width: 56px; height: 56px; border-radius: 28px; background: #ffd60a; color: #000; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;">
             <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
             <span>固定轉帳</span>
@@ -2651,6 +2727,124 @@
         </div>
     </div>
 
+    <!-- 固定支出 Modal（同固定轉帳，僅一個帳戶） -->
+    <div id="fixedExpenseModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedExpenseModal' && closeFixedExpenseModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: #000000; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedExpenseModal()" style="color: #98989d;">取消</button>
+                <button class="btn-icon" style="font-weight:bold; color: var(--color-down);" onclick="saveFixedExpense()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 20px 20px;">
+                <div style="margin-bottom: 20px; padding-top: 10px;">
+                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定支出</h1>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedExpenseTitle" class="form-input" placeholder="例:房租" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="fixedExpenseUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <label class="switch"><input type="checkbox" id="fixedExpenseUseAccountBalance" onchange="updateFixedExpenseAmountMode()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="form-row" id="fixedExpenseAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedExpenseAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedExpenseAccount')">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">帳戶</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="fixedExpenseAccount" style="color: #8e8e93; font-size: 17px;">選擇帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='expense'; openTagColorSelector()">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-tag" id="fixedExpenseTagIcon" style="color: #8e8e93;"></i>
+                            <span id="fixedExpenseTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 30px;">
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='expense'; openRepeatSelectorForFixed()"><span class="form-label">重複</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedExpenseRepeat">每月</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;"><span class="form-label">按期數</span><div style="display: flex; align-items: center; gap: 10px;"><span id="fixedExpensePeriodCount" style="color: var(--text-secondary); font-size: 14px;"></span><label class="switch"><input type="checkbox" id="fixedExpenseByPeriod" onchange="updateFixedExpensePeriodCount()"><span class="slider"></span></label></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='expense'; openDateSelector('start')"><span class="form-label">開始日期</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedExpenseStartDate" style="color: var(--text-secondary);">-</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='expense'; openDateSelector('end')"><span class="form-label">結束日期</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedExpenseEndDate">永不結束</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='expense'; openHolidayAdjustSelector()"><span class="form-label">假日調整</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedExpenseHolidayAdjust">不調整</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 15px;">週期日程</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 10px;">下回<span id="fixedExpenseNextDate" style="margin-left: 10px; color: var(--text-primary);">-</span></div>
+                    <div style="color: var(--text-secondary);">下下回<span id="fixedExpenseNextNextDate" style="margin-left: 10px; color: var(--text-primary);">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 固定收入 Modal（同固定轉帳，僅一個帳戶） -->
+    <div id="fixedIncomeModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedIncomeModal' && closeFixedIncomeModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: #000000; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedIncomeModal()" style="color: #98989d;">取消</button>
+                <button class="btn-icon" style="font-weight:bold; color: var(--color-up);" onclick="saveFixedIncome()">儲存</button>
+            </div>
+            <div style="padding: 0 20px 20px 20px;">
+                <div style="margin-bottom: 20px; padding-top: 10px;">
+                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定收入</h1>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedIncomeTitle" class="form-input" placeholder="例:薪資" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="fixedIncomeUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <label class="switch"><input type="checkbox" id="fixedIncomeUseAccountBalance" onchange="updateFixedIncomeAmountMode()"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="form-row" id="fixedIncomeAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedIncomeAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedIncomeAccount')">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">帳戶</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="fixedIncomeAccount" style="color: #8e8e93; font-size: 17px;">選擇帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='income'; openTagColorSelector()">
+                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-tag" id="fixedIncomeTagIcon" style="color: #8e8e93;"></i>
+                            <span id="fixedIncomeTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
+                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 30px;">
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='income'; openRepeatSelectorForFixed()"><span class="form-label">重複</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedIncomeRepeat">每月</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;"><span class="form-label">按期數</span><div style="display: flex; align-items: center; gap: 10px;"><span id="fixedIncomePeriodCount" style="color: var(--text-secondary); font-size: 14px;"></span><label class="switch"><input type="checkbox" id="fixedIncomeByPeriod" onchange="updateFixedIncomePeriodCount()"><span class="slider"></span></label></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='income'; openDateSelector('start')"><span class="form-label">開始日期</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedIncomeStartDate" style="color: var(--text-secondary);">-</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='income'; openDateSelector('end')"><span class="form-label">結束日期</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedIncomeEndDate">永不結束</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                    <div class="form-row" style="cursor: pointer;" onclick="currentFixedFormContext='income'; openHolidayAdjustSelector()"><span class="form-label">假日調整</span><div style="display: flex; align-items: center; justify-content: space-between; width: 100%;"><span id="fixedIncomeHolidayAdjust">不調整</span><i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i></div></div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 15px;">週期日程</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 10px;">下回<span id="fixedIncomeNextDate" style="margin-left: 10px; color: var(--text-primary);">-</span></div>
+                    <div style="color: var(--text-secondary);">下下回<span id="fixedIncomeNextNextDate" style="margin-left: 10px; color: var(--text-primary);">-</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Calculator Modal -->
     <div id="calculatorModal" class="modal" style="z-index: 2012;" onclick="event.target.id === 'calculatorModal' && closeCalculator()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; height: auto; max-height: 90vh; margin: auto; border-radius: 20px; background: var(--card-bg);" onclick="event.stopPropagation()">
@@ -2779,6 +2973,10 @@
     const STORAGE_KEY_USERS = 'my_assets_users';
     const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
     const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
+    const STORAGE_KEY_FIXED_EXPENSE_ACCOUNTS = 'my_assets_fixed_expense_accounts';
+    const STORAGE_KEY_FIXED_INCOME_ACCOUNTS = 'my_assets_fixed_income_accounts';
+    const STORAGE_KEY_FIXED_EXPENSES = 'my_assets_fixed_expenses';
+    const STORAGE_KEY_FIXED_INCOMES = 'my_assets_fixed_incomes';
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
     const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes'; // 日期記事
     const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
@@ -9227,6 +9425,9 @@
         
         // 檢查並執行固定轉帳（自動日期匯款）
         checkAndExecuteFixedTransfers();
+        // 檢查並執行固定支出、固定收入（當日自動扣款/入帳）
+        checkAndExecuteFixedExpenses();
+        checkAndExecuteFixedIncomes();
         // 初始化箭頭按鈕狀態
         updatePageNavArrows();
         setTimeout(() => { 
@@ -12752,6 +12953,56 @@
         return matchingTransfers;
     }
     
+    // 獲取指定日期的所有固定支出（與固定轉帳相同之重複/日期邏輯）
+    function getFixedExpensesForDate(date) {
+        const items = loadFixedExpenses();
+        const dateObj = new Date(date);
+        dateObj.setHours(0, 0, 0, 0);
+        const matching = [];
+        items.forEach(item => {
+            const startDate = new Date(item.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = item.endDate ? new Date(item.endDate) : null;
+            if(endDate) endDate.setHours(0, 0, 0, 0);
+            if(dateObj < startDate || (endDate && dateObj > endDate)) return;
+            const daysDiff = Math.floor((dateObj - startDate) / (1000 * 60 * 60 * 24));
+            let matches = false;
+            switch(item.repeat || 'monthly') {
+                case 'daily': matches = true; break;
+                case 'weekly': matches = (daysDiff % 7 === 0); break;
+                case 'monthly': matches = (dateObj.getDate() === startDate.getDate()); break;
+                case 'yearly': matches = (dateObj.getMonth() === startDate.getMonth() && dateObj.getDate() === startDate.getDate()); break;
+            }
+            if(matches) matching.push(item);
+        });
+        return matching;
+    }
+    
+    // 獲取指定日期的所有固定收入
+    function getFixedIncomesForDate(date) {
+        const items = loadFixedIncomes();
+        const dateObj = new Date(date);
+        dateObj.setHours(0, 0, 0, 0);
+        const matching = [];
+        items.forEach(item => {
+            const startDate = new Date(item.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = item.endDate ? new Date(item.endDate) : null;
+            if(endDate) endDate.setHours(0, 0, 0, 0);
+            if(dateObj < startDate || (endDate && dateObj > endDate)) return;
+            const daysDiff = Math.floor((dateObj - startDate) / (1000 * 60 * 60 * 24));
+            let matches = false;
+            switch(item.repeat || 'monthly') {
+                case 'daily': matches = true; break;
+                case 'weekly': matches = (daysDiff % 7 === 0); break;
+                case 'monthly': matches = (dateObj.getDate() === startDate.getDate()); break;
+                case 'yearly': matches = (dateObj.getMonth() === startDate.getMonth() && dateObj.getDate() === startDate.getDate()); break;
+            }
+            if(matches) matching.push(item);
+        });
+        return matching;
+    }
+    
     // Calendar Journal Functions (新增支出/收入)
     function openCalendarJournalModal() {
         // 如果沒有選中日期，使用今天
@@ -12872,6 +13123,62 @@
         document.getElementById('expenseDateDisplay').style.color = 'var(--text-primary)';
     }
     
+    // 支出 AI 匯入教學範例（發票怪獸 / 財政部發票存摺 / 國泰信用卡）
+    var expenseAiTutorialIndex = 0;
+    var expenseAiTutorialTimer = null;
+    var EXPENSE_AI_TUTORIAL_SLIDES = 3;
+    function openExpenseAiTutorial() {
+        var overlay = document.getElementById('expenseAiTutorialOverlay');
+        if(!overlay) return;
+        expenseAiTutorialIndex = 0;
+        buildExpenseAiCarouselDots();
+        updateExpenseAiCarousel();
+        overlay.classList.add('show');
+        startExpenseAiTutorialAutoAdvance();
+    }
+    function closeExpenseAiTutorial() {
+        var overlay = document.getElementById('expenseAiTutorialOverlay');
+        if(overlay) overlay.classList.remove('show');
+        stopExpenseAiTutorialAutoAdvance();
+    }
+    function updateExpenseAiCarousel() {
+        var inner = document.getElementById('expenseAiCarouselInner');
+        if(inner) inner.style.transform = 'translateX(-' + (expenseAiTutorialIndex * 100) + '%)';
+        var dots = document.querySelectorAll('.expense-ai-carousel-dots span');
+        dots.forEach(function(d, i) { d.classList.toggle('active', i === expenseAiTutorialIndex); });
+    }
+    function buildExpenseAiCarouselDots() {
+        var container = document.getElementById('expenseAiCarouselDots');
+        if(!container) return;
+        container.innerHTML = '';
+        for(var i = 0; i < EXPENSE_AI_TUTORIAL_SLIDES; i++) {
+            var span = document.createElement('span');
+            span.classList.toggle('active', i === 0);
+            span.onclick = (function(j){ return function(){ expenseAiTutorialIndex = j; updateExpenseAiCarousel(); startExpenseAiTutorialAutoAdvance(); }; })(i);
+            container.appendChild(span);
+        }
+    }
+    function expenseAiCarouselPrev() {
+        expenseAiTutorialIndex = (expenseAiTutorialIndex - 1 + EXPENSE_AI_TUTORIAL_SLIDES) % EXPENSE_AI_TUTORIAL_SLIDES;
+        updateExpenseAiCarousel();
+        startExpenseAiTutorialAutoAdvance();
+    }
+    function expenseAiCarouselNext() {
+        expenseAiTutorialIndex = (expenseAiTutorialIndex + 1) % EXPENSE_AI_TUTORIAL_SLIDES;
+        updateExpenseAiCarousel();
+        startExpenseAiTutorialAutoAdvance();
+    }
+    function startExpenseAiTutorialAutoAdvance() {
+        stopExpenseAiTutorialAutoAdvance();
+        expenseAiTutorialTimer = setInterval(function() {
+            expenseAiTutorialIndex = (expenseAiTutorialIndex + 1) % EXPENSE_AI_TUTORIAL_SLIDES;
+            updateExpenseAiCarousel();
+        }, 3500);
+    }
+    function stopExpenseAiTutorialAutoAdvance() {
+        if(expenseAiTutorialTimer) { clearInterval(expenseAiTutorialTimer); expenseAiTutorialTimer = null; }
+    }
+
     // 支出 AI 匯入截圖
     function triggerExpenseImageUpload() {
         if(!settings.geminiKey) {
@@ -13482,6 +13789,360 @@
                 }
             }, 10);
         });
+    }
+    
+    // 固定支出 / 固定收入（完整項目，同固定轉帳但僅一個帳戶）
+    function loadFixedExpenses() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_FIXED_EXPENSES + '_' + (currentUserId || ''));
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) && (arr.length === 0 || typeof arr[0] === 'object') ? arr : [];
+        } catch(e) { return []; }
+    }
+    function saveFixedExpenses(items) {
+        if (!currentUserId) return;
+        localStorage.setItem(STORAGE_KEY_FIXED_EXPENSES + '_' + currentUserId, JSON.stringify(items));
+    }
+    function loadFixedIncomes() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_FIXED_INCOMES + '_' + (currentUserId || ''));
+            const arr = raw ? JSON.parse(raw) : [];
+            return Array.isArray(arr) && (arr.length === 0 || typeof arr[0] === 'object') ? arr : [];
+        } catch(e) { return []; }
+    }
+    function saveFixedIncomes(items) {
+        if (!currentUserId) return;
+        localStorage.setItem(STORAGE_KEY_FIXED_INCOMES + '_' + currentUserId, JSON.stringify(items));
+    }
+    let editingFixedExpenseId = null;
+    let editingFixedIncomeId = null;
+    
+    function openFixedExpenseListFromJournal() {
+        const modal = document.getElementById('fixedExpenseListModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(!modal) return;
+        renderFixedExpenseList();
+        if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.zIndex = '2010';
+        requestAnimationFrame(() => {
+            setTimeout(() => { if(modalWrapper) modalWrapper.style.transform = 'translateY(0)'; }, 10);
+        });
+    }
+    function closeFixedExpenseListModal() {
+        const modal = document.getElementById('fixedExpenseListModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        if(modal) { modal.style.display = 'none'; }
+    }
+    function renderFixedExpenseList() {
+        const container = document.getElementById('fixedExpenseListContainer');
+        if(!container) return;
+        const items = loadFixedExpenses();
+        container.innerHTML = '';
+        if(items.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px; font-size: 14px;">尚無固定支出</div>';
+            return;
+        }
+        items.forEach(item => {
+            const tagColor = item.tagColor || '#8e8e93';
+            const row = document.createElement('div');
+            row.style.cssText = 'padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;';
+            row.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer;" onclick="closeFixedExpenseListModal(); openFixedExpenseModal('${item.id}')">
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background: ${tagColor};"></div>
+                    <div style="color: var(--text-primary); font-size: 16px; font-weight: 500;">${item.title || '未命名'}</div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteFixedExpenseItem('${item.id}')" style="padding: 8px 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;">刪除</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+    function deleteFixedExpenseItem(id) {
+        if(!confirm('確定要刪除此固定支出？')) return;
+        const items = loadFixedExpenses().filter(x => x.id !== id);
+        saveFixedExpenses(items);
+        renderFixedExpenseList();
+    }
+    
+    function openFixedIncomeListFromJournal() {
+        const modal = document.getElementById('fixedIncomeListModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(!modal) return;
+        renderFixedIncomeList();
+        if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        modal.style.display = 'block';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modal.style.zIndex = '2010';
+        requestAnimationFrame(() => {
+            setTimeout(() => { if(modalWrapper) modalWrapper.style.transform = 'translateY(0)'; }, 10);
+        });
+    }
+    function closeFixedIncomeListModal() {
+        const modal = document.getElementById('fixedIncomeListModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        if(modal) { modal.style.display = 'none'; }
+    }
+    function renderFixedIncomeList() {
+        const container = document.getElementById('fixedIncomeListContainer');
+        if(!container) return;
+        const items = loadFixedIncomes();
+        container.innerHTML = '';
+        if(items.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px; font-size: 14px;">尚無固定收入</div>';
+            return;
+        }
+        items.forEach(item => {
+            const tagColor = item.tagColor || '#8e8e93';
+            const row = document.createElement('div');
+            row.style.cssText = 'padding: 15px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;';
+            row.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer;" onclick="closeFixedIncomeListModal(); openFixedIncomeModal('${item.id}')">
+                    <div style="width: 20px; height: 20px; border-radius: 50%; background: ${tagColor};"></div>
+                    <div style="color: var(--text-primary); font-size: 16px; font-weight: 500;">${item.title || '未命名'}</div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteFixedIncomeItem('${item.id}')" style="padding: 8px 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;">刪除</button>
+            `;
+            container.appendChild(row);
+        });
+    }
+    function deleteFixedIncomeItem(id) {
+        if(!confirm('確定要刪除此固定收入？')) return;
+        const items = loadFixedIncomes().filter(x => x.id !== id);
+        saveFixedIncomes(items);
+        renderFixedIncomeList();
+    }
+    
+    function openFixedExpenseModal(itemId) {
+        currentFixedFormContext = 'expense';
+        editingFixedExpenseId = itemId;
+        const modal = document.getElementById('fixedExpenseModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(!modal) return;
+        fixedExpenseData = { repeat: 'monthly', byPeriod: false, startDate: null, endDate: null, holidayAdjust: 'none', tagColor: null, useAccountBalance: false };
+        const weekdays = ['週日','週一','週二','週三','週四','週五','週六'];
+        const repeatNames = { daily: '每日', weekly: '每星期', monthly: '每月', yearly: '每年' };
+        const adjustNames = { none: '不調整', advance: '提前', delay: '延後' };
+        if(itemId) {
+            const items = loadFixedExpenses();
+            const item = items.find(x => x.id === itemId);
+            if(item) {
+                document.getElementById('fixedExpenseTitle').value = item.title || '';
+                document.getElementById('fixedExpenseAmount').value = item.useAccountBalance ? '' : (item.amount || '');
+                const cb = document.getElementById('fixedExpenseUseAccountBalance');
+                if(cb) cb.checked = item.useAccountBalance || false;
+                updateFixedExpenseAmountMode();
+                const acc = accounts.find(a => a.id === item.accountId);
+                const accEl = document.getElementById('fixedExpenseAccount');
+                if(accEl) { accEl.textContent = acc ? acc.name : '選擇帳戶'; accEl.style.color = acc ? 'var(--text-primary)' : 'var(--text-secondary)'; }
+                window.fixedExpenseAccountId = item.accountId || null;
+                fixedExpenseData.repeat = item.repeat || 'monthly';
+                fixedExpenseData.byPeriod = item.byPeriod || false;
+                fixedExpenseData.startDate = item.startDate ? new Date(item.startDate) : new Date();
+                fixedExpenseData.endDate = item.endDate ? new Date(item.endDate) : null;
+                fixedExpenseData.holidayAdjust = item.holidayAdjust || 'none';
+                fixedExpenseData.tagColor = item.tagColor || null;
+                document.getElementById('fixedExpenseRepeat').textContent = repeatNames[fixedExpenseData.repeat] || '每月';
+                document.getElementById('fixedExpenseByPeriod').checked = fixedExpenseData.byPeriod;
+                document.getElementById('fixedExpenseStartDate').textContent = fixedExpenseData.startDate ? (fixedExpenseData.startDate.getFullYear() + '年' + (fixedExpenseData.startDate.getMonth()+1) + '月' + fixedExpenseData.startDate.getDate() + '日 ' + weekdays[fixedExpenseData.startDate.getDay()]) : '-';
+                document.getElementById('fixedExpenseEndDate').textContent = fixedExpenseData.endDate ? (fixedExpenseData.endDate.getFullYear() + '年' + (fixedExpenseData.endDate.getMonth()+1) + '月' + fixedExpenseData.endDate.getDate() + '日') : '永不結束';
+                document.getElementById('fixedExpenseHolidayAdjust').textContent = adjustNames[fixedExpenseData.holidayAdjust] || '不調整';
+                const tagEl = document.getElementById('fixedExpenseTagColor');
+                const tagIcon = document.getElementById('fixedExpenseTagIcon');
+                if(fixedExpenseData.tagColor && tagEl && tagIcon) { tagEl.textContent = '已選擇'; tagEl.style.color = fixedExpenseData.tagColor; tagIcon.style.color = fixedExpenseData.tagColor; } else if(tagEl && tagIcon) { tagEl.textContent = '選擇顏色'; tagEl.style.color = 'var(--text-secondary)'; tagIcon.style.color = 'var(--text-secondary)'; }
+            }
+        } else {
+            const today = new Date();
+            fixedExpenseData.startDate = today;
+            document.getElementById('fixedExpenseTitle').value = '';
+            document.getElementById('fixedExpenseAmount').value = '';
+            document.getElementById('fixedExpenseUseAccountBalance').checked = false;
+            updateFixedExpenseAmountMode();
+            document.getElementById('fixedExpenseAccount').textContent = '選擇帳戶';
+            document.getElementById('fixedExpenseAccount').style.color = 'var(--text-secondary)';
+            window.fixedExpenseAccountId = null;
+            document.getElementById('fixedExpenseRepeat').textContent = '每月';
+            document.getElementById('fixedExpenseByPeriod').checked = false;
+            document.getElementById('fixedExpenseStartDate').textContent = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日 ' + weekdays[today.getDay()];
+            document.getElementById('fixedExpenseEndDate').textContent = '永不結束';
+            document.getElementById('fixedExpenseHolidayAdjust').textContent = '不調整';
+            document.getElementById('fixedExpenseTagColor').textContent = '選擇顏色';
+            document.getElementById('fixedExpenseTagColor').style.color = 'var(--text-secondary)';
+            document.getElementById('fixedExpenseTagIcon').style.color = 'var(--text-secondary)';
+        }
+        updateFixedExpensePeriodCount();
+        updateNextDatesForFixed();
+        modal.style.display = 'block';
+        modal.style.background = 'transparent';
+        modal.style.zIndex = '2012';
+        if(modalWrapper) modalWrapper.style.transform = 'translateX(100%)';
+        requestAnimationFrame(() => { setTimeout(() => { if(modalWrapper) modalWrapper.style.transform = 'translateX(0)'; }, 10); });
+    }
+    function saveFixedExpense() {
+        const title = (document.getElementById('fixedExpenseTitle').value || '').trim();
+        if(!title) { alert('請輸入標題'); return; }
+        if(!window.fixedExpenseAccountId) { alert('請選擇帳戶'); return; }
+        const useBalance = document.getElementById('fixedExpenseUseAccountBalance').checked;
+        if(!useBalance && !document.getElementById('fixedExpenseAmount').value) { alert('請輸入金額'); return; }
+        const amount = useBalance ? 0 : (parseFloat(document.getElementById('fixedExpenseAmount').value) || 0);
+        if(!fixedExpenseData.startDate) { alert('請選擇開始日期'); return; }
+        const items = loadFixedExpenses();
+        const payload = {
+            id: editingFixedExpenseId || (Date.now().toString()),
+            title: title,
+            accountId: window.fixedExpenseAccountId,
+            amount: amount,
+            useAccountBalance: useBalance,
+            tagColor: fixedExpenseData.tagColor,
+            repeat: fixedExpenseData.repeat,
+            byPeriod: fixedExpenseData.byPeriod,
+            startDate: fixedExpenseData.startDate.toISOString(),
+            endDate: fixedExpenseData.endDate ? fixedExpenseData.endDate.toISOString() : null,
+            holidayAdjust: fixedExpenseData.holidayAdjust,
+            executionRecords: (editingFixedExpenseId && items.find(x => x.id === editingFixedExpenseId)) ? (items.find(x => x.id === editingFixedExpenseId).executionRecords || {}) : {}
+        };
+        const idx = items.findIndex(x => x.id === payload.id);
+        if(idx >= 0) items[idx] = payload; else items.push(payload);
+        saveFixedExpenses(items);
+        // 新增後若今天到期則立即執行一次
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
+        const dueToday = getFixedExpensesForDate(today);
+        if (dueToday.some(x => x.id === payload.id) && (!payload.executionRecords || payload.executionRecords[todayStr] === undefined)) {
+            if (executeFixedExpense(payload, today)) {
+                saveFixedExpenses(items);
+                renderAssets();
+                updateChartData();
+                if (selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                renderCalendar();
+            }
+        }
+        closeFixedExpenseModal();
+        renderFixedExpenseList();
+    }
+    function closeFixedExpenseModal() {
+        const modal = document.getElementById('fixedExpenseModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) modalWrapper.style.transform = 'translateX(100%)';
+        if(modal) modal.style.display = 'none';
+        editingFixedExpenseId = null;
+    }
+    
+    function openFixedIncomeModal(itemId) {
+        currentFixedFormContext = 'income';
+        editingFixedIncomeId = itemId;
+        const modal = document.getElementById('fixedIncomeModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(!modal) return;
+        fixedIncomeData = { repeat: 'monthly', byPeriod: false, startDate: null, endDate: null, holidayAdjust: 'none', tagColor: null, useAccountBalance: false };
+        const weekdays = ['週日','週一','週二','週三','週四','週五','週六'];
+        const repeatNames = { daily: '每日', weekly: '每星期', monthly: '每月', yearly: '每年' };
+        const adjustNames = { none: '不調整', advance: '提前', delay: '延後' };
+        if(itemId) {
+            const items = loadFixedIncomes();
+            const item = items.find(x => x.id === itemId);
+            if(item) {
+                document.getElementById('fixedIncomeTitle').value = item.title || '';
+                document.getElementById('fixedIncomeAmount').value = item.useAccountBalance ? '' : (item.amount || '');
+                document.getElementById('fixedIncomeUseAccountBalance').checked = item.useAccountBalance || false;
+                updateFixedIncomeAmountMode();
+                const acc = accounts.find(a => a.id === item.accountId);
+                const accEl = document.getElementById('fixedIncomeAccount');
+                if(accEl) { accEl.textContent = acc ? acc.name : '選擇帳戶'; accEl.style.color = acc ? 'var(--text-primary)' : 'var(--text-secondary)'; }
+                window.fixedIncomeAccountId = item.accountId || null;
+                fixedIncomeData.repeat = item.repeat || 'monthly';
+                fixedIncomeData.byPeriod = item.byPeriod || false;
+                fixedIncomeData.startDate = item.startDate ? new Date(item.startDate) : new Date();
+                fixedIncomeData.endDate = item.endDate ? new Date(item.endDate) : null;
+                fixedIncomeData.holidayAdjust = item.holidayAdjust || 'none';
+                fixedIncomeData.tagColor = item.tagColor || null;
+                document.getElementById('fixedIncomeRepeat').textContent = repeatNames[fixedIncomeData.repeat] || '每月';
+                document.getElementById('fixedIncomeByPeriod').checked = fixedIncomeData.byPeriod;
+                document.getElementById('fixedIncomeStartDate').textContent = fixedIncomeData.startDate ? (fixedIncomeData.startDate.getFullYear() + '年' + (fixedIncomeData.startDate.getMonth()+1) + '月' + fixedIncomeData.startDate.getDate() + '日 ' + weekdays[fixedIncomeData.startDate.getDay()]) : '-';
+                document.getElementById('fixedIncomeEndDate').textContent = fixedIncomeData.endDate ? (fixedIncomeData.endDate.getFullYear() + '年' + (fixedIncomeData.endDate.getMonth()+1) + '月' + fixedIncomeData.endDate.getDate() + '日') : '永不結束';
+                document.getElementById('fixedIncomeHolidayAdjust').textContent = adjustNames[fixedIncomeData.holidayAdjust] || '不調整';
+                const tagEl = document.getElementById('fixedIncomeTagColor');
+                const tagIcon = document.getElementById('fixedIncomeTagIcon');
+                if(fixedIncomeData.tagColor && tagEl && tagIcon) { tagEl.textContent = '已選擇'; tagEl.style.color = fixedIncomeData.tagColor; tagIcon.style.color = fixedIncomeData.tagColor; } else if(tagEl && tagIcon) { tagEl.textContent = '選擇顏色'; tagEl.style.color = 'var(--text-secondary)'; tagIcon.style.color = 'var(--text-secondary)'; }
+            }
+        } else {
+            const today = new Date();
+            fixedIncomeData.startDate = today;
+            document.getElementById('fixedIncomeTitle').value = '';
+            document.getElementById('fixedIncomeAmount').value = '';
+            document.getElementById('fixedIncomeUseAccountBalance').checked = false;
+            updateFixedIncomeAmountMode();
+            document.getElementById('fixedIncomeAccount').textContent = '選擇帳戶';
+            document.getElementById('fixedIncomeAccount').style.color = 'var(--text-secondary)';
+            window.fixedIncomeAccountId = null;
+            document.getElementById('fixedIncomeRepeat').textContent = '每月';
+            document.getElementById('fixedIncomeByPeriod').checked = false;
+            document.getElementById('fixedIncomeStartDate').textContent = today.getFullYear() + '年' + (today.getMonth()+1) + '月' + today.getDate() + '日 ' + weekdays[today.getDay()];
+            document.getElementById('fixedIncomeEndDate').textContent = '永不結束';
+            document.getElementById('fixedIncomeHolidayAdjust').textContent = '不調整';
+            document.getElementById('fixedIncomeTagColor').textContent = '選擇顏色';
+            document.getElementById('fixedIncomeTagIcon').style.color = 'var(--text-secondary)';
+        }
+        updateFixedIncomePeriodCount();
+        updateNextDatesForFixed();
+        modal.style.display = 'block';
+        modal.style.background = 'transparent';
+        modal.style.zIndex = '2012';
+        if(modalWrapper) modalWrapper.style.transform = 'translateX(100%)';
+        requestAnimationFrame(() => { setTimeout(() => { if(modalWrapper) modalWrapper.style.transform = 'translateX(0)'; }, 10); });
+    }
+    function saveFixedIncome() {
+        const title = (document.getElementById('fixedIncomeTitle').value || '').trim();
+        if(!title) { alert('請輸入標題'); return; }
+        if(!window.fixedIncomeAccountId) { alert('請選擇帳戶'); return; }
+        const useBalance = document.getElementById('fixedIncomeUseAccountBalance').checked;
+        if(!useBalance && !document.getElementById('fixedIncomeAmount').value) { alert('請輸入金額'); return; }
+        const amount = useBalance ? 0 : (parseFloat(document.getElementById('fixedIncomeAmount').value) || 0);
+        if(!fixedIncomeData.startDate) { alert('請選擇開始日期'); return; }
+        const items = loadFixedIncomes();
+        const payload = {
+            id: editingFixedIncomeId || (Date.now().toString()),
+            title: title,
+            accountId: window.fixedIncomeAccountId,
+            amount: amount,
+            useAccountBalance: useBalance,
+            tagColor: fixedIncomeData.tagColor,
+            repeat: fixedIncomeData.repeat,
+            byPeriod: fixedIncomeData.byPeriod,
+            startDate: fixedIncomeData.startDate.toISOString(),
+            endDate: fixedIncomeData.endDate ? fixedIncomeData.endDate.toISOString() : null,
+            holidayAdjust: fixedIncomeData.holidayAdjust,
+            executionRecords: (editingFixedIncomeId && items.find(x => x.id === editingFixedIncomeId)) ? (items.find(x => x.id === editingFixedIncomeId).executionRecords || {}) : {}
+        };
+        const idx = items.findIndex(x => x.id === payload.id);
+        if(idx >= 0) items[idx] = payload; else items.push(payload);
+        saveFixedIncomes(items);
+        // 新增後若今天到期則立即執行一次
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
+        const dueToday = getFixedIncomesForDate(today);
+        if (dueToday.some(x => x.id === payload.id) && (!payload.executionRecords || payload.executionRecords[todayStr] === undefined)) {
+            if (executeFixedIncome(payload, today)) {
+                saveFixedIncomes(items);
+                renderAssets();
+                updateChartData();
+                if (selectedDate) showFixedTransferDetailsForDate(selectedDate);
+                renderCalendar();
+            }
+        }
+        closeFixedIncomeModal();
+        renderFixedIncomeList();
+    }
+    function closeFixedIncomeModal() {
+        const modal = document.getElementById('fixedIncomeModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if(modalWrapper) modalWrapper.style.transform = 'translateX(100%)';
+        if(modal) modal.style.display = 'none';
+        editingFixedIncomeId = null;
     }
     
     // 類別選擇器
@@ -14893,16 +15554,18 @@
         
         // 設置標題
         if(title) {
-            title.textContent = type === 'from' ? '選擇從帳戶' : '選擇到帳戶';
+            if(type === 'fixedExpenseAccount') title.textContent = '選擇帳戶';
+            else if(type === 'fixedIncomeAccount') title.textContent = '選擇帳戶';
+            else title.textContent = type === 'from' ? '選擇從帳戶' : '選擇到帳戶';
         }
         
         // 過濾出錢包和負債類型的帳戶
         const availableAccounts = accounts.filter(acc => acc.type === 'bank' || acc.type === 'debt');
         
-        // 生成帳戶列表
+        // 生成帳戶列表（固定支出/收入用同一個列表）
         if(list) {
             list.innerHTML = '';
-            if(availableAccounts.length === 0) {
+            if(availableAccounts.length === 0 && type !== 'fixedExpenseAccount' && type !== 'fixedIncomeAccount') {
                 // 沒有帳戶時顯示「+」號按鈕
                 const addAccountBtn = document.createElement('div');
                 addAccountBtn.style.cssText = 'cursor: pointer; padding: 20px; border-radius: 12px; background: var(--bg-color); margin-bottom: 10px; text-align: center; border: 2px dashed var(--border-color);';
@@ -15002,6 +15665,21 @@
     function selectAccountForTransfer(account) {
         if(!currentAccountSelectorType) return;
         
+        if(currentAccountSelectorType === 'fixedExpenseAccount') {
+            const el = document.getElementById('fixedExpenseAccount');
+            if(el) { el.textContent = account.name; el.style.color = 'var(--text-primary)'; }
+            window.fixedExpenseAccountId = account.id;
+            closeAccountSelector();
+            return;
+        }
+        if(currentAccountSelectorType === 'fixedIncomeAccount') {
+            const el = document.getElementById('fixedIncomeAccount');
+            if(el) { el.textContent = account.name; el.style.color = 'var(--text-primary)'; }
+            window.fixedIncomeAccountId = account.id;
+            closeAccountSelector();
+            return;
+        }
+        
         const accountName = account.name;
         const accountElement = currentAccountSelectorType === 'from' 
             ? document.getElementById('fixedTransferFromAccount')
@@ -15012,7 +15690,6 @@
             accountElement.style.color = 'var(--text-primary)';
         }
         
-        // 保存選擇的帳戶ID（用於後續保存）
         if(currentAccountSelectorType === 'from') {
             window.fixedTransferFromAccountId = account.id;
         } else {
@@ -15033,6 +15710,12 @@
         useAccountBalance: false, // 是否使用帳戶全部金額
         useFromAccount: true // true: 使用匯出方（從帳戶），false: 使用匯入方（到帳戶）
     };
+    
+    let currentFixedFormContext = 'transfer'; // 'transfer' | 'expense' | 'income'
+    let fixedExpenseData = { repeat: 'monthly', byPeriod: false, startDate: null, endDate: null, holidayAdjust: 'none', tagColor: null, useAccountBalance: false };
+    let fixedIncomeData = { repeat: 'monthly', byPeriod: false, startDate: null, endDate: null, holidayAdjust: 'none', tagColor: null, useAccountBalance: false };
+    
+    function openRepeatSelectorForFixed() { openRepeatSelector(); }
     
     function updateFixedTransferAmountMode() {
         const useAccountBalanceCheckbox = document.getElementById('fixedTransferUseAccountBalance');
@@ -15136,17 +15819,28 @@
     }
     
     function selectRepeat(repeat) {
-        fixedTransferData.repeat = repeat;
-        const repeatNames = {
-            'daily': '每日',
-            'weekly': '每星期',
-            'monthly': '每月',
-            'yearly': '每年'
-        };
-        const repeatElement = document.getElementById('fixedTransferRepeat');
-        if(repeatElement) {
-            repeatElement.textContent = repeatNames[repeat];
+        const repeatNames = { 'daily': '每日', 'weekly': '每星期', 'monthly': '每月', 'yearly': '每年' };
+        if(currentFixedFormContext === 'expense') {
+            fixedExpenseData.repeat = repeat;
+            const el = document.getElementById('fixedExpenseRepeat');
+            if(el) el.textContent = repeatNames[repeat];
+            closeRepeatSelector();
+            updateFixedExpensePeriodCount();
+            updateNextDatesForFixed();
+            return;
         }
+        if(currentFixedFormContext === 'income') {
+            fixedIncomeData.repeat = repeat;
+            const el = document.getElementById('fixedIncomeRepeat');
+            if(el) el.textContent = repeatNames[repeat];
+            closeRepeatSelector();
+            updateFixedIncomePeriodCount();
+            updateNextDatesForFixed();
+            return;
+        }
+        fixedTransferData.repeat = repeat;
+        const repeatElement = document.getElementById('fixedTransferRepeat');
+        if(repeatElement) repeatElement.textContent = repeatNames[repeat];
         closeRepeatSelector();
         updatePeriodCount();
     }
@@ -15172,10 +15866,22 @@
         
         // 初始化日期（如果已有選擇則使用，否則使用今天）
         let initialDate = null;
-        if(type === 'start' && fixedTransferData.startDate) {
-            initialDate = new Date(fixedTransferData.startDate);
-        } else if(type === 'end' && fixedTransferData.endDate) {
-            initialDate = new Date(fixedTransferData.endDate);
+        if(type === 'start' || type === 'end') {
+            if(currentFixedFormContext === 'expense') {
+                if(type === 'start' && fixedExpenseData.startDate) initialDate = new Date(fixedExpenseData.startDate);
+                else if(type === 'end' && fixedExpenseData.endDate) initialDate = new Date(fixedExpenseData.endDate);
+                else initialDate = new Date();
+            } else if(currentFixedFormContext === 'income') {
+                if(type === 'start' && fixedIncomeData.startDate) initialDate = new Date(fixedIncomeData.startDate);
+                else if(type === 'end' && fixedIncomeData.endDate) initialDate = new Date(fixedIncomeData.endDate);
+                else initialDate = new Date();
+            } else if(type === 'start' && fixedTransferData.startDate) {
+                initialDate = new Date(fixedTransferData.startDate);
+            } else if(type === 'end' && fixedTransferData.endDate) {
+                initialDate = new Date(fixedTransferData.endDate);
+            } else {
+                initialDate = new Date();
+            }
         } else if((type === 'income' || type === 'expense' || type === 'transfer') && currentJournalDate) {
             initialDate = new Date(currentJournalDate);
         } else {
@@ -15408,18 +16114,36 @@
         const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${weekday}`;
         
         if(currentDatePickerType === 'start') {
-            fixedTransferData.startDate = date;
-            const startDateElement = document.getElementById('fixedTransferStartDate');
-            if(startDateElement) {
-                startDateElement.textContent = dateStr;
-                startDateElement.style.color = 'var(--text-primary)';
+            if(currentFixedFormContext === 'expense') {
+                fixedExpenseData.startDate = date;
+                const el = document.getElementById('fixedExpenseStartDate');
+                if(el) { el.textContent = dateStr; el.style.color = 'var(--text-primary)'; }
+                updateNextDatesForFixed();
+            } else if(currentFixedFormContext === 'income') {
+                fixedIncomeData.startDate = date;
+                const el = document.getElementById('fixedIncomeStartDate');
+                if(el) { el.textContent = dateStr; el.style.color = 'var(--text-primary)'; }
+                updateNextDatesForFixed();
+            } else {
+                fixedTransferData.startDate = date;
+                const startDateElement = document.getElementById('fixedTransferStartDate');
+                if(startDateElement) { startDateElement.textContent = dateStr; startDateElement.style.color = 'var(--text-primary)'; }
             }
         } else if(currentDatePickerType === 'end') {
-            fixedTransferData.endDate = date;
-            const endDateElement = document.getElementById('fixedTransferEndDate');
-            if(endDateElement) {
-                endDateElement.textContent = dateStr;
-                endDateElement.style.color = 'var(--text-primary)';
+            if(currentFixedFormContext === 'expense') {
+                fixedExpenseData.endDate = date;
+                const el = document.getElementById('fixedExpenseEndDate');
+                if(el) { el.textContent = dateStr; el.style.color = 'var(--text-primary)'; }
+                updateNextDatesForFixed();
+            } else if(currentFixedFormContext === 'income') {
+                fixedIncomeData.endDate = date;
+                const el = document.getElementById('fixedIncomeEndDate');
+                if(el) { el.textContent = dateStr; el.style.color = 'var(--text-primary)'; }
+                updateNextDatesForFixed();
+            } else {
+                fixedTransferData.endDate = date;
+                const endDateElement = document.getElementById('fixedTransferEndDate');
+                if(endDateElement) { endDateElement.textContent = dateStr; endDateElement.style.color = 'var(--text-primary)'; }
             }
         } else if(currentDatePickerType === 'income') {
             currentJournalDate = date;
@@ -15434,8 +16158,12 @@
         
         closeDatePicker();
         if(currentDatePickerType === 'start' || currentDatePickerType === 'end') {
-            updatePeriodCount();
-            updateNextDates();
+            if(currentFixedFormContext === 'expense' || currentFixedFormContext === 'income') {
+                updateNextDatesForFixed();
+            } else {
+                updatePeriodCount();
+                updateNextDates();
+            }
         }
     }
     
@@ -15472,16 +16200,26 @@
     }
     
     function selectHolidayAdjust(adjust) {
-        fixedTransferData.holidayAdjust = adjust;
-        const adjustNames = {
-            'none': '不調整',
-            'advance': '提前',
-            'delay': '延後'
-        };
-        const adjustElement = document.getElementById('fixedTransferHolidayAdjust');
-        if(adjustElement) {
-            adjustElement.textContent = adjustNames[adjust];
+        const adjustNames = { 'none': '不調整', 'advance': '提前', 'delay': '延後' };
+        if(currentFixedFormContext === 'expense') {
+            fixedExpenseData.holidayAdjust = adjust;
+            const el = document.getElementById('fixedExpenseHolidayAdjust');
+            if(el) el.textContent = adjustNames[adjust];
+            closeHolidayAdjustSelector();
+            updateNextDatesForFixed();
+            return;
         }
+        if(currentFixedFormContext === 'income') {
+            fixedIncomeData.holidayAdjust = adjust;
+            const el = document.getElementById('fixedIncomeHolidayAdjust');
+            if(el) el.textContent = adjustNames[adjust];
+            closeHolidayAdjustSelector();
+            updateNextDatesForFixed();
+            return;
+        }
+        fixedTransferData.holidayAdjust = adjust;
+        const adjustElement = document.getElementById('fixedTransferHolidayAdjust');
+        if(adjustElement) adjustElement.textContent = adjustNames[adjust];
         closeHolidayAdjustSelector();
     }
     
@@ -15518,16 +16256,29 @@
     }
     
     function selectTagColor(color) {
+        if(currentFixedFormContext === 'expense') {
+            fixedExpenseData.tagColor = color;
+            const tagColorElement = document.getElementById('fixedExpenseTagColor');
+            const tagIconElement = document.getElementById('fixedExpenseTagIcon');
+            if(tagColorElement) { tagColorElement.textContent = '已選擇'; tagColorElement.style.color = color; }
+            if(tagIconElement) tagIconElement.style.color = color;
+            closeTagColorSelector();
+            return;
+        }
+        if(currentFixedFormContext === 'income') {
+            fixedIncomeData.tagColor = color;
+            const tagColorElement = document.getElementById('fixedIncomeTagColor');
+            const tagIconElement = document.getElementById('fixedIncomeTagIcon');
+            if(tagColorElement) { tagColorElement.textContent = '已選擇'; tagColorElement.style.color = color; }
+            if(tagIconElement) tagIconElement.style.color = color;
+            closeTagColorSelector();
+            return;
+        }
         fixedTransferData.tagColor = color;
         const tagColorElement = document.getElementById('fixedTransferTagColor');
         const tagIconElement = document.getElementById('fixedTransferTagIcon');
-        if(tagColorElement) {
-            tagColorElement.textContent = '已選擇';
-            tagColorElement.style.color = color;
-        }
-        if(tagIconElement) {
-            tagIconElement.style.color = color;
-        }
+        if(tagColorElement) { tagColorElement.textContent = '已選擇'; tagColorElement.style.color = color; }
+        if(tagIconElement) tagIconElement.style.color = color;
         closeTagColorSelector();
     }
     
@@ -15693,6 +16444,154 @@
         return true;
     }
     
+    // 執行固定支出：建立支出紀錄並從帳戶扣款
+    function executeFixedExpense(item, executeDate) {
+        const account = accounts.find(acc => acc.id === item.accountId);
+        if(!account) {
+            console.warn('固定支出執行失敗：找不到帳戶', item);
+            return false;
+        }
+        let amount = item.useAccountBalance ? (parseFloat(account.balance) || 0) : (parseFloat(item.amount) || 0);
+        if(amount <= 0) {
+            console.warn('固定支出執行失敗：金額為0', item);
+            return false;
+        }
+        if(!item.useAccountBalance && account.balance < amount) {
+            console.warn('固定支出執行失敗：餘額不足', item);
+            return false;
+        }
+        const dateStr = executeDate.toISOString().split('T')[0];
+        const records = loadJournalRecords();
+        records.push({
+            id: Date.now().toString(),
+            type: 'expense',
+            date: dateStr,
+            amount: amount,
+            category: '其他支出',
+            accountId: item.accountId,
+            title: item.title || '固定支出',
+            isAdvance: false,
+            createdAt: new Date().toISOString()
+        });
+        saveJournalRecords(records);
+        account.balance = (parseFloat(account.balance) || 0) - amount;
+        saveData();
+        if(!item.executionRecords) item.executionRecords = {};
+        item.executionRecords[dateStr] = amount;
+        console.log('固定支出已執行：' + item.title + '，金額：' + amount + '，帳戶：' + account.name);
+        return true;
+    }
+    
+    // 執行固定收入：建立收入紀錄並入帳到帳戶
+    function executeFixedIncome(item, executeDate) {
+        const account = accounts.find(acc => acc.id === item.accountId);
+        if(!account) {
+            console.warn('固定收入執行失敗：找不到帳戶', item);
+            return false;
+        }
+        let amount = item.useAccountBalance ? (parseFloat(account.balance) || 0) : (parseFloat(item.amount) || 0);
+        if(amount <= 0 && !item.useAccountBalance) {
+            console.warn('固定收入執行失敗：金額為0', item);
+            return false;
+        }
+        if(item.useAccountBalance) amount = parseFloat(account.balance) || 0;
+        if(amount <= 0) return false;
+        const dateStr = executeDate.toISOString().split('T')[0];
+        const records = loadJournalRecords();
+        records.push({
+            id: Date.now().toString(),
+            type: 'income',
+            date: dateStr,
+            amount: amount,
+            category: '其他收入',
+            accountId: item.accountId,
+            title: item.title || '固定收入',
+            isAdvance: false,
+            createdAt: new Date().toISOString()
+        });
+        saveJournalRecords(records);
+        account.balance = (parseFloat(account.balance) || 0) + amount;
+        saveData();
+        if(!item.executionRecords) item.executionRecords = {};
+        item.executionRecords[dateStr] = amount;
+        console.log('固定收入已執行：' + item.title + '，金額：' + amount + '，帳戶：' + account.name);
+        return true;
+    }
+    
+    // 檢查並執行固定支出（補執行：從開始日到今日所有到期未執行的日期）
+    function checkAndExecuteFixedExpenses() {
+        const items = loadFixedExpenses();
+        if(items.length === 0) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let hasChanges = false;
+        items.forEach(item => {
+            const start = new Date(item.startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = item.endDate ? new Date(item.endDate) : null;
+            if(end) end.setHours(0, 0, 0, 0);
+            const endDate = !end || end > today ? today : end;
+            const d = new Date(start.getTime());
+            while(d <= endDate) {
+                const dateStr = d.toISOString().split('T')[0];
+                if(item.executionRecords && item.executionRecords[dateStr] !== undefined) {
+                    d.setDate(d.getDate() + 1);
+                    continue;
+                }
+                const due = getFixedExpensesForDate(d);
+                if(due.some(x => x.id === item.id)) {
+                    if(executeFixedExpense(item, new Date(d.getTime()))) hasChanges = true;
+                }
+                d.setDate(d.getDate() + 1);
+            }
+        });
+        if(hasChanges) {
+            saveFixedExpenses(items);
+            renderAssets();
+            updateChartData();
+            renderFixedExpenseList();
+            if(selectedDate) showFixedTransferDetailsForDate(selectedDate);
+            renderCalendar();
+        }
+    }
+    
+    // 檢查並執行固定收入（補執行：從開始日到今日所有到期未執行的日期）
+    function checkAndExecuteFixedIncomes() {
+        const items = loadFixedIncomes();
+        if(items.length === 0) return;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let hasChanges = false;
+        items.forEach(item => {
+            const start = new Date(item.startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = item.endDate ? new Date(item.endDate) : null;
+            if(end) end.setHours(0, 0, 0, 0);
+            const endDate = !end || end > today ? today : end;
+            const d = new Date(start.getTime());
+            while(d <= endDate) {
+                const dateStr = d.toISOString().split('T')[0];
+                if(item.executionRecords && item.executionRecords[dateStr] !== undefined) {
+                    d.setDate(d.getDate() + 1);
+                    continue;
+                }
+                const due = getFixedIncomesForDate(d);
+                if(due.some(x => x.id === item.id)) {
+                    if(executeFixedIncome(item, new Date(d.getTime()))) hasChanges = true;
+                }
+                d.setDate(d.getDate() + 1);
+            }
+        });
+        if(hasChanges) {
+            saveFixedIncomes(items);
+            renderAssets();
+            updateChartData();
+            renderFixedIncomeList();
+            if(selectedDate) showFixedTransferDetailsForDate(selectedDate);
+            renderCalendar();
+        }
+    }
+    
     // 更新未執行的固定轉帳金額
     function updateFixedTransferAmount(transferId, dateStr) {
         const input = document.getElementById(`fixedTransferAmount_${transferId}_${dateStr}`);
@@ -15851,6 +16750,113 @@
         }
         
         periodCountElement.textContent = count + '期';
+    }
+    
+    function updateNextDatesForFixed() {
+        const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+        if(currentFixedFormContext === 'expense' && fixedExpenseData.startDate && fixedExpenseData.repeat) {
+            const startDate = new Date(fixedExpenseData.startDate);
+            const nextDate = new Date(startDate);
+            switch(fixedExpenseData.repeat) {
+                case 'daily': nextDate.setDate(nextDate.getDate() + 1); break;
+                case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
+                case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                case 'yearly': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+            }
+            const nextNext = new Date(nextDate);
+            switch(fixedExpenseData.repeat) {
+                case 'daily': nextNext.setDate(nextNext.getDate() + 1); break;
+                case 'weekly': nextNext.setDate(nextNext.getDate() + 7); break;
+                case 'monthly': nextNext.setMonth(nextNext.getMonth() + 1); break;
+                case 'yearly': nextNext.setFullYear(nextNext.getFullYear() + 1); break;
+            }
+            const el1 = document.getElementById('fixedExpenseNextDate');
+            const el2 = document.getElementById('fixedExpenseNextNextDate');
+            if(el1) el1.textContent = ':' + nextDate.getFullYear() + '年' + (nextDate.getMonth() + 1) + '月' + nextDate.getDate() + '日 ' + weekdays[nextDate.getDay()];
+            if(el2) el2.textContent = ':' + nextNext.getFullYear() + '年' + (nextNext.getMonth() + 1) + '月' + nextNext.getDate() + '日 ' + weekdays[nextNext.getDay()];
+        } else if(currentFixedFormContext === 'income' && fixedIncomeData.startDate && fixedIncomeData.repeat) {
+            const startDate = new Date(fixedIncomeData.startDate);
+            const nextDate = new Date(startDate);
+            switch(fixedIncomeData.repeat) {
+                case 'daily': nextDate.setDate(nextDate.getDate() + 1); break;
+                case 'weekly': nextDate.setDate(nextDate.getDate() + 7); break;
+                case 'monthly': nextDate.setMonth(nextDate.getMonth() + 1); break;
+                case 'yearly': nextDate.setFullYear(nextDate.getFullYear() + 1); break;
+            }
+            const nextNext = new Date(nextDate);
+            switch(fixedIncomeData.repeat) {
+                case 'daily': nextNext.setDate(nextNext.getDate() + 1); break;
+                case 'weekly': nextNext.setDate(nextNext.getDate() + 7); break;
+                case 'monthly': nextNext.setMonth(nextNext.getMonth() + 1); break;
+                case 'yearly': nextNext.setFullYear(nextNext.getFullYear() + 1); break;
+            }
+            const el1 = document.getElementById('fixedIncomeNextDate');
+            const el2 = document.getElementById('fixedIncomeNextNextDate');
+            if(el1) el1.textContent = ':' + nextDate.getFullYear() + '年' + (nextDate.getMonth() + 1) + '月' + nextDate.getDate() + '日 ' + weekdays[nextDate.getDay()];
+            if(el2) el2.textContent = ':' + nextNext.getFullYear() + '年' + (nextNext.getMonth() + 1) + '月' + nextNext.getDate() + '日 ' + weekdays[nextNext.getDay()];
+        }
+    }
+    
+    function updateFixedExpenseAmountMode() {
+        const cb = document.getElementById('fixedExpenseUseAccountBalance');
+        const row = document.getElementById('fixedExpenseAmountRow');
+        const label = document.getElementById('fixedExpenseUseAccountBalanceLabel');
+        if(!cb) return;
+        fixedExpenseData.useAccountBalance = cb.checked;
+        if(row) row.style.display = cb.checked ? 'none' : 'flex';
+        if(label) label.textContent = cb.checked ? '開啟' : '關閉';
+    }
+    
+    function updateFixedIncomeAmountMode() {
+        const cb = document.getElementById('fixedIncomeUseAccountBalance');
+        const row = document.getElementById('fixedIncomeAmountRow');
+        const label = document.getElementById('fixedIncomeUseAccountBalanceLabel');
+        if(!cb) return;
+        fixedIncomeData.useAccountBalance = cb.checked;
+        if(row) row.style.display = cb.checked ? 'none' : 'flex';
+        if(label) label.textContent = cb.checked ? '開啟' : '關閉';
+    }
+    
+    function updateFixedExpensePeriodCount() {
+        const cb = document.getElementById('fixedExpenseByPeriod');
+        const el = document.getElementById('fixedExpensePeriodCount');
+        if(!cb || !el) return;
+        fixedExpenseData.byPeriod = cb.checked;
+        if(!cb.checked || !fixedExpenseData.startDate || !fixedExpenseData.endDate) { el.textContent = ''; return; }
+        const startDate = new Date(fixedExpenseData.startDate);
+        const endDate = new Date(fixedExpenseData.endDate);
+        let count = 0, d = new Date(startDate);
+        while(d <= endDate) {
+            count++;
+            switch(fixedExpenseData.repeat) {
+                case 'daily': d.setDate(d.getDate() + 1); break;
+                case 'weekly': d.setDate(d.getDate() + 7); break;
+                case 'monthly': d.setMonth(d.getMonth() + 1); break;
+                case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+            }
+        }
+        el.textContent = count + '期';
+    }
+    
+    function updateFixedIncomePeriodCount() {
+        const cb = document.getElementById('fixedIncomeByPeriod');
+        const el = document.getElementById('fixedIncomePeriodCount');
+        if(!cb || !el) return;
+        fixedIncomeData.byPeriod = cb.checked;
+        if(!cb.checked || !fixedIncomeData.startDate || !fixedIncomeData.endDate) { el.textContent = ''; return; }
+        const startDate = new Date(fixedIncomeData.startDate);
+        const endDate = new Date(fixedIncomeData.endDate);
+        let count = 0, d = new Date(startDate);
+        while(d <= endDate) {
+            count++;
+            switch(fixedIncomeData.repeat) {
+                case 'daily': d.setDate(d.getDate() + 1); break;
+                case 'weekly': d.setDate(d.getDate() + 7); break;
+                case 'monthly': d.setMonth(d.getMonth() + 1); break;
+                case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+            }
+        }
+        el.textContent = count + '期';
     }
     
     function updateNextDates() {
