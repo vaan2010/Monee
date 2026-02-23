@@ -8,8 +8,6 @@
     <meta name="theme-color" content="#0a84ff">
     <title>Monee</title>
     
-    <!-- Firebase SDK -->
-    
     <!-- Favicon -->
     <!-- 使用絕對路徑，確保在 GitHub Pages 上能正確載入 -->
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png">
@@ -80,6 +78,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async></script>
     
     <style>
         :root {
@@ -3047,17 +3046,7 @@
         { name: '其他', code: '' }
     ];
     
-    // Firebase 配置
-    const FIREBASE_CONFIG = {
-        apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
-        authDomain: "travel-30c43.firebaseapp.com",
-        databaseURL: "https://travel-30c43-default-rtdb.firebaseio.com",
-        projectId: "travel-30c43",
-        storageBucket: "travel-30c43.firebasestorage.app",
-        messagingSenderId: "402035619902",
-        appId: "1:402035619902:web:f492adf217821c093f396f",
-        measurementId: "G-SPF452S4LR"
-    };
+    const GOOGLE_DRIVE_FOLDER_NAME = 'Monee';
     
     // 預設頭像（使用 emoji 或圖示）
     const DEFAULT_AVATARS = [
@@ -3234,6 +3223,7 @@
         const defaultSettings = { 
             apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
             cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
+            driveClientId: '', driveAccessToken: null, driveUserEmail: null,
             pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
             pageOrder: [0, 1, 2, 3, 4],
             displayCurrency: 'TWD'
@@ -6339,29 +6329,26 @@
                             <span class="slider"></span>
                         </label>
                     </div>
-                    <div class="form-row" id="cloudBackupIntervalRow" style="${settings.cloudBackupEnabled ? '' : 'display: none;'}">
-                        <span class="form-label">備份頻率（小時）</span>
-                        <input type="number" id="cloudBackupInterval" class="form-input" value="${settings.cloudBackupInterval || 24}" min="1" max="168" style="text-align: right; width: 100px;" onchange="updateCloudBackupSetting()">
-                    </div>
                     <div class="form-row" style="${settings.cloudBackupEnabled ? '' : 'display: none;'}" id="cloudBackupStatusRow">
                         <span class="form-label">上次備份</span>
                         <span id="cloudBackupLastTime" style="color: var(--text-secondary);">${settings.cloudBackupLastTime ? new Date(settings.cloudBackupLastTime).toLocaleString('zh-TW') : '尚未備份'}</span>
                     </div>
                     <div class="form-row" style="margin-top: 20px;">
-                        <div id="firebase-login-status" style="margin-bottom: 10px; padding: 10px; background: var(--card-bg); border-radius: 8px;">
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Firebase 登入狀態</div>
-                            <div id="firebase-user-info" style="font-size: 16px; color: var(--text-primary);">未登入</div>
-                        </div>
-                        <button id="btn-firebase-login" onclick="handleFirebaseLogin()" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                            <i class="fab fa-google"></i> Google 登入 Firebase
-                        </button>
-                        <button id="btn-firebase-logout" onclick="handleFirebaseLogout()" style="width: 100%; padding: 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none;">
-                            <i class="fas fa-sign-out-alt"></i> 登出
-                        </button>
+                        <span class="form-label">Google Client ID</span>
+                        <input type="text" id="inpDriveClientId" class="form-input" placeholder="例：123456789-xxx.apps.googleusercontent.com" value="${(settings.driveClientId || '')}" style="font-size: 13px;" onchange="saveDriveClientId()">
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">請至 Google Cloud Console 建立 OAuth 用戶端 ID 並啟用 Drive API</div>
                     </div>
-                    <div id="firebase-backup-actions" class="form-row" style="margin-top: 10px; display: none;">
-                        <button onclick="handleFirebaseListBackups()" style="width: 100%; padding: 12px; background: var(--color-up); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 10px;">
-                            <i class="fas fa-list"></i> 查看備份列表
+                    <div class="form-row" style="margin-top: 15px;">
+                        <div id="drive-login-status" style="margin-bottom: 10px; padding: 10px; background: var(--card-bg); border-radius: 8px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Google Drive 備份狀態</div>
+                            <div id="drive-user-info" style="font-size: 16px; color: var(--text-primary);">未登入</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">登入後將在您的 Google Drive 建立「${GOOGLE_DRIVE_FOLDER_NAME}」資料夾，每次開啟 App 會自動備份</div>
+                        </div>
+                        <button id="btn-drive-login" onclick="handleDriveLogin()" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                            <i class="fab fa-google"></i> Google 登入（連結 Drive）
+                        </button>
+                        <button id="btn-drive-logout" onclick="handleDriveLogout()" style="width: 100%; padding: 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none;">
+                            <i class="fas fa-sign-out-alt"></i> 登出
                         </button>
                     </div>
                     <div class="form-row" style="margin-top: 10px;">
@@ -6382,9 +6369,9 @@
         window.cloudBackupModal = modal;
         modal.style.display = 'block';
         
-        // 初始化 Firebase UI
-                    setTimeout(() => {
-            updateFirebaseUI();
+        // 初始化 Google Drive UI
+        setTimeout(() => {
+            updateDriveUI();
         }, 100);
     }
     
@@ -6399,126 +6386,106 @@
         }
     }
     
-    // Firebase 登入/登出處理
-    async function handleFirebaseLogin() {
-        try {
-            if (window.firebaseSignIn) {
-                await window.firebaseSignIn();
-            } else {
-                alert('Firebase 功能尚未載入，請重新整理頁面');
-            }
-        } catch (error) {
-            alert('登入失敗：' + error.message);
-        }
-    }
-    
-    async function handleFirebaseLogout() {
-        try {
-            if (window.firebaseSignOut) {
-                await window.firebaseSignOut();
-                settings.cloudBackupToken = null;
-                saveSettings();
-                updateFirebaseUI();
-            }
-        } catch (error) {
-            alert('登出失敗：' + error.message);
-        }
-    }
-    
-    function handleFirebaseListBackups() {
-        if (window.firebaseListBackups) {
-            window.firebaseListBackups();
-        } else {
-            alert('Firebase 功能尚未載入，請重新整理頁面');
-        }
-    }
-    
-    function updateFirebaseUI() {
-        const userInfo = document.getElementById('firebase-user-info');
-        const loginBtn = document.getElementById('btn-firebase-login');
-        const logoutBtn = document.getElementById('btn-firebase-logout');
-        const backupActions = document.getElementById('firebase-backup-actions');
-        
-        if (window.getCurrentFirebaseUser && window.getCurrentFirebaseUser()) {
-            const user = window.getCurrentFirebaseUser();
-            if (userInfo) userInfo.textContent = `已登入：${user.displayName || user.email}`;
-            if (loginBtn) loginBtn.style.display = 'none';
-            if (logoutBtn) logoutBtn.style.display = 'block';
-            if (backupActions) backupActions.style.display = 'block';
-            settings.cloudBackupToken = 'firebase';
+    function saveDriveClientId() {
+        const el = document.getElementById('inpDriveClientId');
+        if (el) {
+            settings.driveClientId = (el.value || '').trim();
             saveSettings();
-        } else {
-            if (userInfo) userInfo.textContent = '未登入';
-            if (loginBtn) loginBtn.style.display = 'block';
-            if (logoutBtn) logoutBtn.style.display = 'none';
-            if (backupActions) backupActions.style.display = 'none';
         }
     }
     
-    // 監聽 Firebase 登入狀態變化
-    window.addEventListener('firebaseAuthStateChanged', (e) => {
-        updateFirebaseUI();
-    });
+    // Google Drive 登入/登出處理
+    async function handleDriveLogin() {
+        saveDriveClientId();
+        const clientId = settings.driveClientId;
+        if (!clientId) {
+            alert('請先在上方輸入 Google Client ID。\n\n取得方式：\n1. 前往 Google Cloud Console\n2. 建立專案或選擇現有專案\n3. 啟用「Google Drive API」\n4. 建立 OAuth 2.0 用戶端 ID（網頁應用程式）\n5. 將 Client ID 貼到上方欄位');
+            return;
+        }
+        try {
+            await requestDriveToken();
+        } catch (error) {
+            alert('登入失敗：' + (error.message || error));
+        }
+    }
     
-    // 監聽 Firebase 資料載入完成事件
-    window.addEventListener('firebaseDataLoaded', () => {
-        // 重新載入資料並渲染
-        if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
-            const userData = loadUserData(currentUserId);
-            if (userData) {
-                accounts = userData.accounts;
-                settings = userData.settings;
-                
-                // 同步 UI 狀態（從 settings 讀取）
-                if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                
-                // 更新幣別顯示
-                const ctt = document.getElementById('currencyToggleText');
-                if (ctt) ctt.textContent = currentDisplayCurrency;
-                
-                // 更新主題
-                if (typeof applyTheme === 'function') applyTheme();
-                
-                // 更新使用者頭像
-                if (typeof updateUserAvatar === 'function') updateUserAvatar();
-                
-                // 刷新資產列表
-                renderAssets();
-                
-                // 更新圖表
-                if (typeof updateChartData === 'function') updateChartData();
-                
-                // 更新分頁順序
-                if (typeof reorderPageItems === 'function') reorderPageItems();
-                
-                // 更新分頁指示器
-                if (typeof renderPageIndicator === 'function') renderPageIndicator();
-                
-                // 更新分頁顯示設定
-                if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings();
-                
-                // 更新日曆
-                if (typeof renderCalendar === 'function') renderCalendar();
-                
-                // 更新固定轉帳列表
-                if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                
-                // 如果當前正在顯示記帳分頁，更新記帳詳情
-                if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
-                    showFixedTransferDetailsForDate(selectedDate);
+    function handleDriveLogout() {
+        settings.driveAccessToken = null;
+        settings.driveUserEmail = null;
+        settings.cloudBackupToken = null;
+        saveSettings();
+        updateDriveUI();
+    }
+    
+    function updateDriveUI() {
+        const userInfo = document.getElementById('drive-user-info');
+        const loginBtn = document.getElementById('btn-drive-login');
+        const logoutBtn = document.getElementById('btn-drive-logout');
+        if (userInfo || loginBtn || logoutBtn) {
+            if (settings.driveAccessToken && settings.driveUserEmail) {
+                if (userInfo) userInfo.textContent = `已登入：${settings.driveUserEmail}`;
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (logoutBtn) logoutBtn.style.display = 'block';
+                settings.cloudBackupToken = 'google_drive';
+                saveSettings();
+            } else {
+                if (userInfo) userInfo.textContent = '未登入';
+                if (loginBtn) loginBtn.style.display = 'block';
+                if (logoutBtn) logoutBtn.style.display = 'none';
+                if (settings.cloudBackupToken === 'google_drive') {
+                    settings.cloudBackupToken = null;
+                    saveSettings();
                 }
-                
-                // 清除記帳日期快取
-                if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
             }
         }
-    });
+    }
+    
+    function requestDriveToken() {
+        return new Promise((resolve, reject) => {
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+                reject(new Error('Google 登入服務尚未載入，請稍後再試'));
+                return;
+            }
+            const clientId = (settings.driveClientId || '').trim();
+            if (!clientId) {
+                reject(new Error('請先輸入 Google Client ID'));
+                return;
+            }
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/drive.file email',
+                callback: (response) => {
+                    if (response.error) {
+                        reject(new Error(response.error));
+                        return;
+                    }
+                    settings.driveAccessToken = response.access_token;
+                    settings.cloudBackupToken = 'google_drive';
+                    settings.cloudBackupEnabled = true;
+                    fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                        headers: { Authorization: 'Bearer ' + response.access_token }
+                    }).then(r => r.json()).then(profile => {
+                        settings.driveUserEmail = profile.email || '';
+                        saveSettings();
+                        updateDriveUI();
+                        resolve();
+                    }).catch(() => {
+                        settings.driveUserEmail = '已登入';
+                        saveSettings();
+                        updateDriveUI();
+                        resolve();
+                    });
+                }
+            });
+            tokenClient.requestAccessToken();
+        });
+    }
     
     function updateCloudBackupSetting() {
-        const enabled = document.getElementById('cloudBackupEnabled').checked;
-        const interval = parseInt(document.getElementById('cloudBackupInterval').value) || 24;
+        const enabledEl = document.getElementById('cloudBackupEnabled');
+        const enabled = enabledEl ? enabledEl.checked : false;
+        const intervalEl = document.getElementById('cloudBackupInterval');
+        const interval = intervalEl ? (parseInt(intervalEl.value) || 24) : 24;
         settings.cloudBackupEnabled = enabled;
         settings.cloudBackupInterval = interval;
         saveSettings();
@@ -6540,8 +6507,8 @@
     function startCloudBackupTimer() {
         stopCloudBackupTimer();
         if(!settings.cloudBackupEnabled || !settings.cloudBackupToken) return;
-        // Firebase 使用自己的定時器，不需要額外的定時器
-        if(settings.cloudBackupToken === 'firebase') return;
+        // Google Drive 使用開啟時備份，不需要定時器
+        if(settings.cloudBackupToken === 'google_drive') return;
         
         const intervalMs = (settings.cloudBackupInterval || 24) * 60 * 60 * 1000;
         cloudBackupTimer = setInterval(() => {
@@ -6574,7 +6541,70 @@
         }
     }
     
-    // Google Drive 相關函數已完全移除，改用 Firebase
+    // Google Drive 備份：建立資料夾並上傳 JSON
+    async function uploadBackupToDrive(jsonStr, filename) {
+        const token = settings.driveAccessToken;
+        if (!token) throw new Error('請先登入 Google Drive');
+        
+        const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
+        const headers = {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        };
+        
+        // 1. 查詢或建立 Monee 資料夾
+        let folderId = null;
+        const listRes = await fetch(DRIVE_API + '?q=' + encodeURIComponent("name='" + GOOGLE_DRIVE_FOLDER_NAME + "' and mimeType='application/vnd.google-apps.folder' and trashed=false") + '&fields=files(id,name)', { headers });
+        const listData = await listRes.json();
+        if (listData.files && listData.files.length > 0) {
+            folderId = listData.files[0].id;
+        } else {
+            const createRes = await fetch(DRIVE_API, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    name: GOOGLE_DRIVE_FOLDER_NAME,
+                    mimeType: 'application/vnd.google-apps.folder'
+                })
+            });
+            if (!createRes.ok) {
+                const err = await createRes.json();
+                throw new Error(err.error?.message || '建立資料夾失敗');
+            }
+            const createData = await createRes.json();
+            folderId = createData.id;
+        }
+        
+        // 2. 上傳 JSON 檔案
+        const boundary = '-------314159265358979323846';
+        const delimiter = '\r\n--' + boundary + '\r\n';
+        const closeDelim = '\r\n--' + boundary + '--';
+        const meta = JSON.stringify({
+            name: filename,
+            parents: [folderId]
+        });
+        const body = delimiter + 'Content-Type: application/json\r\n\r\n' + meta +
+            delimiter + 'Content-Type: application/json\r\n\r\n' + jsonStr + closeDelim;
+        
+        const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'multipart/related; boundary=' + boundary
+            },
+            body
+        });
+        
+        if (!uploadRes.ok) {
+            const err = await uploadRes.json();
+            if (err.error?.code === 401) {
+                settings.driveAccessToken = null;
+                saveSettings();
+                throw new Error('登入已過期，請重新登入 Google Drive');
+            }
+            throw new Error(err.error?.message || '上傳失敗');
+        }
+    }
     
     async function performCloudBackup() {
         if(!settings.cloudBackupEnabled) return;
@@ -6601,15 +6631,12 @@
                 settings.cloudBackupLastTime = new Date().toISOString();
                 saveSettings();
                 console.log('雲端備份完成（本地）:', filename);
-            } else if(settings.cloudBackupToken === 'firebase') {
-                // Firebase 備份
-                if (window.firebasePerformBackup) {
-                    await window.firebasePerformBackup(jsonStr, false);
-                    settings.cloudBackupLastTime = new Date().toISOString();
-                    saveSettings();
-        } else {
-                    throw new Error('Firebase 功能尚未載入，請重新整理頁面');
-                }
+            } else if(settings.cloudBackupToken === 'google_drive') {
+                // Google Drive 備份
+                await uploadBackupToDrive(jsonStr, filename);
+                settings.cloudBackupLastTime = new Date().toISOString();
+                saveSettings();
+                console.log('Google Drive 備份完成:', filename);
             }
         } catch(e) {
             console.error('雲端備份失敗:', e);
@@ -9796,6 +9823,12 @@
         // 啟動雲端自動備份
         if(settings.cloudBackupEnabled) {
             startCloudBackupTimer();
+            // Google Drive：每次開啟 App 自動備份一次
+            if(settings.cloudBackupToken === 'google_drive' && settings.driveAccessToken) {
+                setTimeout(() => {
+                    performCloudBackup().catch(err => console.warn('Google Drive 備份失敗:', err));
+                }, 2000);
+            }
         }
         
         
@@ -17169,1441 +17202,8 @@
         }
     }
     
-    init();
-</script>
-
-<script type="module">
-    // Firebase 初始化
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc, getDocs, writeBatch, Timestamp, limit, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAyebCTYX0SdZbO_wTKVjMyQXmGsnmSkzs",
-        authDomain: "travel-30c43.firebaseapp.com",
-        databaseURL: "https://travel-30c43-default-rtdb.firebaseio.com",
-        projectId: "travel-30c43",
-        storageBucket: "travel-30c43.firebasestorage.app",
-        messagingSenderId: "402035619902",
-        appId: "1:402035619902:web:f492adf217821c093f396f",
-        measurementId: "G-SPF452S4LR"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentFirebaseUser = null;
-
-    // 將 Firebase 功能暴露到全域
-    window.firebaseAuth = auth;
-    window.firebaseDb = db;
-    window.firebaseSignIn = () => {
-        const provider = new GoogleAuthProvider();
-        // 強制每次都跳出帳號選擇畫面
-        provider.setCustomParameters({
-            prompt: 'select_account'
-        });
-        return signInWithPopup(auth, provider);
-    };
-    window.firebaseSignOut = () => signOut(auth);
-    window.getCurrentFirebaseUser = () => currentFirebaseUser;
-    window.firebaseDeleteDoc = deleteDoc;
-    window.firebaseDoc = doc;
-
-    // Firestore 同步相關變數
-    let firestoreSyncEnabled = false;
-    let accountsUnsubscribe = null;
-    let journalUnsubscribe = null;
-    let settingsUnsubscribe = null;
-    let fixedTransfersUnsubscribe = null;
-    let usersUnsubscribe = null;
-    let currentUserUnsubscribe = null;
-    let isSyncingFromFirestore = false; // 防止同步循環
-
-    // 監聽登入狀態
-    onAuthStateChanged(auth, (user) => {
-        currentFirebaseUser = user;
-        if (user) {
-            window.firebaseUserLoggedIn = true;
-            // 觸發自訂事件通知主程式
-            window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user } }));
-            // 登入後從 Firestore 載入資料（先載入，再啟動監聽，避免監聽器立即觸發）
-            loadDataFromFirestore().then(() => {
-                // 載入完成後再啟動 Firestore 同步監聽
-                startFirestoreSync();
-            });
-        } else {
-            window.firebaseUserLoggedIn = false;
-            // 停止 Firestore 同步監聽
-            stopFirestoreSync();
-            window.dispatchEvent(new CustomEvent('firebaseAuthStateChanged', { detail: { user: null } }));
-        }
-    });
-    
-    // 先從雲端決定真正的 currentUserId，確保跨裝置用同一組 appUsers（以 Google UID 為主）
-    async function resolveCurrentUserFromFirestore() {
-        const STORAGE_KEY_USERS = 'my_assets_users';
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
-        const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
-        
-        // 取雲端 users 清單
-        let resolvedUsers = users;
-        try {
-            const usersSnap = await getDoc(usersRef);
-            if (usersSnap.exists()) {
-                const firestoreUsers = usersSnap.data().users || [];
-                if (firestoreUsers.length > 0) {
-                    resolvedUsers = firestoreUsers;
-                    users = firestoreUsers;
-                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
-                }
-            }
-        } catch (err) {
-            console.error('[同步] 取得 users 列表失敗', err);
-        }
-        
-        // 取雲端 currentUser
-        let resolvedCurrentUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER) || currentUserId || null;
-        try {
-            const currentUserSnap = await getDoc(currentUserRef);
-            if (currentUserSnap.exists()) {
-                const firestoreCurrentUser = currentUserSnap.data().currentUserId;
-                if (firestoreCurrentUser) {
-                    resolvedCurrentUserId = firestoreCurrentUser;
-                }
-            }
-        } catch (err) {
-            console.error('[同步] 取得 currentUser 失敗', err);
-        }
-        
-        // 若仍無，改用雲端使用者列表的第一筆
-        if (!resolvedCurrentUserId && resolvedUsers && resolvedUsers.length > 0) {
-            resolvedCurrentUserId = resolvedUsers[0].id;
-        }
-        
-        // 寫回本地/記憶體，確保後續使用同一個 ID
-        if (resolvedCurrentUserId) {
-            currentUserId = resolvedCurrentUserId;
-            localStorage.setItem(STORAGE_KEY_CURRENT_USER, resolvedCurrentUserId);
-        }
-        
-        return resolvedCurrentUserId;
-    }
-    
-    // 從 Firestore 載入資料 (自動同步版)
-    async function loadDataFromFirestore() {
-        if (!currentFirebaseUser) return;
-        
-        // 【防護機制】如果正在切換使用者，延遲載入
-        if (isUserSwitching) {
-            console.warn('[同步] 正在切換使用者，延遲載入 Firestore 資料');
-            // 等待使用者切換完成後再載入
-            await new Promise(resolve => {
-                const checkInterval = setInterval(() => {
-                    if (!isUserSwitching) {
-                        clearInterval(checkInterval);
-                        resolve();
-                    }
-                }, 100);
-                // 最多等待 5 秒
-                setTimeout(() => {
-                    clearInterval(checkInterval);
-                    resolve();
-                }, 5000);
-            });
-            // 如果仍然在切換，直接返回
-            if (isUserSwitching) {
-                console.warn('[同步] 使用者切換時間過長，取消載入');
-                return;
-            }
-        }
-        
-        try {
-            isSyncingFromFirestore = true;
-            
-            // 1. 先用 Google 帳號決定共用的 appUsers，再取 currentUserId（子帳）做分流
-            const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-            const resolvedCurrentUserId = await resolveCurrentUserFromFirestore();
-            if (!resolvedCurrentUserId) {
-                console.warn('[同步] 無法決定 currentUserId，停止載入');
-                return;
-            }
-            
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", resolvedCurrentUserId);
-            const userDataSnap = await getDoc(userDataRef);
-            
-            // 準備本地儲存的 Key
-            const STORAGE_KEY_DATA = 'my_assets_stable_data';
-            const STORAGE_KEY_JOURNAL = 'my_assets_journal';
-            const STORAGE_KEY_SETTINGS = 'my_assets_stable_settings';
-            const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
-            const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes';
-            
-            const userDataKey = `${STORAGE_KEY_DATA}_${resolvedCurrentUserId}`;
-            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${resolvedCurrentUserId}`;
-            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${resolvedCurrentUserId}`;
-            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${resolvedCurrentUserId}`;
-            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${resolvedCurrentUserId}`;
-            
-            // 讀取本地現有資料 (用於判斷是否需要初始化上傳)
-            const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-            const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-            const localSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-            const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-            const localDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
-            
-            // 檢查本地是否為空（沒有歷史記錄）
-            const isLocalEmpty = localAccounts.length === 0 && localJournal.length === 0 && localFixedTransfers.length === 0 && Object.keys(localSettings).length === 0 && Object.keys(localDateNotes).length === 0;
-            
-            // 保存 Firestore 資料變數，以便後續 UI 更新時使用
-            let firestoreAccounts = [];
-            let firestoreJournal = [];
-            let firestoreFixedTransfers = [];
-            let firestoreSettings = {};
-            let firestoreDateNotes = {};
-            let firestoreAssetHistory = {};
-            let hasFirestoreDataLoaded = false;
-            
-            if (userDataSnap.exists()) {
-                const userData = userDataSnap.data();
-                firestoreAccounts = userData.accounts || [];
-                firestoreJournal = userData.journal || [];
-                firestoreFixedTransfers = userData.fixedTransfers || [];
-                firestoreSettings = userData.settings || {};
-                firestoreDateNotes = userData.dateNotes || {};
-                firestoreAssetHistory = userData.assetHistory || {};
-                const hasFirestoreData = firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0 || Object.keys(firestoreSettings).length > 0 || Object.keys(firestoreDateNotes).length > 0;
-                hasFirestoreDataLoaded = true;
-                
-                // 【關鍵修正】如果本地為空且 Firestore 有資料，強制同步
-                if (isLocalEmpty && hasFirestoreData) {
-                    console.log(`[同步] 本地為空，自動從 Firestore 同步使用者 ${resolvedCurrentUserId} 的資料`);
-                } else {
-                    console.log(`[同步] 強制同步使用者 ${resolvedCurrentUserId} 資料`);
-                }
-                
-                // 直接覆蓋本地資料（以 Firestore 為主）
-                localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
-                localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                
-                if (firestoreSettings && Object.keys(firestoreSettings).length > 0) {
-                    const merged = { ...localSettings, ...firestoreSettings };
-                    localStorage.setItem(userSettingsKey, JSON.stringify(merged));
-                }
-                
-                // 同步日期記事（無論是否為空都同步，以 Firestore 為主）
-                if (firestoreDateNotes !== undefined) {
-                    localStorage.setItem(userDateNotesKey, JSON.stringify(firestoreDateNotes));
-                }
-                
-                // 同步資產歷史快照（合併雲端和本地資料，取較新的值）
-                if (firestoreAssetHistory && Object.keys(firestoreAssetHistory).length > 0) {
-                    const localHistory = JSON.parse(localStorage.getItem(`my_assets_history_${resolvedCurrentUserId}`) || '{}');
-                    const merged = { ...localHistory, ...firestoreAssetHistory };
-                    localStorage.setItem(`my_assets_history_${resolvedCurrentUserId}`, JSON.stringify(merged));
-                }
-                
-                // 觸發資料載入事件，更新 UI
-                window.dispatchEvent(new CustomEvent('firebaseDataLoaded'));
-                
-            } else {
-                // 雲端無資料 -> 如果本地有資料，上傳本地
-                if (!isLocalEmpty) {
-                    console.log(`[同步] 雲端無資料，上傳本地資料到 Firestore`);
-                    if (window.syncAllDataToFirestore) await window.syncAllDataToFirestore();
-                } else {
-                    console.log(`[同步] 本地和雲端都為空，無需同步`);
-                }
-            }
-            
-            // 3. 同步全域使用者列表 (Users List)
-            const STORAGE_KEY_USERS = 'my_assets_users';
-            const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
-            const usersSnap = await getDoc(usersRef);
-            const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
-            
-            if (usersSnap.exists()) {
-                const firestoreUsers = usersSnap.data().users || [];
-                // 如果雲端有使用者列表，以雲端為主更新本地
-                if (firestoreUsers.length > 0) {
-                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
-                    if (typeof window !== 'undefined' && window.users !== undefined) {
-                        window.users = firestoreUsers;
-                    }
-                } else if (localUsers.length > 0) {
-                    // 雲端列表為空但本地有，上傳本地
-                    await window.syncUsersToFirestore(localUsers);
-                }
-            } else if (localUsers.length > 0) {
-                // 雲端文件不存在，上傳本地列表
-                await window.syncUsersToFirestore(localUsers);
-            }
-            
-            // 4. 同步「上次登入的使用者 ID」(Current User)
-            // 這裡保持之前的邏輯：如果本地有紀錄，以本地為主(避免切換跳轉)；如果本地沒有，才用雲端的
-            const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
-            const currentUserSnap = await getDoc(currentUserRef);
-            const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            
-            if (currentUserSnap.exists()) {
-                const firestoreCurrentUser = currentUserSnap.data().currentUserId;
-                
-                // 本地無紀錄 -> 用雲端的
-                if (firestoreCurrentUser && !localCurrentUser) {
-                    localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
-                    if (typeof window !== 'undefined') window.currentUserId = firestoreCurrentUser;
-                }
-                // 本地有紀錄且不同 -> 更新雲端 (以本地當下操作的使用者為主)
-                else if (localCurrentUser && firestoreCurrentUser && localCurrentUser !== firestoreCurrentUser) {
-                    await window.syncCurrentUserToFirestore(localCurrentUser);
-                }
-            } else if (localCurrentUser) {
-                await window.syncCurrentUserToFirestore(localCurrentUser);
-            }
-            
-            // 確保記憶體變數是最新的，並刷新 UI
-            if (typeof loadUserData === 'function') {
-                const userData = loadUserData(resolvedCurrentUserId);
-                if (userData) {
-                    const previousAccountsLength = accounts.length;
-                    const previousSettingsKeys = Object.keys(settings).length;
-                    
-                    accounts = userData.accounts;
-                    settings = userData.settings;
-                    
-                    // 同步 UI 狀態（從 settings 讀取）
-                    if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                    if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                    if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                    
-                    // 更新幣別顯示
-                    const ctt = document.getElementById('currencyToggleText');
-                    if (ctt) ctt.textContent = currentDisplayCurrency;
-                    
-                    // 更新主題
-                    if (typeof applyTheme === 'function') applyTheme();
-                    
-                    // 檢查是否需要更新 UI：
-                    // 1. 本地原本為空，且從 Firestore 載入了資料
-                    // 2. 或者資料有變化（從 Firestore 同步後）
-                    // 3. 或者從 Firestore 載入了資料（確保清空瀏覽器後登入也能更新 UI）
-                    // 檢查是否有新資料或資料變化
-                    const hasNewData = (isLocalEmpty && (accounts.length > 0 || Object.keys(settings).length > 0)) ||
-                                      (accounts.length !== previousAccountsLength || Object.keys(settings).length !== previousSettingsKeys);
-                    
-                    // 如果從 Firestore 載入了資料，或者本地原本為空但現在有資料，都應該更新 UI
-                    // 特別是在清空瀏覽器後登入時，確保 UI 會更新
-                    // 簡化條件：只要從 Firestore 載入了資料，或者有資料變化，就更新 UI
-                    if (hasNewData || hasFirestoreDataLoaded) {
-                        console.log(`[同步] 從 Firestore 載入資料後，刷新 UI (本地原本為空: ${isLocalEmpty}, 從 Firestore 載入: ${hasFirestoreDataLoaded})`);
-                        
-                        // 使用 setTimeout 確保所有資料都已寫入 localStorage 後再更新 UI
-                        setTimeout(() => {
-                            // 更新使用者頭像
-                            if (typeof updateUserAvatar === 'function') updateUserAvatar();
-                            
-                            // 刷新資產列表
-                            if (typeof renderAssets === 'function') renderAssets();
-                            
-                            // 更新圖表
-                            if (typeof updateChartData === 'function') updateChartData();
-                            
-                            // 更新分頁順序
-                            if (typeof reorderPageItems === 'function') reorderPageItems();
-                            
-                            // 更新分頁指示器
-                            if (typeof renderPageIndicator === 'function') renderPageIndicator();
-                            
-                            // 更新分頁顯示設定
-                            if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings();
-                            
-                            // 更新日曆
-                            if (typeof renderCalendar === 'function') renderCalendar();
-                            
-                            // 更新固定轉帳列表
-                            if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                            
-                            // 如果當前正在顯示記帳分頁，更新記帳詳情
-                            if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) {
-                                showFixedTransferDetailsForDate(selectedDate);
-                            }
-                            
-                            // 清除記帳日期快取
-                            if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
-                        }, 100); // 延遲 100ms 確保資料已寫入
-                    }
-                }
-            }
-            
-            console.log('自動同步完成');
-            
-        } catch (err) {
-            console.error('自動同步失敗:', err);
-        } finally {
-            isSyncingFromFirestore = false;
-        }
-    }
-    
-    // 啟動 Firestore 同步監聽 (修正版：監聽所有使用者)
-    function startFirestoreSync() {
-        if (!currentFirebaseUser) {
-            console.warn('[同步啟動] 沒有 Firebase 使用者，無法啟動');
-            return;
-        }
-        
-        if (firestoreSyncEnabled) {
-            console.warn('[同步啟動] 監聽器已經啟動，先停止舊監聽器');
-            stopFirestoreSync();
-            // 等待一下確保舊監聽器完全停止
-            setTimeout(() => {
-                startFirestoreSync();
-            }, 100);
-            return;
-        }
-        
-        console.log(`[同步啟動] 開始監聽所有使用者的資料變化`);
-        firestoreSyncEnabled = true;
-        
-        // 監聽所有使用者的資料變化（使用 collection 監聽整個 appUsers 集合）
-        const appUsersCollectionRef = collection(db, "users", currentFirebaseUser.uid, "appUsers");
-        
-        accountsUnsubscribe = onSnapshot(appUsersCollectionRef, (snapshot) => {
-            if (isSyncingFromFirestore) return;
-            
-            // 【防護機制】如果正在切換使用者，忽略所有同步更新
-            if (isUserSwitching) {
-                return;
-            }
-            
-            const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-            const currentUserIdNow = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-            
-            // 處理每個使用者的資料變化
-            snapshot.docChanges().forEach((change) => {
-                // 【防護機制】在處理每個變更時再次檢查，避免處理過程中使用者切換
-                if (isUserSwitching) {
-                    return;
-                }
-                
-                const userId = change.doc.id; // 這是使用者的 ID
-                const snap = change.doc;
-                
-                // 【關鍵修正】忽略本地尚未寫入伺服器的快照 (防止自己覆寫自己)
-                if (snap.metadata && snap.metadata.hasPendingWrites) {
-                    return;
-                }
-                
-                if (snap.exists()) {
-                    const userData = snap.data();
-                    const firestoreAccounts = userData.accounts || [];
-                    const firestoreJournal = userData.journal || [];
-                    const firestoreSettings = userData.settings || {};
-                    const firestoreFixedTransfers = userData.fixedTransfers || [];
-                    const firestoreDateNotes = userData.dateNotes || {};
-                    const firestoreAssetHistoryRT = userData.assetHistory || {};
-                    
-                    // 使用變化的使用者 ID 來產生 Key
-                    const userDataKey = `${STORAGE_KEY_DATA}_${userId}`;
-                    const userJournalKey = `${STORAGE_KEY_JOURNAL}_${userId}`;
-                    const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${userId}`;
-                    const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`;
-                    const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${userId}`;
-                    const userAssetHistoryKey = `my_assets_history_${userId}`;
-                    
-                    const localAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                    const localJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-                    const currentSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                    const localFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-                    const localDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
-                    const localAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
-                    
-                    let hasChanges = false;
-                    
-                    // Accounts 同步邏輯
-                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有資產後）
-                    if (JSON.stringify(firestoreAccounts) !== JSON.stringify(localAccounts)) {
-                        // 【防護機制】再次檢查使用者是否切換
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        isSyncingFromFirestore = true;
-                        localStorage.setItem(userDataKey, JSON.stringify(firestoreAccounts));
-                        hasChanges = true;
-                    }
-                    
-                    // Journal 同步邏輯
-                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有記帳記錄後）
-                    if (JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal)) {
-                        // 【防護機制】再次檢查使用者是否切換
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        isSyncingFromFirestore = true;
-                        localStorage.setItem(userJournalKey, JSON.stringify(firestoreJournal));
-                        hasChanges = true;
-                        
-                        // 【關鍵修正】記帳資料更新後，需要重新計算帳戶餘額
-                        // 因為記帳記錄會影響帳戶餘額（收入增加、支出減少、轉帳會轉移）
-                        // 使用 async/await 確保計算完成後再繼續
-                        (async () => {
-                            // 【防護機制】檢查是否正在切換使用者
-                            if (isUserSwitching) {
-                                return;
-                            }
-                            
-                            try {
-                                if (window.recalculateAccountBalancesFromJournal) {
-                                    // 重新讀取最新的帳戶資料（使用 Firestore 同步的 accounts，如果有的話）
-                                    // 優先使用 Firestore 的 accounts，因為它們是未受記帳記錄影響的原始資料
-                                    let accountsToUse = firestoreAccounts.length > 0 ? firestoreAccounts : JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                    
-                                    if (accountsToUse.length > 0) {
-                                        // 再次檢查使用者是否切換
-                                        if (isUserSwitching) {
-                                            return;
-                                        }
-                                        
-                                        // 重新計算帳戶餘額（這個函式會自動同步到 Firestore）
-                                        window.recalculateAccountBalancesFromJournal(userId, firestoreJournal, accountsToUse);
-                                        
-                                        // 等待一下確保同步完成（但減少等待時間，避免延長同步過程）
-                                        await new Promise(resolve => setTimeout(resolve, 100));
-                                        
-                                        // 重新讀取更新後的帳戶資料，確保後續邏輯使用最新的資料
-                                        if (isUserSwitching) {
-                                            return;
-                                        }
-                                        
-                                        const recalculatedAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                        if (recalculatedAccounts.length > 0) {
-                                            // 標記 accounts 也需要更新（觸發 UI 刷新）
-                                            hasChanges = true;
-                                        }
-                                    }
-                                }
-                            } catch (err) {
-                                console.error('[同步更新] 重新計算帳戶餘額時發生錯誤:', err);
-                            }
-                        })();
-                    }
-                    
-                    // Settings 同步邏輯
-                    const mergedSettings = { ...currentSettings, ...firestoreSettings };
-                    if (JSON.stringify(mergedSettings) !== JSON.stringify(currentSettings)) {
-                        // 【防護機制】再次檢查使用者是否切換
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        isSyncingFromFirestore = true;
-                        localStorage.setItem(userSettingsKey, JSON.stringify(mergedSettings));
-                        hasChanges = true;
-                    }
-                    
-                    // FixedTransfers 同步邏輯
-                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空陣列的情況，例如刪除所有固定轉帳後）
-                    if (JSON.stringify(firestoreFixedTransfers) !== JSON.stringify(localFixedTransfers)) {
-                        // 【防護機制】再次檢查使用者是否切換
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        isSyncingFromFirestore = true;
-                        localStorage.setItem(userFixedTransfersKey, JSON.stringify(firestoreFixedTransfers));
-                        hasChanges = true;
-                    }
-                    
-                    // DateNotes 同步邏輯
-                    // 【關鍵修正】不檢查 length，直接比較和覆蓋（包括空物件的情況，例如刪除所有日期記事後）
-                    if (JSON.stringify(firestoreDateNotes) !== JSON.stringify(localDateNotes)) {
-                        // 【防護機制】再次檢查使用者是否切換
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        isSyncingFromFirestore = true;
-                        localStorage.setItem(userDateNotesKey, JSON.stringify(firestoreDateNotes));
-                        hasChanges = true;
-                        
-                        // 如果當前正在顯示記帳分頁，更新日曆顯示
-                        if (currentUserIdNow === userId && typeof renderCalendar === 'function') {
-                            renderCalendar();
-                        }
-                    }
-                    
-                    // AssetHistory 同步邏輯（合併雲端和本地資料）
-                    if (firestoreAssetHistoryRT && Object.keys(firestoreAssetHistoryRT).length > 0) {
-                        const merged = { ...localAssetHistory, ...firestoreAssetHistoryRT };
-                        if (JSON.stringify(merged) !== JSON.stringify(localAssetHistory)) {
-                            localStorage.setItem(userAssetHistoryKey, JSON.stringify(merged));
-                        }
-                    }
-                    
-                    // 如果有變更，且是當前使用者，則刷新介面
-                    if (hasChanges && currentUserIdNow === userId) {
-                        // 【防護機制】再次檢查使用者是否切換，避免刷新錯誤使用者的介面
-                        if (isUserSwitching) {
-                            return;
-                        }
-                        
-                        // 檢查是否是記帳記錄更新（需要等待餘額計算完成）
-                        const isJournalUpdate = JSON.stringify(firestoreJournal) !== JSON.stringify(localJournal);
-                        
-                        if (isJournalUpdate) {
-                            // 記帳記錄更新：延遲刷新，確保餘額計算和同步完成
-                            setTimeout(() => {
-                                // 【防護機制】檢查使用者是否在延遲期間切換
-                                if (isUserSwitching) {
-                                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                                    return;
-                                }
-                                
-                                // 確認當前使用者仍然是原本的使用者
-                                const currentUserIdCheck = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-                                if (currentUserIdCheck !== currentUserIdNow) {
-                                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                                    return;
-                                }
-                                
-                                // 重新讀取最新的帳戶資料（因為餘額可能已經被重新計算）
-                                const finalAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                                
-                                // 呼叫橋樑函式更新介面
-                                if (window.applyCloudUpdate && window.loadUserData) {
-                                    const updatedData = window.loadUserData(currentUserIdNow);
-                                    if (updatedData) {
-                                        window.applyCloudUpdate(updatedData);
-                                    }
-                                } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
-                                    // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
-                                    const userData = loadUserData(currentUserIdNow);
-                                    if (userData) {
-                                        accounts = userData.accounts;
-                                        settings = userData.settings;
-                                        
-                                        // 同步 UI 狀態
-                                        if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                                        if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                                        if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                                        
-                                        const ctt = document.getElementById('currencyToggleText');
-                                        if (ctt) ctt.textContent = currentDisplayCurrency;
-                                        
-                                        if (typeof applyTheme === 'function') applyTheme();
-                                        
-                                        renderAssets();
-                                        if (typeof updateChartData === 'function') updateChartData();
-                                        if (typeof reorderPageItems === 'function') reorderPageItems(); 
-                                        if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
-                                        if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
-                                        
-                                        if (typeof renderCalendar === 'function') renderCalendar();
-                                        if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
-                                        if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                                    }
-                                }
-                                setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                            }, 300); // 減少等待時間，從 500ms 降到 300ms
-                        } else {
-                            // 非記帳記錄更新，立即刷新
-                            // 呼叫橋樑函式更新介面
-                            if (window.applyCloudUpdate && window.loadUserData) {
-                                const updatedData = window.loadUserData(currentUserIdNow);
-                                if (updatedData) {
-                                    window.applyCloudUpdate(updatedData);
-                                }
-                            } else if (typeof loadUserData === 'function' && typeof renderAssets === 'function') {
-                                // 備用方案：如果沒有橋樑函式，使用原本的更新邏輯
-                                const userData = loadUserData(currentUserIdNow);
-                                if (userData) {
-                                    accounts = userData.accounts;
-                                    settings = userData.settings;
-                                    
-                                    // 同步 UI 狀態
-                                    if (settings.pageVisibility) pageVisibility = settings.pageVisibility; 
-                                    if (settings.pageOrder) pageOrder = settings.pageOrder; 
-                                    if (settings.displayCurrency) currentDisplayCurrency = settings.displayCurrency;
-                                    
-                                    const ctt = document.getElementById('currencyToggleText');
-                                    if (ctt) ctt.textContent = currentDisplayCurrency;
-                                    
-                                    if (typeof applyTheme === 'function') applyTheme();
-                                    
-                                    renderAssets();
-                                    if (typeof updateChartData === 'function') updateChartData();
-                                    if (typeof reorderPageItems === 'function') reorderPageItems(); 
-                                    if (typeof renderPageIndicator === 'function') renderPageIndicator(); 
-                                    if (typeof renderPageVisibilitySettings === 'function') renderPageVisibilitySettings(); 
-                                    
-                                    if (typeof renderCalendar === 'function') renderCalendar();
-                                    if (typeof showFixedTransferDetailsForDate === 'function' && selectedDate) showFixedTransferDetailsForDate(selectedDate);
-                                    if (typeof renderFixedTransferList === 'function') renderFixedTransferList();
-                                }
-                            }
-                            setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                        }
-                    } else if (hasChanges) {
-                        // 其他使用者的資料更新，只更新 localStorage，不刷新 UI
-                        setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                    }
-                }
-            });
-        });
-        
-        // 設定其他監聽器的 Unsubscribe 參照（實際上都是同一個監聽器，因為資料存在同一個文件中）
-        // 注意：在 stopFirestoreSync 中只會取消 accountsUnsubscribe，其他變數直接設為 null
-        journalUnsubscribe = accountsUnsubscribe;
-        settingsUnsubscribe = accountsUnsubscribe;
-        fixedTransfersUnsubscribe = accountsUnsubscribe;
-        
-        // 監聽 Users List (全域，不需鎖定 App User ID)
-        const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
-        usersUnsubscribe = onSnapshot(usersRef, (snap) => {
-            if (isSyncingFromFirestore) return;
-            
-            // 【防護機制】如果正在切換使用者，忽略同步更新
-            if (isUserSwitching) {
-                return;
-            }
-            
-            if (snap.exists()) {
-                const firestoreUsers = snap.data().users || [];
-                const localUsers = JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '[]');
-                
-                if (JSON.stringify(firestoreUsers) !== JSON.stringify(localUsers)) {
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(firestoreUsers));
-                    users = firestoreUsers;
-                    if (typeof renderUserList === 'function') renderUserList();
-                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                }
-            }
-        });
-        
-        // 監聽 Current User (全域)
-        const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
-        currentUserUnsubscribe = onSnapshot(currentUserRef, (snap) => {
-            if (isSyncingFromFirestore) return;
-            
-            // 【防護機制】如果正在切換使用者，忽略同步更新（避免衝突）
-            if (isUserSwitching) {
-                return;
-            }
-            
-            if (snap.exists()) {
-                const firestoreCurrentUser = snap.data().currentUserId;
-                const localCurrentUser = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-                
-                // 只有當雲端有變，且跟本地不同時才切換
-                if (firestoreCurrentUser && firestoreCurrentUser !== localCurrentUser) {
-                    // 再次檢查是否正在切換（避免競態條件）
-                    if (isUserSwitching) {
-                        return;
-                    }
-                    
-                    isSyncingFromFirestore = true;
-                    localStorage.setItem(STORAGE_KEY_CURRENT_USER, firestoreCurrentUser);
-                    if (typeof window !== 'undefined') window.currentUserId = firestoreCurrentUser;
-                    
-                    // 如果當前使用者不一致，執行切換
-                    // 注意：這裡可能會跟 switchUser 衝突，所以要小心
-                    const currentUserIdFromStorage = localStorage.getItem('my_assets_current_user');
-                    if (typeof switchUser === 'function' && firestoreCurrentUser !== currentUserIdFromStorage) {
-                        switchUser(firestoreCurrentUser);
-                    }
-                    setTimeout(() => { isSyncingFromFirestore = false; }, 100);
-                }
-            }
-        });
-        
-        console.log('Firestore 同步監聽已啟動');
-    }
-    
-    // 停止 Firestore 同步監聽 (修正版)
-    function stopFirestoreSync() {
-        // 只需取消主監聽器，避免重複呼叫導致錯誤
-        if (accountsUnsubscribe) {
-            try {
-                accountsUnsubscribe();
-            } catch (e) {
-                console.error("取消監聽失敗:", e);
-            }
-            accountsUnsubscribe = null;
-        }
-        
-        // 將其他引用直接設為 null
-        journalUnsubscribe = null;
-        settingsUnsubscribe = null;
-        fixedTransfersUnsubscribe = null;
-        
-        if (usersUnsubscribe) {
-            try { usersUnsubscribe(); } catch(e) {}
-            usersUnsubscribe = null;
-        }
-        if (currentUserUnsubscribe) {
-            try { currentUserUnsubscribe(); } catch(e) {}
-            currentUserUnsubscribe = null;
-        }
-        
-        firestoreSyncEnabled = false;
-        console.log('Firestore 同步監聽已停止');
-    }
-    
-    // 同步 accounts 到 Firestore（使用 currentUserId 區分不同應用內使用者）
-    window.syncAccountsToFirestore = async function(accountsData) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId（因為模組作用域無法直接訪問主腳本的全域變數）
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 accounts');
-            return;
-        }
-        
-        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
-        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
-        if (accountsData.length === 0) {
-            try {
-                const STORAGE_KEY_DATA = 'my_assets_stable_data';
-                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
-                const hasLocalHistory = localStorage.getItem(userDataKey) !== null; // 檢查是否有歷史記錄
-                
-                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
-                if (!hasLocalHistory) {
-                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                    const userDataSnap = await getDoc(userDataRef);
-                    if (userDataSnap.exists()) {
-                        const firestoreData = userDataSnap.data();
-                        const firestoreAccounts = firestoreData.accounts || [];
-                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
-                        if (firestoreAccounts.length > 0) {
-                            console.log(`[同步保護] 本地 accounts 為空且無歷史記錄，但 Firestore 已有 ${firestoreAccounts.length} 筆資料，跳過推送以避免覆蓋`);
-                            return;
-                        }
-                    }
-                }
-                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
-            } catch (err) {
-                console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
-                // 如果檢查失敗，繼續推送（避免阻塞正常流程）
-            }
-        }
-        
-        // 注意：這裡不檢查 isSyncingFromFirestore，因為這是本地操作觸發的同步
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                accounts: accountsData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`accounts 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${accountsData.length} 筆)`);
-        } catch (err) {
-            console.error('同步 accounts 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步 journal 到 Firestore（使用 currentUserId 區分不同應用內使用者）
-    window.syncJournalToFirestore = async function(records) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 journal');
-            return;
-        }
-        
-        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
-        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
-        if (records.length === 0) {
-            try {
-                const STORAGE_KEY_JOURNAL = 'my_assets_journal';
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
-                const hasLocalHistory = localStorage.getItem(userJournalKey) !== null; // 檢查是否有歷史記錄
-                
-                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
-                if (!hasLocalHistory) {
-                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                    const userDataSnap = await getDoc(userDataRef);
-                    if (userDataSnap.exists()) {
-                        const firestoreData = userDataSnap.data();
-                        const firestoreJournal = firestoreData.journal || [];
-                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
-                        if (firestoreJournal.length > 0) {
-                            console.log(`[同步保護] 本地 journal 為空且無歷史記錄，但 Firestore 已有 ${firestoreJournal.length} 筆資料，跳過推送以避免覆蓋`);
-                            return;
-                        }
-                    }
-                }
-                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
-            } catch (err) {
-                console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
-                // 如果檢查失敗，繼續推送（避免阻塞正常流程）
-            }
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                journal: records,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`journal 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${records.length} 筆)`);
-        } catch (err) {
-            console.error('同步 journal 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步 settings 到 Firestore（使用 currentUserId 區分不同應用內使用者）
-    window.syncSettingsToFirestore = async function(settingsData) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 settings');
-            return;
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                settings: settingsData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`settings 已同步到 Firestore (使用者: ${currentUserIdFromStorage})`);
-        } catch (err) {
-            console.error('同步 settings 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步 fixedTransfers 到 Firestore（使用 currentUserId 區分不同應用內使用者）
-    window.syncFixedTransfersToFirestore = async function(transfers) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 fixedTransfers');
-            return;
-        }
-        
-        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
-        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
-        if (transfers.length === 0) {
-            try {
-                const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
-                const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${currentUserIdFromStorage}`;
-                const hasLocalHistory = localStorage.getItem(userFixedTransfersKey) !== null; // 檢查是否有歷史記錄
-                
-                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
-                if (!hasLocalHistory) {
-                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                    const userDataSnap = await getDoc(userDataRef);
-                    if (userDataSnap.exists()) {
-                        const firestoreData = userDataSnap.data();
-                        const firestoreFixedTransfers = firestoreData.fixedTransfers || [];
-                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
-                        if (firestoreFixedTransfers.length > 0) {
-                            console.log(`[同步保護] 本地 fixedTransfers 為空且無歷史記錄，但 Firestore 已有 ${firestoreFixedTransfers.length} 筆資料，跳過推送以避免覆蓋`);
-                            return;
-                        }
-                    }
-                }
-                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
-            } catch (err) {
-                console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
-                // 如果檢查失敗，繼續推送（避免阻塞正常流程）
-            }
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                fixedTransfers: transfers,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`fixedTransfers 已同步到 Firestore (使用者: ${currentUserIdFromStorage}, ${transfers.length} 筆)`);
-        } catch (err) {
-            console.error('同步 fixedTransfers 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步日期記事到 Firestore
-    window.syncDateNotesToFirestore = async function(dateNotes) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 dateNotes');
-            return;
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                dateNotes: dateNotes,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`dateNotes 已同步到 Firestore (使用者: ${currentUserIdFromStorage})`);
-        } catch (err) {
-            console.error('同步 dateNotes 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步資產歷史快照到 Firestore
-    window.syncAssetHistoryToFirestore = async function(historyData) {
-        if (!currentFirebaseUser) return;
-        
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) return;
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                assetHistory: historyData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-        } catch (err) {
-            console.error('同步 assetHistory 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 一起同步 journal 和 accounts 到 Firestore（記帳後使用）
-    window.syncJournalAndAccountsToFirestore = async function(journalRecords, accountsData) {
-        if (!currentFirebaseUser) return;
-        
-        // 從 localStorage 讀取 currentUserId
-        const STORAGE_KEY_CURRENT_USER = 'my_assets_current_user';
-        const currentUserIdFromStorage = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
-        if (!currentUserIdFromStorage) {
-            console.warn('[同步] 沒有 currentUserId，無法同步 journal 和 accounts');
-            return;
-        }
-        
-        // 【關鍵修正】驗證傳入的 accountsData 是否屬於當前使用者
-        // 從 localStorage 讀取當前使用者的 accounts 進行比對
-        const STORAGE_KEY_DATA = 'my_assets_stable_data';
-        const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
-        const currentUserAccountsFromStorage = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-        
-        // 確保同步的是當前使用者的資料（檢查 accounts 數量是否一致）
-        if (accountsData.length !== currentUserAccountsFromStorage.length) {
-            console.warn(`[記帳同步] 警告：傳入的 accounts 數量 (${accountsData.length}) 與 localStorage 中的數量 (${currentUserAccountsFromStorage.length}) 不一致，使用 localStorage 中的資料`);
-            accountsData = currentUserAccountsFromStorage;
-        }
-        
-        // 【關鍵修正】防止初始空資料覆蓋有資料的情況，但允許編輯後變成空的情況
-        // 如果本地資料是空的，檢查是否為初始狀態（沒有歷史記錄）
-        if (accountsData.length === 0 && journalRecords.length === 0) {
-            try {
-                const STORAGE_KEY_DATA = 'my_assets_stable_data';
-                const STORAGE_KEY_JOURNAL = 'my_assets_journal';
-                const userDataKey = `${STORAGE_KEY_DATA}_${currentUserIdFromStorage}`;
-                const userJournalKey = `${STORAGE_KEY_JOURNAL}_${currentUserIdFromStorage}`;
-                const hasAccountsHistory = localStorage.getItem(userDataKey) !== null;
-                const hasJournalHistory = localStorage.getItem(userJournalKey) !== null;
-                const hasLocalHistory = hasAccountsHistory || hasJournalHistory; // 任一有歷史記錄即可
-                
-                // 如果沒有本地歷史記錄，且 Firestore 有資料，則不推送（這是初始狀態為空）
-                if (!hasLocalHistory) {
-                    const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-                    const userDataSnap = await getDoc(userDataRef);
-                    if (userDataSnap.exists()) {
-                        const firestoreData = userDataSnap.data();
-                        const firestoreAccounts = firestoreData.accounts || [];
-                        const firestoreJournal = firestoreData.journal || [];
-                        // 如果 Firestore 有資料，且本地沒有歷史記錄，不推送（避免初始空資料覆蓋）
-                        if (firestoreAccounts.length > 0 || firestoreJournal.length > 0) {
-                            console.log(`[同步保護] 本地 accounts 和 journal 為空且無歷史記錄，但 Firestore 已有資料 (accounts: ${firestoreAccounts.length}, journal: ${firestoreJournal.length})，跳過推送以避免覆蓋`);
-                            return;
-                        }
-                    }
-                }
-                // 如果有本地歷史記錄，即使現在是空的，也推送（這是編輯後變成空，是用戶的明確操作）
-            } catch (err) {
-                console.error('[同步保護] 檢查 Firestore 資料時發生錯誤:', err);
-                // 如果檢查失敗，繼續推送（避免阻塞正常流程）
-            }
-        }
-        
-        try {
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", currentUserIdFromStorage);
-            await setDoc(userDataRef, {
-                journal: journalRecords,
-                accounts: accountsData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log(`[記帳同步] journal 和 accounts 已一起同步到 Firestore (使用者: ${currentUserIdFromStorage}, journal: ${journalRecords.length} 筆, accounts: ${accountsData.length} 筆)`);
-        } catch (err) {
-            console.error('[記帳同步] 同步 journal 和 accounts 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步所有資料到 Firestore（用於匯入資料後）
-    window.syncAllDataToFirestore = async function() {
-        if (!currentFirebaseUser) {
-            console.log('未登入 Firebase，跳過同步');
-            return;
-        }
-        
-        // 如果沒有 currentUserId，嘗試從 localStorage 獲取
-        let targetUserId = currentUserId;
-        if (!targetUserId) {
-            const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
-            if (users.length > 0) {
-                targetUserId = users[0].id;
-            } else {
-                console.error('無法確定要同步的使用者 ID');
-                return;
-            }
-        }
-        
-        try {
-            const STORAGE_KEY_DATA = 'my_assets_stable_data';
-            const STORAGE_KEY_JOURNAL = 'my_assets_journal';
-            const STORAGE_KEY_SETTINGS = 'my_assets_stable_settings';
-            const STORAGE_KEY_FIXED_TRANSFERS = 'my_assets_fixed_transfers';
-            
-            const userDataKey = `${STORAGE_KEY_DATA}_${targetUserId}`;
-            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${targetUserId}`;
-            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${targetUserId}`;
-            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${targetUserId}`;
-            
-            const accounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-            const journal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-            const settings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-            const fixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-            
-            // 【關鍵修正】匯入資料時，如果本地有資料，直接推送（不檢查 Firestore）
-            // 因為這是匯入操作，應該以本地匯入的資料為主
-            // 但如果本地完全為空，則檢查 Firestore 是否有資料
-            const hasLocalData = accounts.length > 0 || journal.length > 0 || fixedTransfers.length > 0 || Object.keys(settings).length > 0;
-            
-            if (!hasLocalData) {
-                // 本地完全為空，檢查 Firestore 是否有資料
-                const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", targetUserId);
-                const userDataSnap = await getDoc(userDataRef);
-                if (userDataSnap.exists()) {
-                    const firestoreData = userDataSnap.data();
-                    const firestoreAccounts = firestoreData.accounts || [];
-                    const firestoreJournal = firestoreData.journal || [];
-                    const firestoreFixedTransfers = firestoreData.fixedTransfers || [];
-                    // 如果 Firestore 有資料，且本地是空的，不推送（避免覆蓋）
-                    if (firestoreAccounts.length > 0 || firestoreJournal.length > 0 || firestoreFixedTransfers.length > 0) {
-                        console.log(`[同步保護] 本地資料為空，但 Firestore 已有資料，跳過推送以避免覆蓋`);
-                        return;
-                    }
-                }
-            }
-            
-            // 讀取日期記事
-            const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes';
-            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${targetUserId}`;
-            const dateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
-            
-            // 讀取資產歷史快照
-            const assetHistory = JSON.parse(localStorage.getItem(`my_assets_history_${targetUserId}`) || '{}');
-            
-            // 一次性同步所有資料
-            const userDataRef = doc(db, "users", currentFirebaseUser.uid, "appUsers", targetUserId);
-            await setDoc(userDataRef, {
-                accounts: accounts,
-                journal: journal,
-                settings: settings,
-                fixedTransfers: fixedTransfers,
-                dateNotes: dateNotes,
-                assetHistory: assetHistory,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            
-            console.log(`使用者 ${targetUserId} 的所有資料已同步到 Firestore`);
-        } catch (err) {
-            console.error('同步所有資料到 Firestore 失敗:', err);
-            throw err;
-        }
-    };
-    
-    // 同步 users 到 Firestore
-    window.syncUsersToFirestore = async function(usersData) {
-        if (!currentFirebaseUser) return;
-        
-        try {
-            const usersRef = doc(db, "users", currentFirebaseUser.uid, "data", "users");
-            await setDoc(usersRef, {
-                users: usersData,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log('users 已同步到 Firestore');
-        } catch (err) {
-            console.error('同步 users 到 Firestore 失敗:', err);
-        }
-    };
-    
-    // 同步 currentUser 到 Firestore
-    window.syncCurrentUserToFirestore = async function(currentUserId) {
-        if (!currentFirebaseUser) return;
-        
-        try {
-            const currentUserRef = doc(db, "users", currentFirebaseUser.uid, "data", "currentUser");
-            await setDoc(currentUserRef, {
-                currentUserId: currentUserId,
-                updatedAt: Timestamp.now()
-            }, { merge: true });
-            console.log('currentUser 已同步到 Firestore');
-        } catch (err) {
-            console.error('同步 currentUser 到 Firestore 失敗:', err);
-        }
-    };
-
-    // 備份功能
-    window.firebasePerformBackup = async function(jsonStr, isAuto = false) {
-        if (!currentFirebaseUser) {
-            throw new Error('請先登入 Firebase');
-        }
-
-        try {
-            // 如果沒有傳入 jsonStr，從 localStorage 生成
-            if (!jsonStr) {
-                const allUsersData = {};
-                const users = JSON.parse(localStorage.getItem('my_assets_users') || '[]');
-                users.forEach(user => {
-                    const userDataKey = `my_assets_stable_data_${user.id}`;
-                    const userSettingsKey = `my_assets_stable_settings_${user.id}`;
-                    const userJournalKey = `my_assets_journal_${user.id}`;
-                    const userFixedTransfersKey = `my_assets_fixed_transfers_${user.id}`;
-                    const userDateNotesKey = `my_assets_date_notes_${user.id}`;
-                    const userAssetHistoryKey = `my_assets_history_${user.id}`;
-                    const userAccounts = JSON.parse(localStorage.getItem(userDataKey) || '[]');
-                    const userSettings = JSON.parse(localStorage.getItem(userSettingsKey) || '{}');
-                    const userJournal = JSON.parse(localStorage.getItem(userJournalKey) || '[]');
-                    const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey) || '[]');
-                    const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
-                    const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
-                    allUsersData[user.id] = {
-                        user: user,
-                        data: userAccounts,
-                        settings: userSettings,
-                        journal: userJournal,
-                        fixedTransfers: userFixedTransfers,
-                        dateNotes: userDateNotes,
-                        assetHistory: userAssetHistory
-                    };
-                });
-
-                const backupData = {
-                    version: '2.0',
-                    users: users,
-                    usersData: allUsersData,
-                    exportDate: new Date().toISOString()
-                };
-
-                jsonStr = JSON.stringify(backupData);
-            }
-
-            if (!jsonStr || jsonStr.length === 0) {
-                if (isAuto) return;
-                throw new Error('沒有資料可備份');
-            }
-
-            // 準備寫入 backups 集合
-            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
-            const newBackupData = {
-                backupTime: Timestamp.now(),
-                jsonData: jsonStr
-            };
-
-            // 檢查數量限制 (Rolling Logic)
-            const q = query(backupsRef, orderBy("backupTime", "asc"));
-            const backupSnapshot = await getDocs(q);
-
-            const MAX_BACKUPS = 10;
-            if (backupSnapshot.size >= MAX_BACKUPS) {
-                const deleteCount = backupSnapshot.size - MAX_BACKUPS + 1;
-                for (let i = 0; i < deleteCount; i++) {
-                    const docToDelete = backupSnapshot.docs[i];
-                    await deleteDoc(docToDelete.ref);
-                }
-            }
-
-            // 寫入新備份
-            await addDoc(backupsRef, newBackupData);
-            console.log("Firebase 備份完成");
-            // 不在此處顯示 alert，由調用者統一處理
-        } catch (error) {
-            console.error("Firebase 備份失敗", error);
-            // 不在此處顯示 alert，由調用者統一處理
-            throw error;
-        }
-    };
-
-    // 列出備份
-    window.firebaseListBackups = async function() {
-        if (!currentFirebaseUser) {
-            alert('請先登入 Firebase');
-            return;
-        }
-
-        try {
-            const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
-            const q = query(backupsRef, orderBy("backupTime", "desc"));
-            const snapshot = await getDocs(q);
-
-            if (snapshot.empty) {
-                alert('尚未有備份文件');
-                return;
-            }
-
-            const backups = [];
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                backups.push({
-                    id: docSnap.id,
-                    name: `備份 ${new Date(data.backupTime.toDate()).toLocaleString('zh-TW')}`,
-                    createdTime: data.backupTime.toDate().toISOString(),
-                    backupTime: data.backupTime
-                });
-            });
-
-            // 顯示備份列表
-            const modal = document.createElement('div');
-            modal.className = 'modal';
-            modal.style.zIndex = '3001';
-            modal.innerHTML = `
-                <div class="modal-content-wrapper" style="max-width: 500px; padding: 20px; max-height: 80vh; overflow-y: auto;">
-                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px;">備份列表</div>
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        ${backups.map((backup, index) => `
-                            <div style="padding: 12px; margin-bottom: 8px; background: var(--card-bg); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary);">備份 #${index + 1}</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                                        ${new Date(backup.createdTime).toLocaleString('zh-TW')}
-                                    </div>
-                                </div>
-                                <button onclick="window.firebaseRestoreBackup('${backup.id}')" style="padding: 8px 16px; background: var(--color-up); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                                    還原
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; cursor: pointer;">關閉</button>
-                    </div>
-                </div>
-            `;
-            modal.onclick = (e) => {
-                if (e.target === modal) modal.remove();
-            };
-            document.body.appendChild(modal);
-            modal.style.display = 'block';
-        } catch (err) {
-            alert('獲取備份列表失敗：' + err.message);
-        }
-    };
-
-    // 還原備份
-    window.firebaseRestoreBackup = async function(backupId) {
-        if (!currentFirebaseUser) {
-            alert('請先登入 Firebase');
-            return;
-        }
-
-        if (!confirm('確定要還原此備份嗎？這將覆蓋現有的所有資料。')) return;
-
-        try {
-            const targetBackupRef = doc(db, "users", currentFirebaseUser.uid, "backups", backupId);
-            const snap = await getDoc(targetBackupRef);
-
-            if (!snap.exists()) {
-                alert("備份檔不存在");
-                return;
-            }
-
-            const jsonStr = snap.data().jsonData;
-            const data = JSON.parse(jsonStr);
-
-            // 使用現有的匯入邏輯
-            if (data.version === '2.0' && data.users && data.usersData) {
-                localStorage.setItem('my_assets_users', JSON.stringify(data.users));
-                Object.keys(data.usersData).forEach(userId => {
-                    const userData = data.usersData[userId];
-                    localStorage.setItem(`my_assets_stable_data_${userId}`, JSON.stringify(userData.data || []));
-                    localStorage.setItem(`my_assets_stable_settings_${userId}`, JSON.stringify(userData.settings || {}));
-                    if (userData.journal !== undefined) {
-                        localStorage.setItem(`my_assets_journal_${userId}`, JSON.stringify(userData.journal || []));
-                    }
-                    if (userData.fixedTransfers !== undefined) {
-                        localStorage.setItem(`my_assets_fixed_transfers_${userId}`, JSON.stringify(userData.fixedTransfers || []));
-                    }
-                    if (userData.dateNotes !== undefined) {
-                        localStorage.setItem(`my_assets_date_notes_${userId}`, JSON.stringify(userData.dateNotes || {}));
-                    }
-                });
-                alert('還原成功！頁面將重新載入。');
-                setTimeout(() => location.reload(), 500);
-            } else {
-                alert('備份文件格式錯誤');
-            }
-        } catch (err) {
-            alert('還原失敗：' + err.message);
-        }
-    };
-
-    // 自動檢查與備份
-    window.firebaseCheckAndAutoBackup = async function() {
-        if (!currentFirebaseUser) return;
-
-        const backupsRef = collection(db, "users", currentFirebaseUser.uid, "backups");
-        const q = query(backupsRef, orderBy("backupTime", "desc"), limit(1));
-        const snapshot = await getDocs(q);
-
-        let shouldBackup = false;
-        if (snapshot.empty) {
-            shouldBackup = true;
-        } else {
-            const lastTime = snapshot.docs[0].data().backupTime.toDate();
-            const now = new Date();
-            const diffHours = (now - lastTime) / (1000 * 60 * 60);
-
-            if (diffHours >= 1) {
-                shouldBackup = true;
-            }
-        }
-
-        if (shouldBackup) {
-            try {
-                await window.firebasePerformBackup(null, true);
-            } catch (e) {
-                console.error('自動備份失敗:', e);
-            }
-        }
-    };
-
-    // 定時器：每分鐘檢查一次是否該備份了
-    setInterval(() => {
-        if (window.firebaseUserLoggedIn) {
-            window.firebaseCheckAndAutoBackup();
-        }
-    }, 60 * 1000);
-    
     // ========== 計算機功能（記帳用，統一使用錢包的計算機）==========
-    // 記帳的計算機直接使用錢包的計算機函數（openCalculator 和 closeCalculator）
     window.openCalculatorModal = function(targetInputId) {
-        // 使用錢包的計算機
         if (typeof openCalculator === 'function') {
             openCalculator(targetInputId);
         } else {
@@ -18611,46 +17211,27 @@
         }
     };
 
-    function openCalculatorModal(targetInputId) {
-        // 使用錢包的計算機
-        openCalculator(targetInputId);
-    }
-    
     function closeCalculatorModal() {
-        // 使用錢包的計算機關閉函數
-        closeCalculator();
+        if (typeof closeCalculator === 'function') closeCalculator();
     }
-    
     function confirmCalculator() {
-        // 使用錢包的計算機確認函數
-        closeCalculator();
+        if (typeof closeCalculator === 'function') closeCalculator();
     }
-    
     function calculatorInput(input) {
-        // 使用錢包的計算機輸入函數
-        calcInput(input);
+        if (typeof calcInput === 'function') calcInput(input);
     }
-    
     function updateCalculatorDisplay() {
-        // 使用錢包的計算機顯示更新函數
-        updateCalcDisplay();
+        if (typeof updateCalcDisplay === 'function') updateCalcDisplay();
     }
-    
-    // ========== 修改記帳金額輸入為計算機 ==========
-    // 在收入、支出、轉帳的金額輸入欄位加入點擊事件
+
     document.addEventListener('DOMContentLoaded', function() {
-        // 為金額輸入欄位加入點擊事件（使用事件委派）
         setTimeout(() => {
-            const incomeAmount = document.getElementById('incomeAmount');
-            const expenseAmount = document.getElementById('expenseAmount');
-            const transferAmount = document.getElementById('transferAmount');
-            
-            // 金額輸入欄位現在使用按鈕打開計算機，不需要 focus 事件監聽器
+            // 金額輸入欄位現在使用按鈕打開計算機
         }, 100);
     });
-    
-    // ========== 修改右上+號為四個分頁 ==========
-    // 注意：openNewExpenseFromCalendar 和 openJournalTypeSelector 已在前面定義
+
+    init();
 </script>
+
 </body>
 </html>
