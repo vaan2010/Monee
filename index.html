@@ -76,7 +76,7 @@
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.0.1/highcharts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async></script>
     
@@ -513,6 +513,7 @@
         .list-item:has(.item-name-row) .item-icon { align-self: flex-start; margin-top: 2px; }
         #group-stock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
         #group-twstock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
+        #group-twstock .list-item.twstock-has-dividend { border-left: 4px solid #ffd60a; }
         
         /* 隱藏對齊用 spacer */
         .list-item:has(.item-name-row) .item-amount-name-row { display: none !important; }
@@ -1954,6 +1955,11 @@
                     <span id="dCostPnlVal" style="font-size: 24px; font-weight: 700;">+0 (0%)</span>
                 <div style="font-size: 12px; color: #8e8e93; margin-top: 5px;">參考損益 (含手續費)</div>
                 </div>
+                <div id="dDividendBlock" style="display: none; margin-top: 16px; padding: 16px; background: rgba(255, 214, 10, 0.15); border-radius: 12px; border: 1px solid rgba(255, 214, 10, 0.5);">
+                    <div style="font-size: 14px; color: #8e8e93; margin-bottom: 6px;">除權除息</div>
+                    <div style="font-size: 20px; font-weight: 700; color: #ffd60a;"><span id="dDividendAmount">0</span></div>
+                    <div style="font-size: 14px; color: #ffd60a; margin-top: 4px;">除息日：<span id="dDividendDate">-</span></div>
+                </div>
             </div>
         </div>
         <div class="detail-list" id="detailTxList"></div>
@@ -3104,6 +3110,7 @@
     let isEditMode = false;
     let sortables = [];
     let currentDetailAcc = null;
+    let twDividendMap = {};
     
     // 統一的圖表動畫配置
     const CHART_ANIMATION_CONFIG = {
@@ -3143,6 +3150,39 @@
 
     // 2. Define Data Loading Functions
     function safeParseFloat(val) { let v = parseFloat(val); return isNaN(v) ? 0 : v; }
+    
+    async function loadTwDividendData() {
+        try {
+            const url = 'https://www.twse.com.tw/exchangeReport/TWT48U?response=json';
+            let res = await fetch(url);
+            if (!res.ok) res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.stat !== 'OK' || !data.data) return;
+            const f = data.fields || [];
+            const dateIdx = f.indexOf('除權除息日期');
+            const codeIdx = f.indexOf('股票代號');
+            const nameIdx = f.indexOf('名稱');
+            const cashIdx = f.indexOf('現金股利');
+            const stockIdx = f.indexOf('無償配股率');
+            twDividendMap = {};
+            for (const row of data.data) {
+                const code = (row[codeIdx] || '').toString().trim();
+                if (!code) continue;
+                const dateStr = (row[dateIdx] || '').toString().trim();
+                let cashDiv = 0;
+                const cashRaw = (row[cashIdx] || '').toString();
+                if (!/待公告/i.test(cashRaw)) {
+                    const n = parseFloat(cashRaw.replace(/\s/g, '').replace(/<[^>]*>/g, ''));
+                    if (!isNaN(n)) cashDiv = n;
+                }
+                const stockDiv = parseFloat((row[stockIdx] || '0').toString()) || 0;
+                const m = dateStr.match(/(\d+)年(\d+)月(\d+)日/);
+                const dateDisplay = m ? (parseInt(m[1], 10) + 1911) + '/' + parseInt(m[2], 10) + '/' + parseInt(m[3], 10) : dateStr;
+                twDividendMap[code] = { name: (row[nameIdx] || '').toString().trim(), cashDiv, stockDiv, dateStr: dateDisplay };
+            }
+        } catch (e) {}
+    }
     
     function tryMigrateOldData() {
         if (localStorage.getItem(STORAGE_KEY_DATA)) return;
@@ -4131,7 +4171,7 @@
     function hideCustomTooltip(){ document.getElementById('customTooltip').style.display='none'; }
 
     function updateChartData(animate = true) { 
-        if(!Highcharts)return; 
+        if(typeof Highcharts === 'undefined') return; 
         let groups={'bank':0,'stock':0,'twstock':0,'crypto':0}; 
         currentDetails={'bank':[],'stock':[],'twstock':[],'crypto':[]}; 
         
@@ -7724,6 +7764,22 @@
         } else {
             document.getElementById('dCostPnl').style.display = 'none';
         }
+        const dDivBlock = document.getElementById('dDividendBlock');
+        if (dDivBlock) {
+            if (currentDetailAcc.type === 'twstock' && currentDetailAcc.symbol) {
+                const divInfo = twDividendMap[(currentDetailAcc.symbol || '').toString().trim()];
+                if (divInfo && divInfo.cashDiv > 0) {
+                    const estDiv = divInfo.cashDiv * (currentDetailAcc.balance || 0);
+                    dDivBlock.style.display = 'block';
+                    document.getElementById('dDividendAmount').innerText = 'NT$ ' + (estDiv >= 0 ? estDiv.toLocaleString() : '0');
+                    document.getElementById('dDividendDate').innerText = divInfo.dateStr || '-';
+                } else {
+                    dDivBlock.style.display = 'none';
+                }
+            } else {
+                dDivBlock.style.display = 'none';
+            }
+        }
         const txList = document.getElementById('detailTxList'); txList.innerHTML = '';
         if (currentDetailAcc.transactions && currentDetailAcc.transactions.length > 0) {
             currentDetailAcc.transactions.forEach((tx, index) => {
@@ -8541,6 +8597,15 @@
                 await new Promise(r => setTimeout(r, 150));
             } catch(e) {
                 console.error(`Failed to refresh crypto info for ${acc.symbol}:`, e);
+            }
+        }
+        
+        // 若有台股帳戶，一併更新除權除息資料
+        if(twstockAccounts.length > 0) {
+            try {
+                await loadTwDividendData();
+            } catch(e) {
+                console.error('Failed to refresh dividend data:', e);
             }
         }
         
@@ -9389,9 +9454,12 @@
                 } else {
                     iconHtml = `<div class="item-icon ${g.s}"><i class="fas ${g.i}"></i></div>`;
                 }
+                const symForDiv = (acc.symbol || '').toString().trim();
+                const hasDiv = acc.type === 'twstock' && twDividendMap[symForDiv] && twDividendMap[symForDiv].cashDiv > 0;
+                const divClass = hasDiv ? ' twstock-has-dividend' : '';
                  // 美股、台股、加密貨幣使用新佈局：金額已內嵌在 item-name-row 中，不需要 item-amount-wrapper
                  if(acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto') {
-                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div></div>`;
+                     html += `<div class="list-item${divClass} ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div></div>`;
                 } else {
                     // 其他分類（錢包等）：眼睛按鈕放在金額右邊
                     html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
@@ -9787,8 +9855,8 @@
         if(settings.apiKey||settings.fugleKey) fetchPrices();
         setInterval(() => { if(isSorting) return; refreshAllData(false); }, 30000);
         
-        // 註冊 Service Worker（支援背景執行）
-        if('serviceWorker' in navigator) {
+        // 註冊 Service Worker（支援背景執行，僅在 HTTPS 或 localhost 下註冊）
+        if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
             navigator.serviceWorker.register('./service-worker.js')
                 .then((registration) => {
                     console.log('Service Worker 註冊成功:', registration.scope);
@@ -9881,6 +9949,7 @@
                     if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
                         openTutorialAssets();
                     }
+                    loadTwDividendData().then(() => { if(typeof renderAssets === 'function') renderAssets(); });
                 }, 300); // 等待淡出動畫完成
             }, 1000); // 等待 Monee 字樣動畫完成（1s 動畫）
         }
@@ -17230,7 +17299,11 @@
         }, 100);
     });
 
-    init();
+    if (document.readyState === 'complete') {
+        init();
+    } else {
+        window.addEventListener('load', init);
+    }
 </script>
 
 </body>
