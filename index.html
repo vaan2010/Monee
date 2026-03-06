@@ -230,16 +230,14 @@
         .user-avatar-container:hover .user-avatar { transform: scale(1.1); border-color: #64d2ff; }
         .user-avatar-container:active .user-avatar { transform: scale(0.95); }
         .sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; transition: opacity 0.3s; }
-        .menu-item { padding: 15px 25px; display: flex; align-items: center; font-size: 17px; color: var(--text-primary); cursor: pointer; transition: background 0.2s; }
+        .menu-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); cursor: pointer; transition: background 0.2s; }
         .menu-item:hover { background: var(--border-color); }
-        .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: #0a84ff; font-size: 20px; }
+        .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: #0a84ff; font-size: 18px; }
         .menu-text { flex: 1; }
         .menu-label { 
-            padding: 15px 25px 5px; 
-            font-size: 17px; 
-            color: var(--text-secondary); 
-            text-transform: uppercase; 
-            margin-top: 10px; 
+            padding: 12px 25px; 
+            font-size: 16px; 
+            color: var(--text-primary); 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
@@ -247,13 +245,37 @@
             user-select: none;
         }
         .menu-label:hover,
-        .menu-label:active { color: var(--text-secondary); }
+        .menu-label:active { color: var(--text-primary); }
         .menu-label .collapse-icon { 
-            font-size: 12px; 
+            font-size: 11px; 
+            color: var(--text-secondary);
             transition: transform 0.1s ease-out; 
             margin-left: 10px;
         }
         .menu-label.collapsed .collapse-icon { transform: rotate(-90deg); }
+        .menu-group-label { 
+            padding: 12px 25px; 
+            margin-top: 10px;
+            font-size: 16px; 
+            font-weight: normal; 
+            color: var(--text-primary); 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            cursor: pointer; 
+            user-select: none;
+        }
+        .menu-group-label:first-child { border-top: none; margin-top: 0; }
+        .menu-group-label:hover, .menu-group-label:active { color: var(--text-primary); }
+        .menu-group-label .collapse-icon { font-size: 11px; color: var(--text-secondary); transition: transform 0.1s ease-out; margin-left: 10px; }
+        .menu-group-label.collapsed .collapse-icon { transform: rotate(-90deg); }
+        .menu-section[id="menuSection-invest"] > *,
+        .menu-section[id="menuSection-data-settings"] > *,
+        .menu-section[id="menuSection-tutorial"] > *,
+        .menu-section[id="menuSection-system"] > * { padding-left: 35px; }
+        .menu-section .menu-section .menu-item,
+        .menu-section .menu-section .page-visibility-item { padding-left: 25px; }
         .menu-section { overflow: hidden; transition: max-height 0.12s ease-out; }
         .menu-section.collapsed { max-height: 0; }
         .menu-section:not(.collapsed) { max-height: 1000px; }
@@ -1545,58 +1567,86 @@
                 </div>
             </div>
             <div class="sidebar-menu">
-                <div class="menu-label collapsed" onclick="toggleMenuSection('update')">
-                    <span>更新</span>
+                <div class="menu-group-label collapsed" onclick="toggleMenuSection('invest')">
+                    <span>投資相關</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
                 </div>
-                <div class="menu-section collapsed" id="menuSection-update">
-                    <div class="menu-item" onclick="refreshAllData(); toggleSidebar();"><i class="fas fa-sync-alt"></i><span class="menu-text">立即更新</span></div>
-                    <div class="menu-item" onclick="refreshStockInfo(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">重新整理</span></div>
+                <div class="menu-section collapsed" id="menuSection-invest">
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('pnl')">
+                        <span>損益管理</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-pnl">
+                        <div class="menu-item" onclick="resetPnL(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">損益歸零</span></div>
+                        <div class="menu-item" onclick="restorePnL(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">恢復損益</span></div>
+                    </div>
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('linechart')">
+                        <span>折線圖記錄</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-linechart">
+                        <div class="menu-item" onclick="resetAssetHistory(); toggleSidebar();"><i class="fas fa-trash-alt"></i><span class="menu-text">重置折線圖</span></div>
+                        <div class="menu-item" onclick="restoreAssetHistory(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">復原折線圖</span></div>
+                    </div>
+                    <div class="menu-item" onclick="openDividendModal(); toggleSidebar();"><i class="fas fa-coins"></i><span class="menu-text">除權息歷史</span></div>
                 </div>
-                <div class="menu-label collapsed" onclick="toggleMenuSection('data')">
-                    <span>資料管理</span>
+
+                <div class="menu-group-label collapsed" onclick="toggleMenuSection('data-settings')">
+                    <span>資料與設定</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
                 </div>
-                <div class="menu-section collapsed" id="menuSection-data">
-                    <div class="menu-item" onclick="exportData(); toggleSidebar();"><i class="fas fa-file-export"></i><span class="menu-text">匯出備份</span></div>
-                    <div class="menu-item" onclick="importData(); toggleSidebar();"><i class="fas fa-file-import"></i><span class="menu-text">匯入還原</span></div>
-                    <div class="menu-item" onclick="setupCloudBackup(); toggleSidebar();"><i class="fas fa-cloud"></i><span class="menu-text">雲端備份設定</span></div>
+                <div class="menu-section collapsed" id="menuSection-data-settings">
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('data')">
+                        <span>資料管理</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-data">
+                        <div class="menu-item" onclick="exportData(); toggleSidebar();"><i class="fas fa-file-export"></i><span class="menu-text">匯出備份</span></div>
+                        <div class="menu-item" onclick="importData(); toggleSidebar();"><i class="fas fa-file-import"></i><span class="menu-text">匯入還原</span></div>
+                        <div class="menu-item" onclick="setupCloudBackup(); toggleSidebar();"><i class="fas fa-cloud"></i><span class="menu-text">雲端備份設定</span></div>
+                    </div>
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('api')">
+                        <span>API 設定</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-api">
+                        <div class="menu-item" onclick="setApiKey('finnhub'); toggleSidebar();"><i class="fas fa-chart-line"></i><span class="menu-text">Finnhub Key (美股報價)</span></div>
+                        <div class="menu-item" onclick="setApiKey('fugle'); toggleSidebar();"><i class="fas fa-chart-line"></i><span class="menu-text">Fugle Key (台股報價)</span></div>
+                        <div class="menu-item" onclick="setApiKey('gemini'); toggleSidebar();"><i class="fas fa-robot"></i><span class="menu-text">Gemini Key (讀圖)</span></div>
+                    </div>
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('pages')">
+                        <span>分頁顯示</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-pages">
+                        <div id="pageVisibilitySettings"></div>
+                    </div>
                 </div>
-                <div class="menu-label collapsed" onclick="toggleMenuSection('pnl')">
-                    <span>損益管理</span>
+
+                <div class="menu-group-label collapsed" onclick="toggleMenuSection('tutorial')">
+                    <span>說明與教學</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
                 </div>
-                <div class="menu-section collapsed" id="menuSection-pnl">
-                    <div class="menu-item" onclick="resetPnL(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">損益歸零</span></div>
-                    <div class="menu-item" onclick="restorePnL(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">恢復損益</span></div>
+                <div class="menu-section collapsed" id="menuSection-tutorial">
+                    <div class="menu-item" onclick="openTutorialAssets(); toggleSidebar();"><i class="fas fa-wallet"></i><span class="menu-text">資產介紹</span></div>
+                    <div class="menu-item" onclick="openTutorialJournal(); toggleSidebar();"><i class="fas fa-book"></i><span class="menu-text">記帳介紹</span></div>
                 </div>
-                <div class="menu-label collapsed" onclick="toggleMenuSection('linechart')">
-                    <span>折線圖記錄</span>
+
+                <div class="menu-group-label collapsed" onclick="toggleMenuSection('system')">
+                    <span>系統</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
                 </div>
-                <div class="menu-section collapsed" id="menuSection-linechart">
-                    <div class="menu-item" onclick="resetAssetHistory(); toggleSidebar();"><i class="fas fa-trash-alt"></i><span class="menu-text">重置折線圖</span></div>
-                    <div class="menu-item" onclick="restoreAssetHistory(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">復原折線圖</span></div>
+                <div class="menu-section collapsed" id="menuSection-system">
+                    <div class="menu-label collapsed" onclick="toggleMenuSection('update')">
+                        <span>更新</span>
+                        <i class="fas fa-chevron-down collapse-icon"></i>
+                    </div>
+                    <div class="menu-section collapsed" id="menuSection-update">
+                        <div class="menu-item" onclick="refreshAllData(); toggleSidebar();"><i class="fas fa-sync-alt"></i><span class="menu-text">立即更新</span></div>
+                        <div class="menu-item" onclick="refreshStockInfo(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">重新整理</span></div>
+                    </div>
+                    <div class="menu-item" onclick="toggleTheme(); toggleSidebar();"><i class="fas fa-moon" id="themeIcon"></i><span class="menu-text" id="themeText">深色模式</span></div>
                 </div>
-                <div class="menu-label collapsed" onclick="toggleMenuSection('api')">
-                    <span>API 設定</span>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </div>
-                <div class="menu-section collapsed" id="menuSection-api">
-                    <div class="menu-item" onclick="setApiKey('finnhub'); toggleSidebar();"><i class="fas fa-chart-line"></i><span class="menu-text">Finnhub Key (美股報價)</span></div>
-                    <div class="menu-item" onclick="setApiKey('fugle'); toggleSidebar();"><i class="fas fa-chart-line"></i><span class="menu-text">Fugle Key (台股報價)</span></div>
-                    <div class="menu-item" onclick="setApiKey('gemini'); toggleSidebar();"><i class="fas fa-robot"></i><span class="menu-text">Gemini Key (讀圖)</span></div>
-                </div>
-                <div class="menu-label collapsed" onclick="toggleMenuSection('pages')">
-                    <span>分頁顯示</span>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </div>
-                <div class="menu-section collapsed" id="menuSection-pages">
-                    <div id="pageVisibilitySettings"></div>
-                </div>
-                <div class="menu-item" onclick="openTutorialAssets(); toggleSidebar();"><i class="fas fa-wallet"></i><span class="menu-text">資產介紹</span></div>
-                <div class="menu-item" onclick="openTutorialJournal(); toggleSidebar();"><i class="fas fa-book"></i><span class="menu-text">記帳介紹</span></div>
-                <div class="menu-item" onclick="toggleTheme(); toggleSidebar();"><i class="fas fa-moon" id="themeIcon"></i><span class="menu-text" id="themeText">深色模式</span></div>
             </div>
         </div>
 
@@ -2142,6 +2192,22 @@
                 <button onclick="openFixedIncomeModal()" style="position: absolute; bottom: 20px; right: 20px; width: 48px; height: 48px; border-radius: 50%; background: #ffd60a; color: #000; border: none; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100;">
                     <i class="fas fa-plus"></i>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 除權息歷史 Modal -->
+    <div id="dividendModal" class="modal" style="z-index: 2006;" onclick="event.target.id === 'dividendModal' && closeDividendModal()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; max-height: 85vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; flex-direction: column; overflow: hidden;" onclick="event.stopPropagation()">
+            <div style="padding: 0 20px 20px 20px; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-top: 20px; flex-shrink: 0;">
+                    <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">除權息歷史</div>
+                    <button class="btn-icon" onclick="closeDividendModal()" style="color: var(--text-secondary);"><i class="fas fa-times"></i></button>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; flex-shrink: 0;">顯示目前持股最近三個月到今天的已除息資料（資料來源：FinMind）</p>
+                <div id="dividendModalLoading" style="text-align: center; padding: 40px; color: var(--text-secondary); flex-shrink: 0;"><i class="fas fa-spinner fa-spin" style="font-size: 24px; display: block; margin-bottom: 12px;"></i>載入中...</div>
+                <div id="dividendModalList" style="flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px; display: none;"></div>
+                <div id="dividendModalEmpty" style="text-align: center; padding: 40px; color: var(--text-secondary); flex-shrink: 0; display: none;">無符合條件的除權除息資料</div>
             </div>
         </div>
     </div>
@@ -3008,6 +3074,8 @@
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
     const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes'; // 日期記事
     const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
+    const STORAGE_KEY_DIVIDEND_RECORDS = 'my_assets_dividend_records'; // 除權息：持股股數、手動輸入金額
+    const STORAGE_KEY_TWSTOCK_DAILY = 'my_assets_twstock_daily'; // 台股每日持股快照（用於除權息歷史自動帶入股數）
     
     // 銀行代碼資料（包含銀行名稱和代碼）
     const BANK_DATA = [
@@ -3334,9 +3402,14 @@
     
     // 選單區塊摺疊狀態（預設全部摺疊，不記錄上次狀態）
     let menuSectionsState = {
+        'invest': true,
+        'data-settings': true,
+        'tutorial': true,
+        'system': true,
         'update': true,
         'data': true,
         'pnl': true,
+        'linechart': true,
         'api': true,
         'pages': true
     };
@@ -3373,7 +3446,7 @@
         Object.keys(menuSectionsState).forEach(sectionId => {
             const section = document.getElementById(`menuSection-${sectionId}`);
             // 找到對應的 label（通過查找包含該 sectionId 的 onclick 屬性）
-            const labels = document.querySelectorAll('.menu-label');
+            const labels = document.querySelectorAll('.menu-label, .menu-group-label');
             let label = null;
             labels.forEach(l => {
                 if(l.getAttribute('onclick') && l.getAttribute('onclick').includes(`'${sectionId}'`)) {
@@ -5680,6 +5753,26 @@
         alert('已復原折線圖記錄');
     }
     
+    function loadTwstockDailyBalances() {
+        const key = `${STORAGE_KEY_TWSTOCK_DAILY}_${currentUserId}`;
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) { return {}; }
+    }
+    function saveTwstockDailyBalances(data) {
+        if (isUserSwitching) return;
+        const key = `${STORAGE_KEY_TWSTOCK_DAILY}_${currentUserId}`;
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+    function getTwstockBalanceAtDate(accId, dateStr) {
+        const data = loadTwstockDailyBalances();
+        const dates = Object.keys(data).filter(d => d <= dateStr).sort().reverse();
+        if (dates.length === 0) return null;
+        const day = data[dates[0]];
+        return day && day[accId] !== undefined ? day[accId] : null;
+    }
+    
     // 記錄今日資產快照（每天只記錄一次，但會更新當天最新值）
     function recordDailyAssetSnapshot() {
         if (isUserSwitching) return;
@@ -5707,10 +5800,20 @@
         const history = loadAssetHistory();
         history[dateStr] = totals;
         
-        // 清理超過 730 天（2年）的舊資料
+        // 記錄台股每日持股（用於除權息歷史自動帶入股數）
+        const twDaily = loadTwstockDailyBalances();
+        const twToday = {};
+        accounts.filter(a => a.type === 'twstock').forEach(acc => {
+            twToday[acc.id] = parseFloat(acc.balance) || 0;
+        });
+        twDaily[dateStr] = twToday;
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 730);
         const cutoffStr = `${cutoffDate.getFullYear()}-${String(cutoffDate.getMonth()+1).padStart(2,'0')}-${String(cutoffDate.getDate()).padStart(2,'0')}`;
+        Object.keys(twDaily).forEach(key => { if (key < cutoffStr) delete twDaily[key]; });
+        saveTwstockDailyBalances(twDaily);
+        
+        // 清理超過 730 天（2年）的舊資料
         Object.keys(history).forEach(key => {
             if(key < cutoffStr) delete history[key];
         });
@@ -6313,12 +6416,16 @@
             const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${user.id}`;
             const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
             const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
+            const userDividendRecordsKey = `${STORAGE_KEY_DIVIDEND_RECORDS}_${user.id}`;
+            const userTwstockDailyKey = `${STORAGE_KEY_TWSTOCK_DAILY}_${user.id}`;
             const userAccounts = JSON.parse(localStorage.getItem(userDataKey)) || [];
             const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
             const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
             const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
             const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
+            const userDividendRecords = JSON.parse(localStorage.getItem(userDividendRecordsKey) || '{}');
+            const userTwstockDaily = JSON.parse(localStorage.getItem(userTwstockDailyKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
@@ -6326,7 +6433,9 @@
                 journal: userJournal,
                 fixedTransfers: userFixedTransfers,
                 dateNotes: userDateNotes,
-                assetHistory: userAssetHistory
+                assetHistory: userAssetHistory,
+                dividendRecords: userDividendRecords,
+                twstockDaily: userTwstockDaily
             };
         });
         
@@ -6697,7 +6806,11 @@
             const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
             const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
             const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
+            const userDividendRecordsKey = `${STORAGE_KEY_DIVIDEND_RECORDS}_${user.id}`;
+            const userTwstockDailyKey = `${STORAGE_KEY_TWSTOCK_DAILY}_${user.id}`;
             const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
+            const userDividendRecords = JSON.parse(localStorage.getItem(userDividendRecordsKey) || '{}');
+            const userTwstockDaily = JSON.parse(localStorage.getItem(userTwstockDailyKey) || '{}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
@@ -6705,7 +6818,9 @@
                 journal: userJournal,
                 fixedTransfers: userFixedTransfers,
                 dateNotes: userDateNotes,
-                assetHistory: userAssetHistory
+                assetHistory: userAssetHistory,
+                dividendRecords: userDividendRecords,
+                twstockDaily: userTwstockDaily
             };
         });
         
@@ -6799,6 +6914,14 @@
                             // 匯入資產歷史快照
                             if (userData.assetHistory !== undefined) {
                                 localStorage.setItem(`${STORAGE_KEY_ASSET_HISTORY}_${userId}`, JSON.stringify(userData.assetHistory || {}));
+                            }
+                            // 匯入除權息紀錄
+                            if (userData.dividendRecords !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_DIVIDEND_RECORDS}_${userId}`, JSON.stringify(userData.dividendRecords || {}));
+                            }
+                            // 匯入台股每日持股快照
+                            if (userData.twstockDaily !== undefined) {
+                                localStorage.setItem(`${STORAGE_KEY_TWSTOCK_DAILY}_${userId}`, JSON.stringify(userData.twstockDaily || {}));
                             }
                         });
 
@@ -7896,6 +8019,7 @@
         
         // 保存資料
         saveData();
+        recordDailyAssetSnapshot();
         
         // 重新渲染詳情頁面
         openDetailView(currentDetailAcc.id);
@@ -9949,6 +10073,7 @@
                     if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
                         openTutorialAssets();
                     }
+                    if (typeof recordDailyAssetSnapshot === 'function') recordDailyAssetSnapshot();
                     loadTwDividendData().then(() => { if(typeof renderAssets === 'function') renderAssets(); });
                 }, 300); // 等待淡出動畫完成
             }, 1000); // 等待 Monee 字樣動畫完成（1s 動畫）
@@ -14314,6 +14439,162 @@
         if(modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
         if(modal) { modal.style.display = 'none'; }
     }
+    
+    function loadDividendRecords() {
+        const key = `${STORAGE_KEY_DIVIDEND_RECORDS}_${currentUserId}`;
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) { return {}; }
+    }
+    function saveDividendRecords(records) {
+        const key = `${STORAGE_KEY_DIVIDEND_RECORDS}_${currentUserId}`;
+        localStorage.setItem(key, JSON.stringify(records));
+    }
+    
+    const FINMIND_API = 'https://api.finmindtrade.com/api/v4/data';
+    const CORS_PROXY_DIV = 'https://api.allorigins.win/raw?url=';
+    
+    async function openDividendModal() {
+        const modal = document.getElementById('dividendModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        const loadingEl = document.getElementById('dividendModalLoading');
+        const listEl = document.getElementById('dividendModalList');
+        const emptyEl = document.getElementById('dividendModalEmpty');
+        if (!modal || !modalWrapper) return;
+        loadingEl.style.display = 'block';
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        modal.style.display = 'flex';
+        modal.style.background = 'rgba(0,0,0,0.5)';
+        modalWrapper.style.transform = 'translateY(100%)';
+        requestAnimationFrame(() => { setTimeout(() => { modalWrapper.style.transform = 'translateY(0)'; }, 10); });
+        const codes = [...new Set(accounts.filter(a => a.type === 'twstock' && a.symbol).map(a => (a.symbol || '').toString().trim()).filter(Boolean))];
+        await queryDividendHistory(codes);
+    }
+    async function queryDividendHistory(codes) {
+        const loadingEl = document.getElementById('dividendModalLoading');
+        const listEl = document.getElementById('dividendModalList');
+        const emptyEl = document.getElementById('dividendModalEmpty');
+        if (codes.length === 0) {
+            loadingEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            emptyEl.textContent = '目前無台股持股';
+            return;
+        }
+        loadingEl.style.display = 'block';
+        listEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        const now = new Date();
+        const endDate = now.toISOString().slice(0, 10);
+        const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        const startDate = threeMonthsAgo.toISOString().slice(0, 10);
+        const items = [];
+        for (let i = 0; i < codes.length; i++) {
+            const code = codes[i];
+            try {
+                const url = `${FINMIND_API}?dataset=TaiwanStockDividendResult&data_id=${code}&start_date=${startDate}&end_date=${endDate}`;
+                let res = await fetch(url);
+                if (!res.ok) res = await fetch(CORS_PROXY_DIV + encodeURIComponent(url));
+                if (!res.ok) continue;
+                const json = await res.json();
+                if (json.data && Array.isArray(json.data)) {
+                    for (const row of json.data) {
+                        const cashDiv = parseFloat(row.stock_and_cache_dividend) || 0;
+                        const typeStr = (row.stock_or_cache_dividend || '').toString();
+                        if (cashDiv <= 0) continue;
+                        if (!/息|除息|權|除權/.test(typeStr)) continue;
+                        const dateDisplay = row.date ? row.date.replace(/-/g, '/') : '-';
+                        const divDateStr = row.date || '';
+                        const acc = accounts.find(a => a.type === 'twstock' && (a.symbol || '').toString().trim() === code);
+                        const rec = acc ? (loadDividendRecords()[acc.id] || {}) : {};
+                        let useShares = rec.dividendShares;
+                        if (useShares === undefined && acc) {
+                            const histBal = getTwstockBalanceAtDate(acc.id, divDateStr);
+                            useShares = histBal !== null ? histBal : 0;
+                        }
+                        if (useShares === undefined) useShares = 0;
+                        const calcAmt = cashDiv * useShares;
+                        items.push({
+                            code: row.stock_id || code,
+                            name: acc ? (acc.name || code) : (twDividendMap[code]?.name || code),
+                            dateStr: dateDisplay,
+                            cashDiv,
+                            typeStr,
+                            shares: useShares,
+                            calcAmt,
+                            accId: acc ? acc.id : null
+                        });
+                    }
+                }
+            } catch (e) {}
+            if (i % 5 === 0 && i > 0) loadingEl.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size: 24px; display: block; margin-bottom: 12px;"></i>查詢中 ${i}/${codes.length}...`;
+            await new Promise(r => setTimeout(r, 50));
+        }
+        const seen = new Set();
+        const unique = items.filter(it => {
+            const key = it.code + '_' + it.dateStr;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        unique.sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
+        loadingEl.style.display = 'none';
+        if (unique.length === 0) {
+            emptyEl.style.display = 'block';
+            emptyEl.textContent = '無符合條件的除權除息資料';
+        } else {
+            listEl.style.display = 'block';
+            listEl.innerHTML = unique.map(it => {
+                let detail = it.typeStr && /權|除權/.test(it.typeStr) ? `除權 權息值 ${it.cashDiv}` : `每股現金 ${it.cashDiv} 元`;
+                const sharesInput = it.accId ? `<div style="margin-top: 8px;"><span style="font-size: 12px; color: var(--text-secondary);">除息時持股：</span><input type="number" min="0" step="1" value="${it.shares}" data-acc-id="${it.accId}" data-cash-div="${it.cashDiv}" onchange="saveDividendHistoryShares(this)" style="width: 80px; padding: 6px 8px; margin-left: 6px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); font-size: 14px;"> 股 <span style="font-size: 13px; color: var(--text-secondary); margin-left: 8px;">× ${it.cashDiv} 元 = NT$ <span class="dividend-amt">${Math.round(it.calcAmt).toLocaleString()}</span></span></div>` : `<div style="font-size: 14px; color: var(--text-secondary); margin-top: 6px;">除息時持股 ${it.shares} 股 × ${it.cashDiv} 元 = NT$ ${Math.round(it.calcAmt).toLocaleString()}</div>`;
+                return `
+                    <div style="padding: 16px; border-radius: 12px; background: var(--bg-color); margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div><span style="font-size: 16px; font-weight: 600; color: var(--text-primary);">${it.name}</span> <span style="font-size: 13px; color: var(--text-secondary);">${it.code}</span></div>
+                            <span style="font-size: 14px; color: var(--text-secondary);">除息日 ${it.dateStr}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">${detail}</div>
+                        ${sharesInput}
+                    </div>`;
+            }).join('');
+        }
+    }
+    function saveDividendHistoryShares(input) {
+        const accId = input.getAttribute('data-acc-id');
+        const cashDiv = parseFloat(input.getAttribute('data-cash-div')) || 0;
+        const shares = parseInt(input.value, 10) || 0;
+        const records = loadDividendRecords();
+        if (!records[accId]) records[accId] = { dividendShares: 0, manualAmount: null };
+        records[accId].dividendShares = shares;
+        saveDividendRecords(records);
+        const amtEl = input.closest('div').querySelector('.dividend-amt');
+        if (amtEl) amtEl.textContent = Math.round(shares * cashDiv).toLocaleString();
+    }
+    function saveDividendItemField(input) {
+        const accId = input.getAttribute('data-acc-id');
+        const field = input.getAttribute('data-field');
+        const val = field === 'manualAmount' ? (input.value === '' ? null : parseFloat(input.value) || 0) : (parseFloat(input.value) || 0);
+        const records = loadDividendRecords();
+        if (!records[accId]) records[accId] = { dividendShares: 0, manualAmount: null };
+        records[accId][field] = val;
+        saveDividendRecords(records);
+    }
+    function fillDividendSharesWithCurrent(accId, currentBalance) {
+        const records = loadDividendRecords();
+        if (!records[accId]) records[accId] = { dividendShares: 0, manualAmount: null };
+        records[accId].dividendShares = currentBalance;
+        saveDividendRecords(records);
+        const input = document.querySelector(`input[data-field="shares"][data-acc-id="${accId}"]`);
+        if (input) { input.value = currentBalance; }
+    }
+    function closeDividendModal() {
+        const modal = document.getElementById('dividendModal');
+        const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
+        if (modalWrapper) modalWrapper.style.transform = 'translateY(100%)';
+        if (modal) modal.style.display = 'none';
+    }
+    
     function renderFixedIncomeList() {
         const container = document.getElementById('fixedIncomeListContainer');
         if(!container) return;
