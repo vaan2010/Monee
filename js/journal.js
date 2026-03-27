@@ -7181,7 +7181,6 @@
         
         // 計算下下回日期
         const nextNextDate = new Date(nextDate);
-        const nextNextDate = new Date(nextDate);
         switch(fixedTransferData.repeat) {
             case 'daily':
                 nextNextDate.setDate(nextNextDate.getDate() + 1);
