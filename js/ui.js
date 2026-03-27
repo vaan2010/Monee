@@ -391,3 +391,18 @@ function togglePageVisibility(pageIndex, enabled) {
 }
 
     function toggleSidebarCollapse() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); const isCollapsed=s.classList.contains('collapsed'); if(isCollapsed){s.classList.remove('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('active'); o.classList.add('active');} localStorage.setItem('sidebarCollapsed','false');}else{s.classList.add('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('active'); o.classList.remove('active');} localStorage.setItem('sidebarCollapsed','true');} }
+
+function initNumbersState() {
+    const isHidden = localStorage.getItem('numbersHidden') === 'true';
+    const body = document.body;
+    const icon = document.getElementById('toggleNumbersIcon');
+    if (isHidden) {
+        body.classList.add('numbers-hidden');
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        body.classList.remove('numbers-hidden');
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}

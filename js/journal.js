@@ -4232,9 +4232,6 @@
         if (!currentUserId) return;
         localStorage.setItem(STORAGE_KEY_FIXED_INCOMES + '_' + currentUserId, JSON.stringify(items));
     }
-    let editingFixedExpenseId = null;
-    let editingFixedIncomeId = null;
-    
     function openFixedExpenseListFromJournal() {
         const modal = document.getElementById('fixedExpenseListModal');
         const modalWrapper = modal && modal.querySelector('.modal-content-wrapper');
@@ -5318,9 +5315,6 @@
         // 立即打開固定轉帳表單，不延遲
         openFixedTransferModal();
     }
-    
-    // 當前編輯的固定轉帳ID（null表示新增模式）
-    let editingFixedTransferId = null;
     
     // Fixed Transfer Functions
     function openFixedTransferModal(transferId = null) {

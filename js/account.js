@@ -70,6 +70,8 @@ function renderPageIndicator() {
     }
 }
 
+function switchTab(t) { document.querySelectorAll('.modal-tab').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active')); document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active'); document.getElementById('content'+t.charAt(0).toUpperCase()+t.slice(1)).classList.add('active'); }
+
 function openModal() {
     if(isEditMode)return;
     editingId=null;
