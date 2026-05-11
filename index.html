@@ -7,6 +7,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a84ff">
     <title>Monee</title>
+    <!-- Firebase 模組：對應 npm 文件的 import { ... } from "firebase/app"（瀏覽器需 import map） -->
+    <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js",
+        "firebase/database": "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js"
+      }
+    }
+    </script>
     
     <!-- Favicon -->
     <!-- 使用絕對路徑，確保在 GitHub Pages 上能正確載入 -->
@@ -78,7 +87,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highcharts/11.0.1/highcharts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async></script>
     
     <style>
         :root {
@@ -199,12 +207,53 @@
             .tab-bar .tab-item i { font-size: 18px; }
             .modal { align-items: center; justify-content: center; display: flex; }
             .modal-content-wrapper { width: 500px !important; height: 80% !important; max-height: 700px; border-radius: 16px; border: 1px solid var(--border-color); position: relative !important; overflow: hidden; display: flex; flex-direction: column; }
+            /* 計算機：勿套用桌面共用 modal 的 500px / 80% 高度（捲動與 max-height 見全域 #calculatorModal 規則） */
+            #calculatorModal .modal-content-wrapper {
+                width: 100% !important;
+                max-width: 400px !important;
+            }
             #chartWrapper { max-width: 100%; overflow: hidden; padding: 0 10px; flex: 0 0 auto; min-height: 320px; width: 100%; }
             #assetChart { max-width: 100% !important; width: 100% !important; height: 100% !important; min-width: 0; min-height: 0; }
             #chartWrapper .highcharts-container { max-width: 100% !important; overflow: hidden !important; width: 100% !important; height: 100% !important; }
             #chartWrapper .highcharts-root { max-width: 100% !important; overflow: hidden !important; width: 100% !important; height: 100% !important; }
             #chartWrapper svg { max-width: 100% !important; height: auto !important; }
             #lineChartWrapper { max-width: 100%; width: 100%; height: 350px !important; }
+        }
+
+        @media (min-width: 768px) and (max-height: 720px) {
+            #calculatorModal .calc-key { padding: 12px 14px; font-size: 20px; }
+            #calculatorModal .calc-key-function { font-size: 16px; }
+            #calculatorModal #calcDisplay { font-size: 28px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child { padding: 12px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child > div:first-child { padding: 12px !important; min-height: 56px !important; margin-bottom: 12px !important; }
+            #calculatorModal .modal-content-wrapper .modal-header { padding: 10px 16px; }
+        }
+
+        @media (max-width: 767px) {
+            #calculatorModal {
+                padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+                box-sizing: border-box;
+            }
+            #calculatorModal .modal-content-wrapper {
+                width: 100% !important;
+                max-width: min(400px, 100%) !important;
+                margin: 0 auto !important;
+            }
+            #calculatorModal .calc-key { padding: 12px 8px; font-size: 20px; }
+            #calculatorModal .calc-key-function { font-size: 15px; }
+            #calculatorModal #calcDisplay { font-size: 28px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child { padding: 12px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child > div:first-child { padding: 12px !important; min-height: 52px !important; margin-bottom: 10px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child > div:last-child { gap: 8px !important; }
+            #calculatorModal .modal-content-wrapper .modal-header { padding: 10px 16px; }
+        }
+
+        @media (max-width: 767px) and (max-height: 700px) {
+            #calculatorModal .calc-key { padding: 10px 6px; font-size: 18px; }
+            #calculatorModal .calc-key-function { font-size: 14px; }
+            #calculatorModal #calcDisplay { font-size: 24px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child > div:first-child { min-height: 44px !important; margin-bottom: 8px !important; }
+            #calculatorModal .modal-content-wrapper > div:last-child > div:last-child { gap: 6px !important; }
         }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: var(--bg-color); position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; width: 100%; }
@@ -659,8 +708,8 @@
             position: fixed;
             bottom: 80px;
             right: 20px;
-            width: 60px;
-            height: 60px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: transparent !important;
             backdrop-filter: none !important;
@@ -673,36 +722,72 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
             z-index: 10000;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 0;
-            gap: 2px;
+            gap: 0;
         }
         .currency-toggle-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
             background: rgba(58, 58, 60, 0.3) !important;
             backdrop-filter: none !important;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
         }
         .currency-toggle-btn:active {
             transform: scale(0.95);
         }
         .currency-toggle-btn i {
-            font-size: 18px;
+            font-size: 12px;
             margin: 0;
+            transition: all 0.25s ease;
         }
         .currency-toggle-btn span {
-            font-size: 11px;
+            font-size: 10px;
             line-height: 1;
+            opacity: 0;
+            max-height: 0;
+            transform: scale(0.85);
+            overflow: hidden;
+            transition: all 0.25s ease;
+        }
+        /* 桌面：滑鼠移上去才展開（icon 彈出） */
+        @media (min-width: 768px) {
+            .currency-toggle-btn:hover {
+                width: 62px;
+                height: 62px;
+                gap: 2px;
+            }
+            .currency-toggle-btn:hover i {
+                font-size: 18px;
+            }
+            .currency-toggle-btn:hover span {
+                opacity: 1;
+                max-height: 16px;
+                transform: scale(1);
+            }
         }
         @media (max-width: 767px) {
             .currency-toggle-btn {
                 bottom: 90px; /* 提高位置，確保在 tab-bar 上方且不被遮蓋 */
                 right: 15px;
-                width: 56px;
-                height: 56px;
+                width: 42px;
+                height: 42px;
                 z-index: 10001; /* 確保在最上層 */
+            }
+            /* 手機：先點一下展開，第二下才切換 */
+            .currency-toggle-btn.is-armed {
+                width: 62px;
+                height: 62px;
+                gap: 2px;
+            }
+            .currency-toggle-btn.is-armed i {
+                font-size: 18px;
+            }
+            .currency-toggle-btn.is-armed span {
+                opacity: 1;
+                max-height: 16px;
+                transform: scale(1);
             }
         }
 
@@ -1260,7 +1345,21 @@
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; transition: background 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         #accountModal { z-index: 2001; } /* 確保編輯模態框在詳情視圖之上 */
-        #calculatorModal { z-index: 2012; } /* 確保計算機模態框在編輯模態框之上 */
+        /* 計算機：全螢幕尺寸皆需可捲動；手機版 .modal-content-wrapper 預設 height:100% + overflow:hidden 會裁切鍵盤 */
+        #calculatorModal {
+            z-index: 2012;
+            align-items: center;
+            justify-content: center;
+        }
+        #calculatorModal .modal-content-wrapper {
+            height: auto !important;
+            max-height: min(92vh, calc(100vh - 16px)) !important;
+            max-height: min(92vh, calc(100dvh - 16px)) !important;
+            max-height: min(92vh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px)) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
         #accountModal .modal-content-wrapper { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
         #accountModal[style*="display: block"] .modal-content-wrapper, #accountModal[style*="display:flex"] .modal-content-wrapper { transform: translateX(0); }
         #accountModal .modal-content-wrapper.swiping { transition: none; } /* 滑動過程中禁用過渡 */
@@ -1408,6 +1507,52 @@
         #detailView { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; flex-direction: column; }
         #detailView.active { transform: translateX(0); }
         #detailView.swiping { transition: none; } /* 滑動過程中禁用過渡，實現實時跟隨 */
+        .detail-view-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; height: 100%; background: var(--bg-color); }
+        @media (min-width: 768px) {
+            #detailView {
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                transform: none !important;
+                transition: background 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.4s;
+                background: transparent !important;
+                pointer-events: none;
+                opacity: 0;
+                visibility: hidden;
+            }
+            #detailView.active {
+                transform: none !important;
+                background: rgba(0,0,0,0.55) !important;
+                pointer-events: auto;
+                opacity: 1;
+                visibility: visible;
+            }
+            #detailView .detail-view-panel {
+                width: 500px !important;
+                height: 80% !important;
+                max-height: 700px;
+                max-width: calc(100vw - 40px);
+                flex: 0 0 auto;
+                border-radius: 16px;
+                border: 1px solid var(--border-color);
+                box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+                transform: translateX(100%);
+                transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                overflow-x: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            /* 桌面板：整欄一起捲動，勿固定上方、僅列表捲動 */
+            #detailView .detail-view-panel .navbar,
+            #detailView .detail-view-panel .detail-header {
+                flex-shrink: 0;
+            }
+            #detailView .detail-view-panel .detail-list {
+                flex: 0 0 auto;
+                overflow: visible;
+            }
+            #detailView.swiping .detail-view-panel { transition: none; }
+        }
         .detail-header { padding: 10px 20px 20px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0; }
         #detailView .navbar { position: relative; z-index: 1; }
         .detail-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
@@ -1486,9 +1631,79 @@
         .expense-ai-carousel-dots span.active { background: #0a84ff; }
         #expenseAiTutorialModal .tutorial-close { padding: 12px 20px 20px; text-align: center; }
         #expenseAiTutorialModal .tutorial-close button { padding: 10px 32px; border-radius: 10px; border: none; background: #0a84ff; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+        /* ===== Monee 雲端登入閘道 ===== */
+        html.monee-gate-pending #loadingOverlay,
+        html.monee-gate-pending .app-container,
+        html.monee-gate-pending .loading-overlay { display: none !important; }
+        #moneeCloudGate {
+            position: fixed; inset: 0; z-index: 1000000;
+            background: var(--bg-color); color: var(--text-primary);
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+            display: none; flex-direction: column; align-items: center;
+        }
+        html.monee-gate-pending #moneeCloudGate { display: flex; }
+        .monee-cloud-panel {
+            width: 100%; max-width: 420px;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 20px; margin-top: 8px;
+        }
+        .monee-cloud-brand {
+            font-size: 20px; font-weight: 700; margin-bottom: 6px;
+            text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .monee-cloud-brand img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+        .monee-cloud-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.45; }
+        .monee-cloud-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .monee-cloud-tabs button {
+            flex: 1; padding: 10px; border-radius: 10px; border: none;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+        }
+        .monee-cloud-tabs button.primary { background: #0a84ff; color: #fff; }
+        .monee-cloud-tabs button.ghost { background: var(--border-color); color: var(--text-primary); }
+        .monee-cloud-field { margin-bottom: 12px; }
+        .monee-cloud-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .monee-cloud-field input {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);
+            background: var(--bg-color); color: var(--text-primary); font-size: 16px; box-sizing: border-box;
+        }
+        .monee-cloud-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #0a84ff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .monee-cloud-btn.secondary { background: var(--border-color); color: var(--text-primary); }
+        .monee-cloud-status { font-size: 13px; color: var(--text-secondary); margin-top: 10px; min-height: 1.2em; }
+        .monee-cloud-status.err { color: #ff453a; }
+        .monee-cloud-hidden { display: none !important; }
+        .sidebar-footer {
+            margin-top: auto;
+            flex-shrink: 0;
+            padding: 8px 0 max(12px, env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border-color);
+        }
+        /* Footer 的登出項目要和上方 menu-item 完全對齊 */
+        .sidebar-footer .menu-item {
+            margin: 0;
+            border-radius: 0;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-footer .menu-item i {
+            margin-right: 15px;
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
+    <script>
+    (function () {
+        if (sessionStorage.getItem("monee_rtdb_session_ok") || localStorage.getItem("monee_rtdb_session_ok")) {
+            document.documentElement.classList.remove("monee-gate-pending");
+        } else {
+            document.documentElement.classList.add("monee-gate-pending");
+        }
+    })();
+    </script>
     <!-- 載入遮罩 -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-content">
@@ -1498,6 +1713,47 @@
             </div>
             <div class="loading-spinner"></div>
             <div class="loading-text">讀取中...</div>
+        </div>
+    </div>
+
+    <!-- 雲端帳戶：登入／註冊（通過後進入主畫面；多使用者請於選單「匯入還原」載入備份 JSON） -->
+    <div id="moneeCloudGate" aria-hidden="true">
+        <div class="monee-cloud-panel">
+            <div class="monee-cloud-brand"><img src="./favico.png" alt="Monee">Monee</div>
+            <p class="monee-cloud-sub">登入或註冊後即進入記帳主畫面。本機尚無資料時可為空白；若有多位使用者／完整資料，請於側邊選單「資料管理 → 匯入還原」載入備份 JSON。</p>
+            <div id="moneeGateAuth" class="monee-cloud-auth">
+                <div class="monee-cloud-tabs">
+                    <button type="button" class="primary" id="moneeGateTabLogin" data-tab="login">登入</button>
+                    <button type="button" class="ghost" id="moneeGateTabReg" data-tab="reg">註冊</button>
+                </div>
+                <div id="moneeGateLoginBlock">
+                    <div class="monee-cloud-field">
+                        <label for="moneeGateSerial">帳號名稱</label>
+                        <input id="moneeGateSerial" type="text" autocomplete="username">
+                    </div>
+                    <div class="monee-cloud-field">
+                        <label for="moneeGatePassword">密碼</label>
+                        <input id="moneeGatePassword" type="password" autocomplete="current-password">
+                    </div>
+                    <button type="button" class="monee-cloud-btn" id="moneeGateBtnLogin">登入並進入 Monee</button>
+                </div>
+                <div id="moneeGateRegBlock" class="monee-cloud-hidden">
+                    <div class="monee-cloud-field">
+                        <label for="moneeGateRegUser">帳號名稱</label>
+                        <input id="moneeGateRegUser" type="text" autocomplete="username">
+                    </div>
+                    <div class="monee-cloud-field">
+                        <label for="moneeGateRegPassword">設定密碼（至少 6 碼）</label>
+                        <input id="moneeGateRegPassword" type="password" autocomplete="new-password">
+                    </div>
+                    <div class="monee-cloud-field">
+                        <label for="moneeGateRegPassword2">確認密碼</label>
+                        <input id="moneeGateRegPassword2" type="password" autocomplete="new-password">
+                    </div>
+                    <button type="button" class="monee-cloud-btn" id="moneeGateBtnCreate">註冊並進入 Monee</button>
+                </div>
+                <div class="monee-cloud-status" id="moneeGateAuthStatus"></div>
+            </div>
         </div>
     </div>
     
@@ -1602,8 +1858,7 @@
                     </div>
                     <div class="menu-section collapsed" id="menuSection-data">
                         <div class="menu-item" onclick="exportData(); toggleSidebar();"><i class="fas fa-file-export"></i><span class="menu-text">匯出備份</span></div>
-                        <div class="menu-item" onclick="importData(); toggleSidebar();"><i class="fas fa-file-import"></i><span class="menu-text">匯入還原</span></div>
-                        <div class="menu-item" onclick="setupCloudBackup(); toggleSidebar();"><i class="fas fa-cloud"></i><span class="menu-text">雲端備份設定</span></div>
+                        <div class="menu-item" onclick="importData(); toggleSidebar();"><i class="fas fa-file-import"></i><span class="menu-text">還原資料</span></div>
                     </div>
                     <div class="menu-label collapsed" onclick="toggleMenuSection('api')">
                         <span>API 設定</span>
@@ -1647,6 +1902,9 @@
                     </div>
                     <div class="menu-item" onclick="toggleTheme(); toggleSidebar();"><i class="fas fa-moon" id="themeIcon"></i><span class="menu-text" id="themeText">深色模式</span></div>
                 </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="menu-item" onclick="moneeCloudLogout();" title="登出並清除本機記帳資料，返回登入畫面"><i class="fas fa-sign-out-alt"></i><span class="menu-text">登出</span></div>
             </div>
         </div>
 
@@ -1717,7 +1975,7 @@
                     <div id="lineChartGrowthRate" style="display:none;"></div>
                     
                     <!-- Currency Toggle Button -->
-                    <button id="currencyToggleBtn" class="currency-toggle-btn" onclick="event.stopPropagation(); toggleCurrency();" title="切換幣別">
+                    <button id="currencyToggleBtn" class="currency-toggle-btn" onclick="handleCurrencyToggleClick(event)" title="切換幣別">
                         <i class="fas fa-exchange-alt"></i>
                         <span id="currencyToggleText">TWD</span>
                     </button>
@@ -1978,7 +2236,8 @@
     </div>
 
     <!-- Detail View -->
-    <div id="detailView">
+    <div id="detailView" onclick="detailViewBackdropClick(event)">
+        <div class="detail-view-panel" id="detailViewPanel" onclick="event.stopPropagation()">
         <div class="navbar">
             <button class="btn-icon" onclick="closeDetailView()"><i class="fas fa-arrow-left"></i></button>
             <h1 id="detailTitleName">資產詳情</h1>
@@ -2013,6 +2272,7 @@
             </div>
         </div>
         <div class="detail-list" id="detailTxList"></div>
+        </div>
     </div>
 
     <!-- Account Modal -->
@@ -3076,6 +3336,8 @@
     const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
     const STORAGE_KEY_DIVIDEND_RECORDS = 'my_assets_dividend_records'; // 除權息：持股股數、手動輸入金額
     const STORAGE_KEY_TWSTOCK_DAILY = 'my_assets_twstock_daily'; // 台股每日持股快照（用於除權息歷史自動帶入股數）
+    /** 顯示雲端閘道且尚無本機使用者列時，僅供主程式初始化佔位，不可寫入 localStorage */
+    const MONEE_GATE_PLACEHOLDER_USER_ID = '__monee_gate__';
     
     // 銀行代碼資料（包含銀行名稱和代碼）
     const BANK_DATA = [
@@ -3120,7 +3382,6 @@
         { name: '其他', code: '' }
     ];
     
-    const GOOGLE_DRIVE_FOLDER_NAME = 'Monee';
     
     // 預設頭像（使用 emoji 或圖示）
     const DEFAULT_AVATARS = [
@@ -3296,25 +3557,527 @@
     // Track if avatar selector was opened from edit modal
     let avatarSelectorFromEdit = false;
 
-    // 如果沒有使用者，創建預設使用者
-    if (users.length === 0) {
-        const defaultUser = {
-            id: Date.now().toString(),
-            name: '使用者 1',
-            avatar: DEFAULT_AVATARS[0],
-            createdAt: new Date().toISOString()
-        };
-        users.push(defaultUser);
-        currentUserId = defaultUser.id;
-        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-        localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
+    const MONEE_GATE_PENDING_EL = document.documentElement.classList.contains('monee-gate-pending');
+
+    if (MONEE_GATE_PENDING_EL && users.length === 0) {
+        currentUserId = MONEE_GATE_PLACEHOLDER_USER_ID;
+    } else {
+        // 如果沒有使用者，創建預設使用者
+        if (users.length === 0) {
+            const defaultUser = {
+                id: Date.now().toString(),
+                name: '使用者 1',
+                avatar: DEFAULT_AVATARS[0],
+                createdAt: new Date().toISOString()
+            };
+            users.push(defaultUser);
+            currentUserId = defaultUser.id;
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
+        }
+
+        // 如果當前使用者不存在，使用第一個使用者
+        if (!currentUserId || !users.find(u => u.id === currentUserId)) {
+            currentUserId = users[0].id;
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
+        }
     }
 
-    // 如果當前使用者不存在，使用第一個使用者
-    if (!currentUserId || !users.find(u => u.id === currentUserId)) {
-        currentUserId = users[0].id;
-        localStorage.setItem(STORAGE_KEY_CURRENT_USER, currentUserId);
+    /**
+     * 將備份物件寫入 localStorage（與匯入 JSON 相同邏輯）。
+     * 供 handleFileImport 與雲端 moneeAppBackup 還原共用。
+     */
+    function applyMoneeImportedBackupObject(d) {
+        if (!d || typeof d !== 'object') throw new Error('檔案格式錯誤');
+        if (d.version === '2.0' && d.users && d.usersData) {
+            localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
+            if (d.users.length > 0) {
+                const prevCur = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+                const keepPrev = prevCur && d.users.some((u) => u.id === prevCur);
+                const primaryUserId = keepPrev ? prevCur : d.users[0].id;
+                localStorage.setItem(STORAGE_KEY_CURRENT_USER, primaryUserId);
+                currentUserId = primaryUserId;
+                users = d.users;
+            }
+            Object.keys(d.usersData).forEach((userId) => {
+                const userData = d.usersData[userId];
+                localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
+                localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
+                localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
+                localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
+                if (userData.dateNotes !== undefined) {
+                    localStorage.setItem(`${STORAGE_KEY_DATE_NOTES}_${userId}`, JSON.stringify(userData.dateNotes || {}));
+                }
+                if (userData.assetHistory !== undefined) {
+                    localStorage.setItem(`${STORAGE_KEY_ASSET_HISTORY}_${userId}`, JSON.stringify(userData.assetHistory || {}));
+                }
+                if (userData.dividendRecords !== undefined) {
+                    localStorage.setItem(`${STORAGE_KEY_DIVIDEND_RECORDS}_${userId}`, JSON.stringify(userData.dividendRecords || {}));
+                }
+                if (userData.twstockDaily !== undefined) {
+                    localStorage.setItem(`${STORAGE_KEY_TWSTOCK_DAILY}_${userId}`, JSON.stringify(userData.twstockDaily || {}));
+                }
+            });
+        } else if (d.data && d.settings) {
+            let primaryUserId = currentUserId || localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!primaryUserId) {
+                const defaultUser = {
+                    id: Date.now().toString(),
+                    name: '使用者 1',
+                    avatar: DEFAULT_AVATARS[0],
+                    createdAt: new Date().toISOString(),
+                };
+                users = [defaultUser];
+                primaryUserId = defaultUser.id;
+                localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+                localStorage.setItem(STORAGE_KEY_CURRENT_USER, primaryUserId);
+                currentUserId = primaryUserId;
+            }
+            localStorage.setItem(`${STORAGE_KEY_DATA}_${primaryUserId}`, JSON.stringify(d.data));
+            localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${primaryUserId}`, JSON.stringify(d.settings));
+        } else {
+            throw new Error('檔案格式錯誤');
+        }
     }
+    window.applyMoneeImportedBackupObject = applyMoneeImportedBackupObject;
+
+    /**
+     * 僅更新頂部總資產／損益（與 renderAssets 內計算一致，不重建列表）
+     */
+    function moneeUpdateNetWorthHeaderOnly() {
+        const tn = document.getElementById('totalNetWorth');
+        if (!tn) return;
+        let displayAmount = 0;
+        let totalDailyPnL = 0;
+        if (currentPage === 0) {
+            accounts.forEach((acc) => {
+                if (acc.type !== 'debt') {
+                    if (acc.type === 'bank' && !pageVisibility['bank']) return;
+                    if (acc.type === 'stock' && !pageVisibility['stock']) return;
+                    if (acc.type === 'twstock' && !pageVisibility['twstock']) return;
+                    if (acc.type === 'crypto' && !pageVisibility['crypto']) return;
+                }
+                const val = calculateValue(acc);
+                if (acc.type === 'bank' && acc.bankTag === '信用卡') return;
+                if (acc.type === 'debt') displayAmount -= val;
+                else displayAmount += val;
+                if (acc.isAuto) totalDailyPnL += calculateDailyPnL(acc);
+            });
+        } else {
+            const currentType = PAGE_TYPES[currentPage];
+            accounts.forEach((acc) => {
+                if (acc.type === currentType) {
+                    if (acc.type === 'bank' && acc.bankTag === '信用卡') return;
+                    const val = calculateValue(acc);
+                    displayAmount += val;
+                    if (acc.isAuto) totalDailyPnL += calculateDailyPnL(acc);
+                }
+            });
+        }
+        let totalCostPnL = 0;
+        accounts.forEach((acc) => {
+            if (!acc.isAuto) return;
+            if (currentPage === 0) {
+                if (acc.type !== 'debt') {
+                    if (acc.type === 'bank' && !pageVisibility['bank']) return;
+                    if (acc.type === 'stock' && !pageVisibility['stock']) return;
+                    if (acc.type === 'twstock' && !pageVisibility['twstock']) return;
+                    if (acc.type === 'crypto' && !pageVisibility['crypto']) return;
+                }
+                totalCostPnL += calculateCostPnL(acc);
+            } else {
+                const currentType = PAGE_TYPES[currentPage];
+                if (acc.type === currentType) totalCostPnL += calculateCostPnL(acc);
+            }
+        });
+        if (currentPage === 0) {
+            const journalDailyPnL = calculateJournalDailyPnL();
+            const journalTotalPnL = calculateJournalTotalPnL();
+            const journalDailyWithOffset = journalDailyPnL + getDailyPnLOffset();
+            const journalTotalWithOffset = journalTotalPnL + getTotalPnLOffset();
+            const usdRate = settings && settings.usdRate ? settings.usdRate : 1;
+            if (currentDisplayCurrency === 'USD' && usdRate > 0) {
+                totalDailyPnL += journalDailyWithOffset / usdRate;
+                totalCostPnL += journalTotalWithOffset / usdRate;
+            } else {
+                totalDailyPnL += journalDailyWithOffset;
+                totalCostPnL += journalTotalWithOffset;
+            }
+        } else if (currentPage === 1) {
+            const journalDailyPnL = calculateJournalDailyPnL();
+            const journalTotalPnL = calculateJournalTotalPnL();
+            const journalDailyWithOffset = journalDailyPnL + getDailyPnLOffset();
+            const journalTotalWithOffset = journalTotalPnL + getTotalPnLOffset();
+            const usdRate = settings && settings.usdRate ? settings.usdRate : 1;
+            if (currentDisplayCurrency === 'USD' && usdRate > 0) {
+                totalDailyPnL = journalDailyWithOffset / usdRate;
+                totalCostPnL = journalTotalWithOffset / usdRate;
+            } else {
+                totalDailyPnL = journalDailyWithOffset;
+                totalCostPnL = journalTotalWithOffset;
+            }
+        }
+        tn.innerText = formatAmount(displayAmount);
+        const b = document.getElementById('totalPnLBlock');
+        const bd = document.getElementById('totalPnLBadge');
+        if (!b || !bd) return;
+        if (Math.abs(totalDailyPnL) > 1 || Math.abs(totalCostPnL) > 1) {
+            b.style.display = 'block';
+            bd.style.visibility = 'visible';
+            bd.style.height = '';
+            bd.style.margin = '';
+            bd.style.padding = '';
+            let pnlHtml = '';
+            if (Math.abs(totalDailyPnL) > 1) {
+                const s = totalDailyPnL > 0 ? '+' : '';
+                const c = totalDailyPnL > 0 ? 'pnl-up' : 'pnl-down';
+                const pct = formatHeaderPnLPercent(totalDailyPnL, displayAmount);
+                pnlHtml += `今日: <span class="${c}">${s}${formatAmount(totalDailyPnL)}${pct}</span>`;
+            }
+            if (Math.abs(totalCostPnL) > 1) {
+                if (pnlHtml) pnlHtml += '<br>';
+                const s = totalCostPnL > 0 ? '+' : '';
+                const c = totalCostPnL > 0 ? 'pnl-up' : 'pnl-down';
+                const pct = formatHeaderPnLPercent(totalCostPnL, displayAmount);
+                pnlHtml += `總計: <span class="${c}">${s}${formatAmount(totalCostPnL)}${pct}</span>`;
+            }
+            bd.innerHTML = pnlHtml;
+        } else {
+            b.style.display = 'block';
+            bd.style.visibility = 'hidden';
+            bd.style.height = '0';
+            bd.style.margin = '0';
+            bd.style.padding = '0';
+            bd.innerHTML = '';
+        }
+        const summaryLabelEl = document.getElementById('summaryLabel');
+        if (summaryLabelEl) {
+            summaryLabelEl.innerText =
+                currentPage === 0 ? '總淨資產' : `${PAGE_NAMES[currentPage]} 總額`;
+        }
+    }
+
+    /** 不重建 list DOM，只更新已畫出的金額節點（總覽分類卡與各分頁資產列、表頭小計） */
+    function moneePatchVisibleListAmountsOnly() {
+        if (currentPage === 0) {
+            const orderedCategoryTypes = pageOrder
+                .filter((index) => index !== 0)
+                .map((index) => PAGE_TYPES[index])
+                .filter((type) => pageVisibility[type] !== false);
+            let totalSum = 0;
+            let totalPnLAll = 0;
+            orderedCategoryTypes.forEach((type) => {
+                let sum = 0;
+                let groupPnL = 0;
+                accounts.forEach((acc) => {
+                    if (acc.type !== type) return;
+                    if (type === 'bank' && acc.bankTag === '信用卡') return;
+                    sum += calculateValue(acc);
+                    groupPnL += calculatePnL(acc);
+                });
+                totalSum += sum;
+                totalPnLAll += groupPnL;
+                const card = document.querySelector(`[data-id="category-${type}"]`);
+                if (card) {
+                    const av = card.querySelector('.amount-val');
+                    if (av) av.textContent = formatAmount(sum);
+                    const pnlEl = card.querySelector('.amount-pnl');
+                    if (pnlEl) {
+                        if (Math.abs(groupPnL) > 0.01) {
+                            pnlEl.innerHTML = formatPnL(groupPnL);
+                            pnlEl.style.display = '';
+                        } else {
+                            pnlEl.textContent = '';
+                            pnlEl.style.display = 'none';
+                        }
+                    }
+                }
+            });
+            const ac0 = document.getElementById('assetsContainer');
+            if (ac0) {
+                const block = ac0.querySelector('.group-header .group-total-block');
+                if (block) {
+                    const gt = block.querySelector('.group-total');
+                    if (gt) gt.textContent = formatAmount(totalSum);
+                    let gp = block.querySelector('.group-pnl');
+                    if (Math.abs(totalPnLAll) > 0.01) {
+                        if (!gp) {
+                            gp = document.createElement('span');
+                            gp.className = 'group-pnl numbers-content';
+                            block.appendChild(gp);
+                        }
+                        gp.innerHTML = formatPnL(totalPnLAll);
+                        gp.style.display = '';
+                    } else if (gp) {
+                        gp.textContent = '';
+                        gp.style.display = 'none';
+                    }
+                }
+            }
+        } else {
+            const currentType = PAGE_TYPES[currentPage];
+            const containerId =
+                currentPage === 1
+                    ? 'assetsContainer1'
+                    : currentPage === 2
+                      ? 'assetsContainer2'
+                      : currentPage === 3
+                        ? 'assetsContainer3'
+                        : 'assetsContainer4';
+            const c = document.getElementById(containerId);
+            if (c) {
+                c.querySelectorAll('.list-item[data-id]').forEach((row) => {
+                    const raw = row.getAttribute('data-id');
+                    if (!raw || String(raw).startsWith('category-')) return;
+                    const acc = accounts.find((a) => String(a.id) === String(raw));
+                    if (!acc) return;
+                    const val = calculateValue(acc);
+                    const av = row.querySelector('.amount-val');
+                    if (av) av.textContent = formatAmount(val);
+                    const pnl = calculatePnL(acc);
+                    const pnlWrap = row.querySelector('.item-amount');
+                    let pnlEl = pnlWrap && pnlWrap.querySelector('.amount-pnl');
+                    if (pnlWrap && Math.abs(pnl) > 0.01) {
+                        if (!pnlEl) {
+                            pnlEl = document.createElement('div');
+                            pnlEl.className = 'amount-pnl item-numbers';
+                            pnlWrap.appendChild(pnlEl);
+                        }
+                        pnlEl.innerHTML = formatPnL(pnl);
+                        pnlEl.style.display = '';
+                    } else if (pnlEl) {
+                        pnlEl.textContent = '';
+                        pnlEl.style.display = 'none';
+                    }
+                });
+            }
+            let sum = 0;
+            let groupPnL = 0;
+            accounts
+                .filter((a) => a.type === currentType)
+                .forEach((acc) => {
+                    if (acc.type === 'bank' && acc.bankTag === '信用卡') return;
+                    sum += calculateValue(acc);
+                    groupPnL += calculatePnL(acc);
+                });
+            const ctn = document.getElementById(containerId);
+            if (ctn) {
+                const block = ctn.querySelector('.group-header .group-total-block');
+                if (block) {
+                    const gt = block.querySelector('.group-total');
+                    if (gt) gt.textContent = formatAmount(sum);
+                    let gp = block.querySelector('.group-pnl');
+                    if (Math.abs(groupPnL) > 0.01) {
+                        if (!gp) {
+                            gp = document.createElement('span');
+                            gp.className = 'group-pnl numbers-content';
+                            block.appendChild(gp);
+                        }
+                        gp.innerHTML = formatPnL(groupPnL);
+                    } else if (gp) {
+                        gp.textContent = '';
+                    }
+                }
+            }
+        }
+        const debtEl = document.getElementById(`debtContainer${currentPage}`);
+        if (debtEl) {
+            let totalDebt = 0;
+            debtEl.querySelectorAll('.list-item[data-id]').forEach((row) => {
+                const raw = row.getAttribute('data-id');
+                const acc = accounts.find((a) => String(a.id) === String(raw));
+                if (!acc || acc.type !== 'debt') return;
+                const val = calculateValue(acc);
+                totalDebt += val;
+                const av = row.querySelector('.amount-val');
+                if (av) av.textContent = formatAmount(val);
+            });
+            const block = debtEl.querySelector('.group-header .group-total-block');
+            if (block) {
+                const gt = block.querySelector('.group-total');
+                if (gt) gt.textContent = formatAmount(totalDebt);
+            }
+        }
+    }
+
+    /**
+     * 供 RTDB 同步前後比對：目前 localStorage 作用使用者的帳戶 id 列表（依陣列順序）。
+     * 僅餘額／價格變動時字串不變；新增／刪除／拖曳排序後會變，需重建列表。
+     */
+    function moneeSnapshotCurrentUserAccountIdsSig() {
+        try {
+            const uid = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!uid) return '';
+            const raw = localStorage.getItem(`${STORAGE_KEY_DATA}_${uid}`);
+            const arr = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(arr)) return '';
+            return arr
+                .map((a) => (a && a.id != null ? String(a.id) : ''))
+                .filter(Boolean)
+                .join('\u0001');
+        } catch (e) {
+            return '';
+        }
+    }
+    window.moneeSnapshotCurrentUserAccountIdsSig = moneeSnapshotCurrentUserAccountIdsSig;
+
+    /**
+     * 供 RTDB 同步前後比對：作用使用者在 settings 內的「分頁顯示／順序」。
+     * 與帳戶 id 清單無關；僅勾選要保留的分頁或拖曳順序時也會變，需重繪頁籤與總覽區塊。
+     */
+    function moneeSnapshotCurrentUserPageLayoutSig() {
+        try {
+            const uid = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            if (!uid) return "";
+            const raw = localStorage.getItem(`${STORAGE_KEY_SETTINGS}_${uid}`);
+            const s = raw ? JSON.parse(raw) : {};
+            return JSON.stringify({
+                pv: s.pageVisibility !== undefined ? s.pageVisibility : null,
+                po: s.pageOrder !== undefined ? s.pageOrder : null,
+            });
+        } catch (e) {
+            return "";
+        }
+    }
+    window.moneeSnapshotCurrentUserPageLayoutSig =
+        moneeSnapshotCurrentUserPageLayoutSig;
+
+    /** 雲端即時同步：不重載、不換頁；帳戶列或分頁版面變動時完整重繪列表與頁籤，其餘只刷數字 */
+    function moneeRehydrateUiAfterRtdbRemoteSync(opts) {
+        opts = opts || {};
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
+        const keepPage = currentPage;
+        const keepChartLevel = chartLevel;
+        const prevTheme = settings.theme || 'dark';
+        let detailAccId = null;
+        const detailView = document.getElementById('detailView');
+        if (
+            currentDetailAcc &&
+            detailView &&
+            detailView.classList.contains('active')
+        ) {
+            detailAccId = currentDetailAcc.id;
+        }
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_USERS);
+            const nextUsers = raw ? JSON.parse(raw) : null;
+            if (!nextUsers || !Array.isArray(nextUsers) || nextUsers.length === 0)
+                return;
+            users = nextUsers;
+        } catch (e) {
+            console.warn('[Monee] 無法重讀使用者列表', e);
+            return;
+        }
+        let cu = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+        if (!cu || !users.find((u) => u.id === cu)) {
+            cu = users[0].id;
+            localStorage.setItem(STORAGE_KEY_CURRENT_USER, cu);
+        }
+        currentUserId = cu;
+        if (typeof clearJournalDatesCache === 'function') clearJournalDatesCache();
+        const loaded = loadUserData(currentUserId);
+        accounts = loaded.accounts;
+        settings = loaded.settings;
+        currentDisplayCurrency =
+            settings.displayCurrency ||
+            localStorage.getItem('displayCurrency') ||
+            'TWD';
+        if (settings.displayCurrency) {
+            localStorage.setItem('displayCurrency', settings.displayCurrency);
+        }
+        if (!settings.displayCurrency && localStorage.getItem('displayCurrency')) {
+            settings.displayCurrency = currentDisplayCurrency;
+        }
+        pageVisibility =
+            settings.pageVisibility ||
+            JSON.parse(localStorage.getItem('pageVisibility') || 'null') || {
+                overview: true,
+                bank: true,
+                stock: true,
+                twstock: true,
+                crypto: true,
+            };
+        if (settings.pageVisibility) {
+            localStorage.setItem(
+                'pageVisibility',
+                JSON.stringify(settings.pageVisibility),
+            );
+        }
+        if (!settings.pageVisibility && localStorage.getItem('pageVisibility')) {
+            settings.pageVisibility = pageVisibility;
+        }
+        pageOrder =
+            settings.pageOrder ||
+            JSON.parse(localStorage.getItem('pageOrder') || 'null') || [
+                0, 1, 2, 3, 4,
+            ];
+        if (settings.pageOrder) {
+            localStorage.setItem('pageOrder', JSON.stringify(settings.pageOrder));
+        }
+        if (!settings.pageOrder && localStorage.getItem('pageOrder')) {
+            settings.pageOrder = pageOrder;
+        }
+        currentPage = keepPage;
+        if (typeof isPageEnabled === 'function' && !isPageEnabled(currentPage)) {
+            const ep =
+                typeof getEnabledPages === 'function'
+                    ? getEnabledPages()[0]
+                    : 0;
+            currentPage = ep !== undefined ? ep : 0;
+            if (typeof switchToPage === 'function') switchToPage(currentPage);
+        }
+        chartLevel = keepChartLevel;
+        if ((settings.theme || 'dark') !== prevTheme) {
+            if (typeof applyTheme === 'function') applyTheme();
+            if (typeof updateThemeButton === 'function') updateThemeButton();
+            if (typeof updateChartTextColor === 'function') updateChartTextColor();
+        }
+        if (typeof updateCurrencyButton === 'function') updateCurrencyButton();
+        if (typeof updateUserAvatar === 'function') updateUserAvatar();
+        const needsHeavyUi =
+            opts.structureChanged === true || opts.layoutChanged === true;
+        if (needsHeavyUi && typeof renderAssets === 'function') {
+            if (typeof reorderPageItems === 'function') reorderPageItems();
+            if (typeof renderPageIndicator === 'function') renderPageIndicator();
+            if (typeof renderPageVisibilitySettings === 'function')
+                renderPageVisibilitySettings();
+            renderAssets();
+        } else {
+            moneeUpdateNetWorthHeaderOnly();
+            moneePatchVisibleListAmountsOnly();
+            if (typeof updateChartData === 'function') updateChartData(true);
+        }
+        if (
+            detailAccId != null &&
+            accounts.find((a) => a.id === detailAccId) &&
+            typeof openDetailView === 'function'
+        ) {
+            openDetailView(detailAccId);
+        } else if (
+            detailAccId != null &&
+            !accounts.find((a) => a.id === detailAccId) &&
+            typeof closeDetailView === 'function'
+        ) {
+            closeDetailView();
+            chartLevel = currentPage === 0 ? 'root' : 'page';
+        }
+        if (typeof updatePageNavArrows === 'function') updatePageNavArrows();
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (
+            typeof showFixedTransferDetailsForDate === 'function' &&
+            typeof selectedDate !== 'undefined' &&
+            selectedDate
+        ) {
+            showFixedTransferDetailsForDate(selectedDate);
+        }
+        if (
+            currentChartMode === 'line' &&
+            typeof renderAssetLineChart === 'function'
+        ) {
+            renderAssetLineChart();
+        }
+    }
+    window.moneeRehydrateUiAfterRtdbRemoteSync = moneeRehydrateUiAfterRtdbRemoteSync;
 
     // Load State (多使用者版本)
     function loadUserData(userId) {
@@ -3330,8 +4093,6 @@
         
         const defaultSettings = { 
             apiKey: '', fugleKey: '', geminiKey: '', usdRate: 32.5, usdtRate: 1.0, feeRate: 0.1425, chartTextColor: 'white', theme: 'dark',
-            cloudBackupEnabled: false, cloudBackupInterval: 24, cloudBackupLastTime: null, cloudBackupToken: null,
-            driveClientId: '', driveAccessToken: null, driveUserEmail: null,
             pageVisibility: { 'overview': true, 'bank': true, 'stock': true, 'twstock': true, 'crypto': true },
             pageOrder: [0, 1, 2, 3, 4],
             displayCurrency: 'TWD'
@@ -3345,7 +4106,7 @@
     }
 
     // 遷移舊資料到第一個使用者（向後兼容）
-    if (!localStorage.getItem(`${STORAGE_KEY_DATA}_${currentUserId}`)) {
+    if (currentUserId !== MONEE_GATE_PLACEHOLDER_USER_ID && !localStorage.getItem(`${STORAGE_KEY_DATA}_${currentUserId}`)) {
         const oldData = localStorage.getItem(STORAGE_KEY_DATA);
         const oldSettings = localStorage.getItem(STORAGE_KEY_SETTINGS);
         if (oldData) {
@@ -4570,6 +5331,14 @@
         const formatted = currentDisplayCurrency === 'USD' ? parseFloat(val).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : Math.round(val).toLocaleString();
         return `<span class="${cls}">${sign}${formatted}</span>`; 
     }
+    /** 頂部今日／總計徽章：相對於變動前淨額的漲跌幅 (pnl / (display - pnl)) */
+    function formatHeaderPnLPercent(pnlAmount, displayAmount) {
+        const base = displayAmount - pnlAmount;
+        if (!isFinite(pnlAmount) || !isFinite(displayAmount) || Math.abs(base) < 1) return '';
+        const pct = (pnlAmount / base) * 100;
+        const sign = pct > 0 ? '+' : '';
+        return ` (${sign}${pct.toFixed(2)}%)`;
+    }
 
     // --- UI ---
     function toggleSidebar() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(s.classList.contains('active')){s.classList.remove('active');o.classList.remove('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('collapsed');} setTimeout(function(){initMenuSections();},0);}else{s.classList.add('active');o.classList.add('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('collapsed');}} }
@@ -4915,10 +5684,8 @@
         if(editingFromDetail) {
             const detailView = document.getElementById('detailView');
             if(detailView) {
-                // 確保詳情頁面在編輯模態框下面（z-index 較低）
                 detailView.style.zIndex = '2000';
-                // 詳情頁面保持在正確位置（已經顯示，不需要動畫）
-                detailView.style.transform = 'translateX(0)';
+                syncDetailViewOpenTransform();
             }
             // 從詳情頁面進入時，背景設為透明，避免詳情頁面變暗
             accountModal.style.background = 'transparent';
@@ -4951,7 +5718,7 @@
                 if(!detailView.classList.contains('active')) {
                     detailView.classList.add('active');
                 }
-                detailView.style.transform = 'translateX(0)';
+                syncDetailViewOpenTransform();
             }
             // 立即讓背景變透明（在動畫開始前）
             accountModal.style.background = 'transparent';
@@ -5045,8 +5812,7 @@
                 if(!detailView.classList.contains('active')) {
                     detailView.classList.add('active');
                 }
-                // 確保 transform 是正確的（完全顯示）
-                detailView.style.transform = 'translateX(0)';
+                syncDetailViewOpenTransform();
             }
             
             // 直接更新詳情頁面數據，不調用 openDetailView（避免觸發動畫）
@@ -5162,7 +5928,20 @@
         }
     }
     
+    /** 若有未完成的運算（已選 +−×÷），等同先按 =，供「完成」關閉時寫入正確結果 */
+    function calcApplyEqualsIfPending() {
+        if (calcState.operator != null && calcState.previousValue !== null) {
+            const result = performCalculation();
+            calcState.display = formatCalcResult(result);
+            calcState.previousValue = null;
+            calcState.operator = null;
+            calcState.waitingForOperand = true;
+        }
+    }
+    
     function closeCalculator() {
+        calcApplyEqualsIfPending();
+        updateCalcDisplay();
         // 將計算結果填入目標輸入欄位
         if (currentCalcTarget) {
             const input = document.getElementById(currentCalcTarget);
@@ -5272,13 +6051,7 @@
                 break;
                 
             case '=':
-                if (calcState.operator && calcState.previousValue !== null) {
-                    const result = performCalculation();
-                    calcState.display = formatCalcResult(result);
-                    calcState.previousValue = null;
-                    calcState.operator = null;
-                    calcState.waitingForOperand = true;
-                }
+                calcApplyEqualsIfPending();
                 break;
                 
             case '+':
@@ -5686,20 +6459,24 @@
     }
     function saveData() { 
         if (isUserSwitching) return; // 鎖定攔截
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         const userDataKey = `${STORAGE_KEY_DATA}_${currentUserId}`;
         localStorage.setItem(userDataKey, JSON.stringify(accounts)); 
         if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn) {
             window.syncAccountsToFirestore(accounts);
         }
+        scheduleMoneeRtdbBackupPush();
     }
     
     function saveSettings() {
         if (isUserSwitching) return; // 鎖定攔截
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${currentUserId}`;
         localStorage.setItem(userSettingsKey, JSON.stringify(settings));
         if (window.syncSettingsToFirestore && window.firebaseUserLoggedIn) {
             window.syncSettingsToFirestore(settings);
         }
+        scheduleMoneeRtdbBackupPush();
     }
     // ========== 資產歷史快照系統 ==========
     let assetHistoryLineChart = null;
@@ -5715,12 +6492,14 @@
     // 保存資產歷史記錄
     function saveAssetHistory(history) {
         if (isUserSwitching) return;
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         const historyKey = `${STORAGE_KEY_ASSET_HISTORY}_${currentUserId}`;
         localStorage.setItem(historyKey, JSON.stringify(history));
         // 同步到 Firestore
         if (window.syncAssetHistoryToFirestore && window.firebaseUserLoggedIn) {
             window.syncAssetHistoryToFirestore(history);
         }
+        scheduleMoneeRtdbBackupPush();
     }
     
     // 折線圖記錄：重置（清空）與復原（依使用者分開儲存）
@@ -5762,8 +6541,10 @@
     }
     function saveTwstockDailyBalances(data) {
         if (isUserSwitching) return;
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         const key = `${STORAGE_KEY_TWSTOCK_DAILY}_${currentUserId}`;
         localStorage.setItem(key, JSON.stringify(data));
+        scheduleMoneeRtdbBackupPush();
     }
     function getTwstockBalanceAtDate(accId, dateStr) {
         const data = loadTwstockDailyBalances();
@@ -5776,6 +6557,7 @@
     // 記錄今日資產快照（每天只記錄一次，但會更新當天最新值）
     function recordDailyAssetSnapshot() {
         if (isUserSwitching) return;
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         if (!accounts || accounts.length === 0) return;
         
         const today = new Date();
@@ -6406,8 +7188,10 @@
     function setApiKey(t) { if(t==='finnhub'){const k=prompt("Finnhub Key:", settings.apiKey);if(k)settings.apiKey=k.trim();} else if(t==='fugle'){const k=prompt("Fugle Key:", settings.fugleKey);if(k)settings.fugleKey=k.trim();} else {const k=prompt("Gemini Key:", settings.geminiKey);if(k)settings.geminiKey=k.trim();} saveSettings(); refreshAllData(); }
     function setFeeRate() { const k=prompt("手續費率 (%):", settings.feeRate); if(k)settings.feeRate=parseFloat(k); saveSettings(); }
     function updateFeeDisplay() { const s=document.getElementById('brokerSelect'); if(s.value==='custom'){ const r=prompt("自訂費率 (%):", settings.feeRate||0.1); if(r)settings.feeRate=parseFloat(r); saveSettings(); } }
-    function exportData() { 
-        // 匯出所有使用者資料
+    /** 與匯出 JSON／雲端 moneeAppBackup 相同結構（供即時同步上傳） */
+    /** @param {{ forRtdbSync?: boolean }} [opts] forRtdbSync：不含 exportDate，避免兩端互寫唯一造成重載循環 */
+    function buildMoneeBackupExportObject(opts) {
+        const forRtdbSync = !!(opts && opts.forRtdbSync);
         const allUsersData = {};
         users.forEach(user => {
             const userDataKey = `${STORAGE_KEY_DATA}_${user.id}`;
@@ -6438,14 +7222,36 @@
                 twstockDaily: userTwstockDaily
             };
         });
-        
-        const exportData = {
+        const base = {
             version: '2.0',
             users: users,
             usersData: allUsersData,
-            exportDate: new Date().toISOString()
         };
-        
+        if (!forRtdbSync) {
+            base.exportDate = new Date().toISOString();
+        }
+        return base;
+    }
+
+    /** 用於比對／略過重複寫入：忽略 exportDate，再對 JSON 字串做雜湊 */
+    function moneeBackupNormHash(jsonStr) {
+        try {
+            const o = JSON.parse(jsonStr);
+            if (o && typeof o === 'object') delete o.exportDate;
+            jsonStr = JSON.stringify(o);
+        } catch (e) {
+            /* 沿用原字串 */
+        }
+        let h = 5381;
+        for (let i = 0; i < jsonStr.length; i++) {
+            h = ((h << 5) + h) ^ jsonStr.charCodeAt(i);
+        }
+        return (h >>> 0).toString(16);
+    }
+    window.moneeBackupNormHash = moneeBackupNormHash;
+
+    function exportData() { 
+        const exportData = buildMoneeBackupExportObject();
         const jsonStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonStr], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
@@ -6460,407 +7266,490 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+
+        // 手動備份：同時寫入 Firebase 帳號節點下的 moneeBackups（最多保留 5 筆）
+        syncMoneeManualBackupToRtdb(jsonStr, a.download).catch((err) => {
+            console.error('[Monee] 雲端手動備份失敗', err);
+            alert('本地匯出完成，但雲端手動備份失敗：' + (err.message || err));
+        });
     }
     
-    // 雲端備份功能
-    async function setupCloudBackup() {
+    function closeRestoreModeModal() {
+        const modal = document.getElementById('restoreModeModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        setTimeout(() => {
+            if (modal.parentNode) modal.parentNode.removeChild(modal);
+        }, 200);
+    }
+
+    async function syncMoneeManualBackupToRtdb(jsonString, filename) {
+        ensureMoneeFirebaseConfig();
+        const cfg = window.MONEE_FIREBASE_CONFIG;
+        const serial = localStorage.getItem('rtdb_account_serial');
+        if (!cfg || !serial) return;
+
+        const RTDB_APP = 'monee-rtdb-import';
+        const { initializeApp, getApp } = await import("firebase/app");
+        const { getDatabase, ref, get, set, remove } = await import("firebase/database");
+        let app;
+        try {
+            app = getApp(RTDB_APP);
+        } catch {
+            app = initializeApp(cfg, RTDB_APP);
+        }
+        const rtdb = getDatabase(app);
+        const backupsRef = ref(rtdb, `${serial}/moneeBackups`);
+        const backupsSnap = await get(backupsRef);
+        const backupsObj = moneeRtdbSnapExists(backupsSnap) ? (backupsSnap.val() || {}) : {};
+
+        const id = `b_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const createdAt = new Date().toISOString();
+        await set(ref(rtdb, `${serial}/moneeBackups/${id}`), {
+            id,
+            filename: filename || `my_assets_backup_${createdAt.replace(/[:.]/g, '-')}.json`,
+            createdAt,
+            kind: 'manual',
+            content: jsonString,
+        });
+
+        // 保留策略：auto + 手動合計最多 5；auto 固定保留，其餘手動最多 4
+        const manualList = Object.entries(backupsObj)
+            .map(([k, v]) => ({
+                id: k,
+                createdAt: (v && typeof v.createdAt === 'string') ? v.createdAt : '',
+                kind: (v && typeof v.kind === 'string') ? v.kind : '',
+            }))
+            .filter((x) => x.id !== 'auto' && x.kind !== 'auto');
+        manualList.push({ id, createdAt, kind: 'manual' });
+        manualList.sort((a, b) => {
+            if (a.createdAt === b.createdAt) return a.id.localeCompare(b.id);
+            return a.createdAt.localeCompare(b.createdAt);
+        });
+        const excessManual = Math.max(0, manualList.length - 4);
+        for (let i = 0; i < excessManual; i++) {
+            await remove(ref(rtdb, `${serial}/moneeBackups/${manualList[i].id}`));
+        }
+    }
+
+    async function syncMoneeDailyAutoBackupToRtdb(jsonString) {
+        ensureMoneeFirebaseConfig();
+        const cfg = window.MONEE_FIREBASE_CONFIG;
+        const serial = localStorage.getItem('rtdb_account_serial');
+        if (!cfg || !serial) return;
+
+        const RTDB_APP = 'monee-rtdb-import';
+        const { initializeApp, getApp } = await import("firebase/app");
+        const { getDatabase, ref, get, set, remove } = await import("firebase/database");
+        let app;
+        try { app = getApp(RTDB_APP); } catch { app = initializeApp(cfg, RTDB_APP); }
+        const rtdb = getDatabase(app);
+        const autoRef = ref(rtdb, `${serial}/moneeBackups/auto`);
+        const autoSnap = await get(autoRef);
+
+        const todayKey = (typeof formatLocalDate === 'function') ? formatLocalDate(new Date()) : (new Date().toISOString().slice(0,10));
+        if (moneeRtdbSnapExists(autoSnap)) {
+            const cur = autoSnap.val();
+            if (cur && typeof cur.dateKey === 'string' && cur.dateKey === todayKey) {
+                return; // 今天已自動備份過
+            }
+        }
+
+        const createdAt = new Date().toISOString();
+        await set(autoRef, {
+            id: 'auto',
+            filename: `auto_${todayKey}.json`,
+            createdAt,
+            dateKey: todayKey,
+            kind: 'auto',
+            content: jsonString,
+        });
+
+        // 修剪：auto + 手動最多 5 → 手動最多 4
+        const backupsSnap = await get(ref(rtdb, `${serial}/moneeBackups`));
+        const backupsObj = moneeRtdbSnapExists(backupsSnap) ? (backupsSnap.val() || {}) : {};
+        const manualList = Object.entries(backupsObj)
+            .map(([k, v]) => ({
+                id: k,
+                createdAt: (v && typeof v.createdAt === 'string') ? v.createdAt : '',
+                kind: (v && typeof v.kind === 'string') ? v.kind : '',
+            }))
+            .filter((x) => x.id !== 'auto' && x.kind !== 'auto');
+        manualList.sort((a, b) => {
+            if (a.createdAt === b.createdAt) return a.id.localeCompare(b.id);
+            return a.createdAt.localeCompare(b.createdAt);
+        });
+        const excessManual = Math.max(0, manualList.length - 4);
+        for (let i = 0; i < excessManual; i++) {
+            await remove(ref(rtdb, `${serial}/moneeBackups/${manualList[i].id}`));
+        }
+    }
+
+    function moneeFormatBackupTime(iso) {
+        if (!iso) return '-';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleString('zh-TW', { hour12: false });
+    }
+
+    async function restoreFromBackupJsonString(jsonStr) {
+        const progressToast = document.getElementById('importProgressToast');
+        const progressBar = document.getElementById('importProgressBar');
+        const progressText = document.getElementById('importProgressText');
+        const importOverlay = document.getElementById('importOverlay');
+        try {
+            if(importOverlay) importOverlay.style.display = 'block';
+            if(progressToast) progressToast.style.display = 'block';
+            if(progressBar) progressBar.style.width = '20%';
+            if(progressText) progressText.innerText = '解析JSON中...';
+            const d = JSON.parse(jsonStr);
+            if(progressBar) progressBar.style.width = '70%';
+            if(progressText) progressText.innerText = '寫入資料中...';
+            applyMoneeImportedBackupObject(d);
+            const primaryUserId = localStorage.getItem(STORAGE_KEY_CURRENT_USER);
+            let rtdbNote = '';
+            if (localStorage.getItem('rtdb_account_serial')) {
+                if(progressText) progressText.innerText = '寫入 Firebase（Realtime Database）...';
+                try {
+                    await syncMoneeImportJsonToRtdb(String(jsonStr), { force: true });
+                } catch (rtdbErr) {
+                    console.error('Realtime Database 寫入失敗:', rtdbErr);
+                    rtdbNote = '（本機已還原；Firebase 寫入失敗：' + (rtdbErr.message || rtdbErr) + '）';
+                }
+            }
+            if (window.firebaseUserLoggedIn) {
+                if(progressText) progressText.innerText = '同步到雲端...';
+                try {
+                    if (d.users && window.syncUsersToFirestore) {
+                        await window.syncUsersToFirestore(d.users);
+                    }
+                    if (primaryUserId && window.syncCurrentUserToFirestore) {
+                        await window.syncCurrentUserToFirestore(primaryUserId);
+                    }
+                    if (window.syncAllDataToFirestore) {
+                        await window.syncAllDataToFirestore();
+                    }
+                } catch (err) {
+                    console.error('同步到 Firestore 失敗:', err);
+                }
+            }
+            if(progressBar) progressBar.style.width = '100%';
+            if(progressText) progressText.innerText = rtdbNote ? ('完成' + rtdbNote) : '完成！';
+            setTimeout(() => location.reload(), 500);
+        } catch (err) {
+            if(importOverlay) importOverlay.style.display = 'none';
+            if(progressToast) progressToast.style.display = 'none';
+            if(progressBar) progressBar.style.width = '0%';
+            alert("還原失敗: " + err.message);
+            console.error(err);
+        }
+    }
+
+    async function openCloudRestorePicker() {
+        ensureMoneeFirebaseConfig();
+        const serial = localStorage.getItem('rtdb_account_serial');
+        if (!serial) {
+            alert('目前尚未登入 Firebase 帳號，無法使用雲端還原。');
+            return;
+        }
         const modal = document.createElement('div');
         modal.className = 'modal';
-        modal.style.zIndex = '3000';
+        modal.style.zIndex = '3001';
         modal.innerHTML = `
-            <div class="modal-content-wrapper" style="max-width: 400px; max-height: 90vh; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--card-bg); border-radius: 12px;">
-                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); padding: 20px 20px 15px 20px; flex-shrink: 0; border-bottom: 1px solid var(--border-color);">雲端備份設定</div>
-                <div class="form-group" style="flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 15px 20px; -webkit-overflow-scrolling: touch;">
-                    <div class="form-row" style="display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label">啟用自動備份</span>
-                        <label class="switch">
-                            <input type="checkbox" id="cloudBackupEnabled" ${settings.cloudBackupEnabled ? 'checked' : ''} onchange="updateCloudBackupSetting()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <div class="form-row" style="${settings.cloudBackupEnabled ? '' : 'display: none;'}" id="cloudBackupStatusRow">
-                        <span class="form-label">上次備份</span>
-                        <span id="cloudBackupLastTime" style="color: var(--text-secondary);">${settings.cloudBackupLastTime ? new Date(settings.cloudBackupLastTime).toLocaleString('zh-TW') : '尚未備份'}</span>
-                    </div>
-                    <div class="form-row" style="margin-top: 20px;">
-                        <span class="form-label">Google Client ID</span>
-                        <input type="text" id="inpDriveClientId" class="form-input" placeholder="例：123456789-xxx.apps.googleusercontent.com" value="${(settings.driveClientId || '')}" style="font-size: 13px;" onchange="saveDriveClientId()">
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">請至 Google Cloud Console 建立 OAuth 用戶端 ID 並啟用 Drive API</div>
-                    </div>
-                    <div class="form-row" style="margin-top: 15px;">
-                        <div id="drive-login-status" style="margin-bottom: 10px; padding: 10px; background: var(--card-bg); border-radius: 8px;">
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Google Drive 備份狀態</div>
-                            <div id="drive-user-info" style="font-size: 16px; color: var(--text-primary);">未登入</div>
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">登入後將在您的 Google Drive 建立「${GOOGLE_DRIVE_FOLDER_NAME}」資料夾，每次開啟 App 會自動備份</div>
-                        </div>
-                        <button id="btn-drive-login" onclick="handleDriveLogin()" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                            <i class="fab fa-google"></i> Google 登入（連結 Drive）
-                        </button>
-                        <button id="btn-drive-logout" onclick="handleDriveLogout()" style="width: 100%; padding: 12px; background: var(--color-down); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; display: none;">
-                            <i class="fas fa-sign-out-alt"></i> 登出
-                        </button>
-                    </div>
-                    <div class="form-row" style="margin-top: 10px;">
-                        <button onclick="testCloudBackup()" style="width: 100%; padding: 12px; background: var(--color-up); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                            <i class="fas fa-cloud-upload-alt"></i> 立即備份
-                        </button>
-                    </div>
-                </div>
-                <div style="padding: 15px 20px; text-align: center; flex-shrink: 0; border-top: 1px solid var(--border-color);">
-                    <button onclick="closeCloudBackupModal()" style="padding: 10px 20px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; cursor: pointer;">關閉</button>
+            <div class="modal-content-wrapper" style="width: min(520px, 92vw); max-height: min(80vh, calc(100vh - 40px)); padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--card-bg); border-radius: 12px;">
+                <div id="cloudRestoreList" style="padding: 12px 16px; overflow-y: auto; flex: 1; min-height: 0;">
+                    <div style="color: var(--text-secondary); padding: 10px;">讀取雲端備份中...</div>
                 </div>
             </div>
         `;
-        modal.onclick = (e) => {
-            if(e.target === modal) closeCloudBackupModal();
-        };
+        modal.onclick = (e) => { if (e.target === modal) { modal.remove(); } };
         document.body.appendChild(modal);
-        window.cloudBackupModal = modal;
-        modal.style.display = 'block';
-        
-        // 初始化 Google Drive UI
-        setTimeout(() => {
-            updateDriveUI();
-        }, 100);
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.padding = '16px';
+
+        try {
+            const cfg = window.MONEE_FIREBASE_CONFIG;
+            const RTDB_APP = 'monee-rtdb-import';
+            const { initializeApp, getApp } = await import("firebase/app");
+            const { getDatabase, ref, get } = await import("firebase/database");
+            let app;
+            try { app = getApp(RTDB_APP); } catch { app = initializeApp(cfg, RTDB_APP); }
+            const rtdb = getDatabase(app);
+            const snap = await get(ref(rtdb, `${serial}/moneeBackups`));
+            const listEl = document.getElementById('cloudRestoreList');
+            if (!listEl) return;
+            if (!moneeRtdbSnapExists(snap)) {
+                listEl.innerHTML = '<div style="color: var(--text-secondary); padding: 10px;">目前沒有雲端備份。</div>';
+                return;
+            }
+            const obj = snap.val() || {};
+            const backups = Object.entries(obj).map(([id, v]) => ({
+                id,
+                filename: v && v.filename ? String(v.filename) : 'backup.json',
+                createdAt: v && v.createdAt ? String(v.createdAt) : '',
+                kind: v && v.kind ? String(v.kind) : (id === 'auto' ? 'auto' : ''),
+                content: v && v.content ? String(v.content) : '',
+            })).filter((x) => x.content);
+            backups.sort((a, b) => {
+                const aAuto = (a.id === 'auto' || a.kind === 'auto') ? 1 : 0;
+                const bAuto = (b.id === 'auto' || b.kind === 'auto') ? 1 : 0;
+                if (aAuto !== bAuto) return bAuto - aAuto; // AUTO 永遠置頂
+                return (b.createdAt || '').localeCompare(a.createdAt || '');
+            });
+            if (backups.length === 0) {
+                listEl.innerHTML = '<div style="color: var(--text-secondary); padding: 10px;">目前沒有可還原的雲端備份。</div>';
+                return;
+            }
+            listEl.innerHTML = backups.map((b) => {
+                const isAuto = (b.id === 'auto' || b.kind === 'auto');
+                const border = isAuto ? '2px solid #0a84ff' : '1px solid var(--border-color)';
+                const badge = isAuto
+                    ? `<div style="display:flex; align-items:center; gap:6px; color:#0a84ff; font-weight:800; font-size:12px; margin-bottom:6px;"><i class="fas fa-bolt"></i><span>AUTO</span></div>`
+                    : '';
+                return `
+                    <button data-id="${b.id}" style="width: 100%; text-align: left; margin-bottom: 8px; padding: 12px; border-radius: 10px; border: ${border}; background: var(--bg-color); color: var(--text-primary); cursor: pointer;">
+                        ${badge}
+                        <div style="font-weight: 600; margin-bottom: 4px; word-break: break-all;">${b.filename}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">${moneeFormatBackupTime(b.createdAt)}</div>
+                    </button>
+                `;
+            }).join('');
+            Array.from(listEl.querySelectorAll('button[data-id]')).forEach((btn) => {
+                btn.onclick = async () => {
+                    const id = btn.getAttribute('data-id');
+                    const selected = backups.find((b) => b.id === id);
+                    if (!selected) return;
+                    if (!confirm(`確定要還原這份雲端備份嗎？\n${selected.filename}\n${moneeFormatBackupTime(selected.createdAt)}`)) return;
+                    modal.remove();
+                    await restoreFromBackupJsonString(selected.content);
+                };
+            });
+        } catch (err) {
+            const listEl = document.getElementById('cloudRestoreList');
+            if (listEl) listEl.innerHTML = `<div style="color:#ff453a; padding:10px;">讀取雲端備份失敗：${err.message || err}</div>`;
+        }
     }
-    
-    function closeCloudBackupModal() {
-        if(window.cloudBackupModal) {
-            window.cloudBackupModal.style.display = 'none';
-                            setTimeout(() => {
-                if(window.cloudBackupModal && window.cloudBackupModal.parentNode) {
-                    window.cloudBackupModal.parentNode.removeChild(window.cloudBackupModal);
+
+    function importData() { 
+        const modal = document.createElement('div');
+        modal.id = 'restoreModeModal';
+        modal.className = 'modal';
+        modal.style.zIndex = '3000';
+        modal.innerHTML = `
+            <div style="width: min(520px, 92vw); margin: auto; padding: 16px; box-sizing: border-box;">
+                <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+                    <button id="btnCloudRestore" style="width: clamp(110px, 32vw, 150px); height: clamp(110px, 32vw, 150px); border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); color: var(--text-primary); cursor: pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; padding: 12px; box-sizing: border-box; transition: transform 0.12s ease, background 0.12s ease;">
+                        <i class="fas fa-cloud" style="font-size: 22px; color:#0a84ff;"></i>
+                        <div style="font-size: 15px; font-weight: 700; line-height: 1.1; text-align:center;">雲端還原</div>
+                    </button>
+                    <button id="btnLocalRestore" style="width: clamp(110px, 32vw, 150px); height: clamp(110px, 32vw, 150px); border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); color: var(--text-primary); cursor: pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; padding: 12px; box-sizing: border-box; transition: transform 0.12s ease, background 0.12s ease;">
+                        <i class="fas fa-file-upload" style="font-size: 22px; color:#0a84ff;"></i>
+                        <div style="font-size: 15px; font-weight: 700; line-height: 1.1; text-align:center;">本地還原</div>
+                    </button>
+                </div>
+            </div>
+        `;
+        modal.onclick = (e) => { if (e.target === modal) closeRestoreModeModal(); };
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.padding = '16px';
+        document.getElementById('btnLocalRestore').onclick = () => {
+            closeRestoreModeModal();
+            document.getElementById('importFileInput').click();
+        };
+        document.getElementById('btnCloudRestore').onclick = () => {
+            closeRestoreModeModal();
+            openCloudRestorePicker();
+        };
+    }
+
+    /**
+     * 清除本機記帳／匯入資料（JSON 匯入後存在 localStorage；登出時一併清掉）。
+     * 不刪除側邊欄收合、數字隱藏、教學看過等與帳本內容無關的鍵。
+     */
+    function clearMoneeAppLocalStorage() {
+        const exactKeys = new Set([
+            'displayCurrency',
+            'pageVisibility',
+            'pageOrder',
+            'my_assets_stable_data',
+            'my_assets_stable_settings',
+            'myAssets_v6',
+            'myAssets_v5',
+            'myAssets_v4',
+            'myAssets_settings_v3',
+        ]);
+        const prefixes = [
+            'my_assets_',
+            'journalPageState_',
+            'pnl_backup_',
+            'pnl_daily_offset_',
+            'pnl_total_offset_',
+            'cloud_backup_',
+        ];
+        try {
+            const toRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k) continue;
+                if (exactKeys.has(k)) {
+                    toRemove.push(k);
+                    continue;
                 }
-            }, 300);
-        }
+                if (prefixes.some((p) => k.startsWith(p))) toRemove.push(k);
+            }
+            toRemove.forEach((k) => localStorage.removeItem(k));
+        } catch (e) { console.error(e); }
     }
-    
-    function saveDriveClientId() {
-        const el = document.getElementById('inpDriveClientId');
-        if (el) {
-            settings.driveClientId = (el.value || '').trim();
-            saveSettings();
-        }
+    window.clearMoneeAppLocalStorage = clearMoneeAppLocalStorage;
+
+    /** 結束雲端工作階段、清空本機記帳資料後回到登入畫面 */
+    function moneeCloudLogout() {
+        try {
+            clearMoneeAppLocalStorage();
+            sessionStorage.removeItem('monee_rtdb_session_ok');
+            localStorage.removeItem('monee_rtdb_session_ok');
+            localStorage.removeItem('rtdb_account_serial');
+            localStorage.removeItem('rtdb_account_username');
+            localStorage.removeItem('rtdb_member_serial');
+        } catch (e) { console.error(e); }
+        location.reload();
     }
-    
-    // Google Drive 登入/登出處理
-    async function handleDriveLogin() {
-        saveDriveClientId();
-        const clientId = settings.driveClientId;
-        if (!clientId) {
-            alert('請先在上方輸入 Google Client ID。\n\n取得方式：\n1. 前往 Google Cloud Console\n2. 建立專案或選擇現有專案\n3. 啟用「Google Drive API」\n4. 建立 OAuth 2.0 用戶端 ID（網頁應用程式）\n5. 將 Client ID 貼到上方欄位');
+
+    /** 與雲端閘道相同專案；主程式須能獨立初始化 RTDB（不依賴 type=module 是否載入成功） */
+    function ensureMoneeFirebaseConfig() {
+        if (window.MONEE_FIREBASE_CONFIG) return;
+        window.MONEE_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAh8s9HFb805Sqmfw_K3zITs9Q-ApP0XDA",
+            authDomain: "monee-804d8.firebaseapp.com",
+            databaseURL: "https://monee-804d8-default-rtdb.firebaseio.com",
+            projectId: "monee-804d8",
+            storageBucket: "monee-804d8.firebasestorage.app",
+            messagingSenderId: "829816956035",
+            appId: "1:829816956035:web:b37edc1cdc935178cbe7b6",
+        };
+    }
+
+    /**
+     * 將匯入的 JSON 原文寫到 Realtime Database：{rtdb_account_serial}/moneeAppBackup
+     * @param {string} jsonString
+     * @param {{ force?: boolean }} [opts] force：檔案匯入等需覆寫雲端時略過「防舊資料」檢查
+     */
+    async function syncMoneeImportJsonToRtdb(jsonString, opts) {
+        const force = !!(opts && opts.force);
+        ensureMoneeFirebaseConfig();
+        const cfg = window.MONEE_FIREBASE_CONFIG;
+        const serial = localStorage.getItem('rtdb_account_serial');
+        if (!cfg || !serial) {
+            throw new Error('缺少 Firebase 設定或本機帳號節點（rtdb_account_serial）');
+        }
+        const updatedAt = new Date().toISOString();
+        const normHash = moneeBackupNormHash(jsonString);
+        if (
+            typeof window.__moneeLastRemoteBackupNormHash === 'string' &&
+            normHash === window.__moneeLastRemoteBackupNormHash
+        ) {
+            window.moneeLocalEditsSinceRemoteApply = false;
             return;
         }
+        const RTDB_APP = 'monee-rtdb-import';
+        const { initializeApp, getApp } = await import("firebase/app");
+        const { getDatabase, ref, get, set } = await import("firebase/database");
+        let app;
         try {
-            await requestDriveToken();
-        } catch (error) {
-            alert('登入失敗：' + (error.message || error));
+            app = getApp(RTDB_APP);
+        } catch {
+            app = initializeApp(cfg, RTDB_APP);
         }
-    }
-    
-    function handleDriveLogout() {
-        settings.driveAccessToken = null;
-        settings.driveUserEmail = null;
-        settings.cloudBackupToken = null;
-        saveSettings();
-        updateDriveUI();
-    }
-    
-    function updateDriveUI() {
-        const userInfo = document.getElementById('drive-user-info');
-        const loginBtn = document.getElementById('btn-drive-login');
-        const logoutBtn = document.getElementById('btn-drive-logout');
-        if (userInfo || loginBtn || logoutBtn) {
-            if (settings.driveAccessToken && settings.driveUserEmail) {
-                if (userInfo) userInfo.textContent = `已登入：${settings.driveUserEmail}`;
-                if (loginBtn) loginBtn.style.display = 'none';
-                if (logoutBtn) logoutBtn.style.display = 'block';
-                settings.cloudBackupToken = 'google_drive';
-                saveSettings();
-            } else {
-                if (userInfo) userInfo.textContent = '未登入';
-                if (loginBtn) loginBtn.style.display = 'block';
-                if (logoutBtn) logoutBtn.style.display = 'none';
-                if (settings.cloudBackupToken === 'google_drive') {
-                    settings.cloudBackupToken = null;
-                    saveSettings();
+        const rtdb = getDatabase(app);
+        const rRef = ref(rtdb, `${serial}/moneeAppBackup`);
+        const snap = await get(rRef);
+        if (moneeRtdbSnapExists(snap)) {
+            const cur = snap.val();
+            if (cur && typeof cur.content === 'string' && cur.content.trim()) {
+                const remoteHash = moneeBackupNormHash(cur.content);
+                if (remoteHash === normHash) {
+                    window.moneeLocalEditsSinceRemoteApply = false;
+                    return;
                 }
-            }
-        }
-    }
-    
-    function requestDriveToken() {
-        return new Promise((resolve, reject) => {
-            if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-                reject(new Error('Google 登入服務尚未載入，請稍後再試'));
-                return;
-            }
-            const clientId = (settings.driveClientId || '').trim();
-            if (!clientId) {
-                reject(new Error('請先輸入 Google Client ID'));
-                return;
-            }
-            const tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/drive.file email',
-                callback: (response) => {
-                    if (response.error) {
-                        reject(new Error(response.error));
+                if (!force) {
+                    const remoteAt =
+                        typeof cur.updatedAt === 'string' ? cur.updatedAt : '';
+                    const lastApp =
+                        typeof window.__moneeLastAppliedRemoteUpdatedAt === 'string'
+                            ? window.__moneeLastAppliedRemoteUpdatedAt
+                            : '';
+                    if (remoteAt && lastApp && remoteAt > lastApp) {
+                        console.warn(
+                            '[Monee RTDB] 略過上傳：雲端備份較新，避免以舊快照覆寫',
+                        );
+                        window.moneeLocalEditsSinceRemoteApply = false;
                         return;
                     }
-                    settings.driveAccessToken = response.access_token;
-                    settings.cloudBackupToken = 'google_drive';
-                    settings.cloudBackupEnabled = true;
-                    fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-                        headers: { Authorization: 'Bearer ' + response.access_token }
-                    }).then(r => r.json()).then(profile => {
-                        settings.driveUserEmail = profile.email || '';
-                        saveSettings();
-                        updateDriveUI();
-                        resolve();
-                    }).catch(() => {
-                        settings.driveUserEmail = '已登入';
-                        saveSettings();
-                        updateDriveUI();
-                        resolve();
-                    });
-                }
-            });
-            tokenClient.requestAccessToken();
-        });
-    }
-    
-    function updateCloudBackupSetting() {
-        const enabledEl = document.getElementById('cloudBackupEnabled');
-        const enabled = enabledEl ? enabledEl.checked : false;
-        const intervalEl = document.getElementById('cloudBackupInterval');
-        const interval = intervalEl ? (parseInt(intervalEl.value) || 24) : 24;
-        settings.cloudBackupEnabled = enabled;
-        settings.cloudBackupInterval = interval;
-        saveSettings();
-        
-        const intervalRow = document.getElementById('cloudBackupIntervalRow');
-        const statusRow = document.getElementById('cloudBackupStatusRow');
-        if(intervalRow) intervalRow.style.display = enabled ? 'flex' : 'none';
-        if(statusRow) statusRow.style.display = enabled ? 'flex' : 'none';
-        
-        if(enabled) {
-            startCloudBackupTimer();
-                        } else {
-            stopCloudBackupTimer();
-        }
-    }
-    
-    let cloudBackupTimer = null;
-    
-    function startCloudBackupTimer() {
-        stopCloudBackupTimer();
-        if(!settings.cloudBackupEnabled || !settings.cloudBackupToken) return;
-        // Google Drive 使用開啟時備份，不需要定時器
-        if(settings.cloudBackupToken === 'google_drive') return;
-        
-        const intervalMs = (settings.cloudBackupInterval || 24) * 60 * 60 * 1000;
-        cloudBackupTimer = setInterval(() => {
-            performCloudBackup();
-        }, intervalMs);
-        
-        // 檢查是否需要立即備份
-        if(!settings.cloudBackupLastTime || 
-           (Date.now() - new Date(settings.cloudBackupLastTime).getTime()) >= intervalMs) {
-            performCloudBackup();
-        }
-        
-        // 註冊背景同步（如果支援）
-        if('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
-            navigator.serviceWorker.ready.then((registration) => {
-                // 定期註冊背景同步
-                setInterval(() => {
-                    registration.sync.register('cloud-backup').catch((err) => {
-                        console.log('背景同步註冊失敗（可能不支援）:', err);
-                    });
-                }, intervalMs);
-            });
-        }
-    }
-    
-    function stopCloudBackupTimer() {
-        if(cloudBackupTimer) {
-            clearInterval(cloudBackupTimer);
-            cloudBackupTimer = null;
-        }
-    }
-    
-    // Google Drive 備份：建立資料夾並上傳 JSON
-    async function uploadBackupToDrive(jsonStr, filename) {
-        const token = settings.driveAccessToken;
-        if (!token) throw new Error('請先登入 Google Drive');
-        
-        const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
-        const headers = {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-        };
-        
-        // 1. 查詢或建立 Monee 資料夾
-        let folderId = null;
-        const listRes = await fetch(DRIVE_API + '?q=' + encodeURIComponent("name='" + GOOGLE_DRIVE_FOLDER_NAME + "' and mimeType='application/vnd.google-apps.folder' and trashed=false") + '&fields=files(id,name)', { headers });
-        const listData = await listRes.json();
-        if (listData.files && listData.files.length > 0) {
-            folderId = listData.files[0].id;
-        } else {
-            const createRes = await fetch(DRIVE_API, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    name: GOOGLE_DRIVE_FOLDER_NAME,
-                    mimeType: 'application/vnd.google-apps.folder'
-                })
-            });
-            if (!createRes.ok) {
-                const err = await createRes.json();
-                throw new Error(err.error?.message || '建立資料夾失敗');
-            }
-            const createData = await createRes.json();
-            folderId = createData.id;
-        }
-        
-        // 2. 上傳 JSON 檔案
-        const boundary = '-------314159265358979323846';
-        const delimiter = '\r\n--' + boundary + '\r\n';
-        const closeDelim = '\r\n--' + boundary + '--';
-        const meta = JSON.stringify({
-            name: filename,
-            parents: [folderId]
-        });
-        const body = delimiter + 'Content-Type: application/json\r\n\r\n' + meta +
-            delimiter + 'Content-Type: application/json\r\n\r\n' + jsonStr + closeDelim;
-        
-        const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'multipart/related; boundary=' + boundary
-            },
-            body
-        });
-        
-        if (!uploadRes.ok) {
-            const err = await uploadRes.json();
-            if (err.error?.code === 401) {
-                settings.driveAccessToken = null;
-                saveSettings();
-                throw new Error('登入已過期，請重新登入 Google Drive');
-            }
-            throw new Error(err.error?.message || '上傳失敗');
-        }
-    }
-    
-    async function performCloudBackup() {
-        if(!settings.cloudBackupEnabled) return;
-        
-        try {
-            // 生成備份資料
-            const backupData = await generateBackupData();
-            const jsonStr = JSON.stringify(backupData, null, 2);
-            // 生成包含日期和時間的檔名，格式：my_assets_backup_2025-12-04_12-20-34.json
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0]; // 2025-12-04
-            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // 12:20:34 -> 12-20-34
-            const filename = `my_assets_backup_${dateStr}_${timeStr}.json`;
-            
-            if(settings.cloudBackupToken === 'local_storage_backup') {
-                // 簡化版本：備份到 localStorage
-                // 使用完整的檔名（包含日期和時間）作為 key
-                localStorage.setItem(`cloud_backup_${dateStr}_${timeStr}`, jsonStr);
-                // 只保留最近 10 個備份
-                const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('cloud_backup_')).sort().reverse();
-                if(backupKeys.length > 10) {
-                    backupKeys.slice(10).forEach(k => localStorage.removeItem(k));
-                }
-                settings.cloudBackupLastTime = new Date().toISOString();
-                saveSettings();
-                console.log('雲端備份完成（本地）:', filename);
-            } else if(settings.cloudBackupToken === 'google_drive') {
-                // Google Drive 備份
-                await uploadBackupToDrive(jsonStr, filename);
-                settings.cloudBackupLastTime = new Date().toISOString();
-                saveSettings();
-                console.log('Google Drive 備份完成:', filename);
-            }
-        } catch(e) {
-            console.error('雲端備份失敗:', e);
-        }
-    }
-    
-    async function generateBackupData() {
-        const allUsersData = {};
-        users.forEach(user => {
-            const userDataKey = `${STORAGE_KEY_DATA}_${user.id}`;
-            const userSettingsKey = `${STORAGE_KEY_SETTINGS}_${user.id}`;
-            const userJournalKey = `${STORAGE_KEY_JOURNAL}_${user.id}`;
-            const userFixedTransfersKey = `${STORAGE_KEY_FIXED_TRANSFERS}_${user.id}`;
-            const userAccounts = JSON.parse(localStorage.getItem(userDataKey)) || [];
-            const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
-            const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
-            const userFixedTransfers = JSON.parse(localStorage.getItem(userFixedTransfersKey)) || [];
-            const userDateNotesKey = `${STORAGE_KEY_DATE_NOTES}_${user.id}`;
-            const userDateNotes = JSON.parse(localStorage.getItem(userDateNotesKey) || '{}');
-            const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
-            const userDividendRecordsKey = `${STORAGE_KEY_DIVIDEND_RECORDS}_${user.id}`;
-            const userTwstockDailyKey = `${STORAGE_KEY_TWSTOCK_DAILY}_${user.id}`;
-            const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
-            const userDividendRecords = JSON.parse(localStorage.getItem(userDividendRecordsKey) || '{}');
-            const userTwstockDaily = JSON.parse(localStorage.getItem(userTwstockDailyKey) || '{}');
-            allUsersData[user.id] = {
-                user: user,
-                data: userAccounts,
-                settings: userSettings,
-                journal: userJournal,
-                fixedTransfers: userFixedTransfers,
-                dateNotes: userDateNotes,
-                assetHistory: userAssetHistory,
-                dividendRecords: userDividendRecords,
-                twstockDaily: userTwstockDaily
-            };
-        });
-        
-        return {
-            version: '2.0',
-            users: users,
-            usersData: allUsersData,
-            exportDate: new Date().toISOString()
-        };
-    }
-    
-    // Google Drive 相關函數已完全移除，改用 Firebase
-    
-    async function testCloudBackup() {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 備份中...';
-        btn.disabled = true;
-        
-        try {
-            await performCloudBackup();
-            alert('備份完成！');
-            if(window.cloudBackupModal) {
-                const lastTimeEl = document.getElementById('cloudBackupLastTime');
-                if(lastTimeEl) {
-                    lastTimeEl.textContent = settings.cloudBackupLastTime ? new Date(settings.cloudBackupLastTime).toLocaleString('zh-TW') : '尚未備份';
+                    if (!window.moneeLocalEditsSinceRemoteApply) {
+                        console.warn(
+                            '[Monee RTDB] 略過上傳：未標記本地變更（多為延遲排程），避免覆寫雲端',
+                        );
+                        return;
+                    }
                 }
             }
-        } catch(e) {
-            alert('備份失敗：' + e.message);
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+        }
+        window.__moneeLastRtdbPushUpdatedAt = updatedAt;
+        await set(rRef, {
+            content: jsonString,
+            updatedAt,
+        });
+        window.__moneeLastAppliedRemoteUpdatedAt = updatedAt;
+        window.moneeLocalEditsSinceRemoteApply = false;
+    }
+
+    let moneeRtdbBackupPushTimer = null;
+    const MONEE_RTDB_BACKUP_DEBOUNCE_MS = 550;
+
+    function moneeRtdbSnapExists(snap) {
+        if (!snap) return false;
+        return typeof snap.exists === 'function' ? snap.exists() : !!snap.exists;
+    }
+
+    /** 取消 debounce 上傳，避免「已套用雲端後」舊排程仍以舊快照覆寫 RTDB */
+    function moneeCancelPendingRtdbBackupPush() {
+        if (moneeRtdbBackupPushTimer) {
+            clearTimeout(moneeRtdbBackupPushTimer);
+            moneeRtdbBackupPushTimer = null;
         }
     }
-    
-    function importData() { 
-        // 直接觸發檔案選擇，不再提供貼上文字的選項
-        document.getElementById('importFileInput').click();
+    window.moneeCancelPendingRtdbBackupPush = moneeCancelPendingRtdbBackupPush;
+
+    function scheduleMoneeRtdbBackupPush() {
+        if (window.moneeApplyingRtdbRemote) return;
+        if (isUserSwitching) return;
+        if (!sessionStorage.getItem('monee_rtdb_session_ok') && !localStorage.getItem('monee_rtdb_session_ok')) return;
+        if (!localStorage.getItem('rtdb_account_serial')) return;
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
+        if (typeof buildMoneeBackupExportObject !== 'function') return;
+        window.moneeLocalEditsSinceRemoteApply = true;
+        clearTimeout(moneeRtdbBackupPushTimer);
+        moneeRtdbBackupPushTimer = setTimeout(async () => {
+            moneeRtdbBackupPushTimer = null;
+            try {
+                if (window.moneeApplyingRtdbRemote) return;
+                const payload = buildMoneeBackupExportObject({ forRtdbSync: true });
+                await syncMoneeImportJsonToRtdb(JSON.stringify(payload));
+            } catch (e) {
+                console.warn('[Monee RTDB 即時備份]', e);
+            }
+        }, MONEE_RTDB_BACKUP_DEBOUNCE_MS);
     }
+    window.getMoneeRtdbSyncJsonString = function () {
+        return JSON.stringify(buildMoneeBackupExportObject({ forRtdbSync: true }));
+    };
+    window.scheduleMoneeRtdbBackupPush = scheduleMoneeRtdbBackupPush;
+
     function handleFileImport(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -6884,81 +7773,9 @@
                     progressBar.style.width = '70%';
                     progressText.innerText = '驗證資料中...';
                     const d = JSON.parse(e.target.result);
-                    
-                    // 準備要切換的主要使用者 ID
-                    let primaryUserId = null;
-
-                    if (d.version === '2.0' && d.users && d.usersData) {
-                        progressBar.style.width = '90%';
-                        progressText.innerText = '寫入資料中...';
-                        
-                        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(d.users));
-                        
-                        if (d.users.length > 0) {
-                            primaryUserId = d.users[0].id;
-                            localStorage.setItem(STORAGE_KEY_CURRENT_USER, primaryUserId);
-                            currentUserId = primaryUserId;
-                        }
-
-                        Object.keys(d.usersData).forEach(userId => {
-                            const userData = d.usersData[userId];
-                            localStorage.setItem(`${STORAGE_KEY_DATA}_${userId}`, JSON.stringify(userData.data || []));
-                            localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${userId}`, JSON.stringify(userData.settings || {}));
-                            // 修正：確保即使是 undefined 也要存成空陣列，避免讀取錯誤
-                            localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${userId}`, JSON.stringify(userData.journal || []));
-                            localStorage.setItem(`${STORAGE_KEY_FIXED_TRANSFERS}_${userId}`, JSON.stringify(userData.fixedTransfers || []));
-                            // 匯入日期記事
-                            if (userData.dateNotes !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_DATE_NOTES}_${userId}`, JSON.stringify(userData.dateNotes || {}));
-                            }
-                            // 匯入資產歷史快照
-                            if (userData.assetHistory !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_ASSET_HISTORY}_${userId}`, JSON.stringify(userData.assetHistory || {}));
-                            }
-                            // 匯入除權息紀錄
-                            if (userData.dividendRecords !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_DIVIDEND_RECORDS}_${userId}`, JSON.stringify(userData.dividendRecords || {}));
-                            }
-                            // 匯入台股每日持股快照
-                            if (userData.twstockDaily !== undefined) {
-                                localStorage.setItem(`${STORAGE_KEY_TWSTOCK_DAILY}_${userId}`, JSON.stringify(userData.twstockDaily || {}));
-                            }
-                        });
-
-                    } else if (d.data && d.settings) {
-                        progressBar.style.width = '90%';
-                        progressText.innerText = '寫入資料中...';
-                        primaryUserId = currentUserId; 
-                        localStorage.setItem(`${STORAGE_KEY_DATA}_${primaryUserId}`, JSON.stringify(d.data));
-                        localStorage.setItem(`${STORAGE_KEY_SETTINGS}_${primaryUserId}`, JSON.stringify(d.settings));
-                    } else {
-                        throw new Error("檔案格式錯誤");
-                    }
-
-                    if (window.firebaseUserLoggedIn) {
-                        progressText.innerText = '同步到雲端...';
-                        try {
-                            if (d.users && window.syncUsersToFirestore) {
-                                await window.syncUsersToFirestore(d.users);
-                            }
-                            // 關鍵：更新雲端紀錄的「當前使用者」，防止重新整理後跳回舊帳號
-                            if (primaryUserId && window.syncCurrentUserToFirestore) {
-                                await window.syncCurrentUserToFirestore(primaryUserId);
-                            }
-                            if (window.syncAllDataToFirestore) {
-                                await window.syncAllDataToFirestore();
-                            }
-                            progressText.innerText = '同步完成！';
-                        } catch (err) {
-                            console.error('同步到 Firestore 失敗:', err);
-                        }
-                    }
-                    
-                    progressBar.style.width = '100%';
-                    progressText.innerText = '完成！';
-                    
-                    // 延遲重新整理，確保資料寫入完成
-                    setTimeout(() => location.reload(), 500);
+                    progressBar.style.width = '90%';
+                    progressText.innerText = '寫入資料中...';
+                    await restoreFromBackupJsonString(String(e.target.result));
 
                 }, 100);
             } catch(err) {
@@ -7092,6 +7909,7 @@
         if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
             window.syncUsersToFirestore(users);
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 切換到新使用者
         switchUser(newUser.id);
@@ -7181,6 +7999,7 @@
         setTimeout(() => {
             isUserSwitching = false;
             console.log('[切換使用者] 鎖定解除');
+            scheduleMoneeRtdbBackupPush();
         }, 500);
     }
 
@@ -7239,6 +8058,7 @@
         if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
             window.syncUsersToFirestore(users);
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 如果刪除的是當前使用者，切換到第一個使用者
         if (currentUserId === userId) {
@@ -7293,6 +8113,7 @@
         if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
             window.syncUsersToFirestore(users);
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 更新顯示
         renderUserList();
@@ -7342,6 +8163,7 @@
         
         user.name = trimmedName;
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        scheduleMoneeRtdbBackupPush();
         
         // 更新使用者列表顯示
         renderUserList();
@@ -7400,6 +8222,7 @@
             if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
                 window.syncUsersToFirestore(users);
             }
+            scheduleMoneeRtdbBackupPush();
             
             // 更新顯示
             if (editingUserId === currentUserId) {
@@ -7810,6 +8633,7 @@
             if (window.syncUsersToFirestore && window.firebaseUserLoggedIn) {
                 window.syncUsersToFirestore(users);
             }
+            scheduleMoneeRtdbBackupPush();
             
             // 更新顯示
             if (editingUserId === currentUserId) {
@@ -7843,7 +8667,45 @@
         cropImage = null;
     }
 
-    // Detail View
+    // Detail View（桌面版：面板由 #detailViewPanel 滑入，與帳戶編輯 modal 類似；手機版：整頁 #detailView 滑入）
+    function isDetailViewDesktopPanel() {
+        return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
+    }
+    function getDetailViewSlideEl() {
+        const panel = document.getElementById('detailViewPanel');
+        if (isDetailViewDesktopPanel() && panel) return panel;
+        return document.getElementById('detailView');
+    }
+    function detailViewBackdropClick(ev) {
+        if (!isDetailViewDesktopPanel()) return;
+        if (ev.target !== ev.currentTarget) return;
+        closeDetailView();
+    }
+    function syncDetailViewOpenTransform() {
+        const detailView = document.getElementById('detailView');
+        const slideEl = getDetailViewSlideEl();
+        if (!detailView || !slideEl) return;
+        if (slideEl === detailView) {
+            detailView.style.transform = 'translateX(0)';
+        } else {
+            detailView.style.transform = '';
+            slideEl.style.transform = 'translateX(0)';
+        }
+    }
+    /** F12 / 視窗橫跨 768px 時，滑動目標會從面板換成整層或相反；若不重設 transform 會只剩遮罩、面板卡在畫面外 */
+    function syncDetailViewLayoutForViewport() {
+        const detailView = document.getElementById('detailView');
+        const panel = document.getElementById('detailViewPanel');
+        if (!detailView || !detailView.classList.contains('active')) return;
+        detailView.classList.remove('swiping');
+        if (isDetailViewDesktopPanel()) {
+            detailView.style.transform = '';
+            if (panel) panel.style.transform = 'translateX(0)';
+        } else {
+            if (panel) panel.style.transform = '';
+            detailView.style.transform = 'translateX(0)';
+        }
+    }
     function openDetailView(id) {
         if (isEditMode) return;
         currentDetailAcc = accounts.find(x => x.id === id);
@@ -7934,35 +8796,37 @@
             });
         } else { txList.innerHTML = '<div class="tx-no-data">無詳細交易紀錄<br>請在編輯模式匯入截圖</div>'; }
         const detailView = document.getElementById('detailView');
-        if(detailView) {
-            // 檢查詳情頁面是否已經打開（通過檢查 active 類和 display 樣式）
-            const isAlreadyOpen = detailView.classList.contains('active') && 
-                                  (detailView.style.transform === 'translateX(0px)' || 
-                                   detailView.style.transform === '' ||
-                                   getComputedStyle(detailView).transform === 'matrix(1, 0, 0, 1, 0, 0)');
-            
+        const slideEl = getDetailViewSlideEl();
+        if(detailView && slideEl) {
+            if (isDetailViewDesktopPanel()) {
+                detailView.style.transform = '';
+            }
+            const isAlreadyOpen = detailView.classList.contains('active') &&
+                (slideEl.style.transform === 'translateX(0px)' ||
+                    slideEl.style.transform === 'translateX(0)' ||
+                    getComputedStyle(slideEl).transform === 'matrix(1, 0, 0, 1, 0, 0)');
+
             if(!isAlreadyOpen) {
-                // 先設置初始位置
-                detailView.style.transform = 'translateX(100%)';
+                slideEl.style.transform = 'translateX(100%)';
                 detailView.classList.add('active');
-                // 然後動畫滑入
                 setTimeout(() => {
-                    detailView.style.transform = 'translateX(0)';
+                    slideEl.style.transform = 'translateX(0)';
                 }, 10);
             }
-            // 如果已經打開，不重新設置 transform，避免觸發動畫
         }
         initDetailViewSwipe();
     }
     function closeDetailView() { 
         const detailView = document.getElementById('detailView');
-        if(detailView) {
-            // 先動畫滑出
-            detailView.style.transform = 'translateX(100%)';
+        const slideEl = getDetailViewSlideEl();
+        if(detailView && slideEl) {
+            slideEl.style.transform = 'translateX(100%)';
             setTimeout(() => {
                 detailView.classList.remove('active');
-                // 重置 transform 以便下次打開時動畫正常
-                detailView.style.transform = 'translateX(100%)';
+                slideEl.style.transform = 'translateX(100%)';
+                if (slideEl !== detailView) {
+                    detailView.style.transform = '';
+                }
             }, 400);
         }
     }
@@ -8126,18 +8990,16 @@
     let detailStartTransform = 0;
     
     function initDetailViewSwipe() {
-        const detailView = document.getElementById('detailView');
-        if(!detailView) return;
+        const slideEl = getDetailViewSlideEl();
+        if(!slideEl) return;
         
-        // 移除舊的事件監聽器（如果有的話）
-        detailView.removeEventListener('touchstart', handleDetailTouchStart);
-        detailView.removeEventListener('touchmove', handleDetailTouchMove);
-        detailView.removeEventListener('touchend', handleDetailTouchEnd);
+        slideEl.removeEventListener('touchstart', handleDetailTouchStart);
+        slideEl.removeEventListener('touchmove', handleDetailTouchMove);
+        slideEl.removeEventListener('touchend', handleDetailTouchEnd);
         
-        // 添加新的事件監聽器
-        detailView.addEventListener('touchstart', handleDetailTouchStart, { passive: true });
-        detailView.addEventListener('touchmove', handleDetailTouchMove, { passive: true });
-        detailView.addEventListener('touchend', handleDetailTouchEnd, { passive: true });
+        slideEl.addEventListener('touchstart', handleDetailTouchStart, { passive: true });
+        slideEl.addEventListener('touchmove', handleDetailTouchMove, { passive: true });
+        slideEl.addEventListener('touchend', handleDetailTouchEnd, { passive: true });
     }
     
     function handleDetailTouchStart(e) {
@@ -8151,7 +9013,8 @@
         if(!detailTouchStartX || !detailTouchStartY) return;
         
         const detailView = document.getElementById('detailView');
-        if(!detailView || !detailView.classList.contains('active')) return;
+        const slideEl = getDetailViewSlideEl();
+        if(!detailView || !slideEl || !detailView.classList.contains('active')) return;
         
         const currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
@@ -8168,24 +9031,16 @@
             isDetailSwiping = true;
             detailView.classList.add('swiping');
             
-            // 計算滑動百分比
-            // diffX = touchStartX - currentX
-            // 向右滑動（關閉）：diffX < 0，transform 應該變正（向右移動）
-            // 向左滑動（不允許）：diffX > 0，應該回彈
-            const swipePercent = -(diffX / detailView.offsetWidth) * 100;
+            const swipePercent = -(diffX / slideEl.offsetWidth) * 100;
             
-            // 限制範圍：0 到 100%（0 是完全顯示，100% 是完全隱藏）
-            // 只允許向右滑動（關閉），向左滑動時回彈
             let newTransform = 0;
             if(swipePercent > 0) {
-                // 向右滑動，允許顯示動畫
                 newTransform = Math.min(100, swipePercent);
             } else {
-                // 向左滑動，添加阻力效果
                 newTransform = swipePercent * 0.3;
             }
             
-            detailView.style.transform = `translateX(${newTransform}%)`;
+            slideEl.style.transform = `translateX(${newTransform}%)`;
         }
     }
     
@@ -8225,10 +9080,9 @@
         if(diffX < -swipeThreshold && absDiffX > swipeThreshold) {
             closeDetailView();
         } else if(isDetailSwiping) {
-            // 如果滑動距離不夠，回彈到原位置
-            const detailView = document.getElementById('detailView');
-            if(detailView) {
-                detailView.style.transform = 'translateX(0)';
+            const slideEl = getDetailViewSlideEl();
+            if(slideEl) {
+                slideEl.style.transform = 'translateX(0)';
             }
         }
     }
@@ -8299,14 +9153,11 @@
             if(editingFromDetail && currentDetailAcc) {
                 const detailView = document.getElementById('detailView');
                 if(detailView) {
-                    // 確保詳情頁面已經打開
                     if(!detailView.classList.contains('active')) {
                         detailView.classList.add('active');
                     }
-                    // 確保詳情頁面在編輯模態框之下（z-index 較低），這樣才能看到編輯模態框的滑出動畫
                     detailView.style.zIndex = '2000';
-                    // 確保詳情頁面在正確位置（完全顯示）
-                    detailView.style.transform = 'translateX(0)';
+                    syncDetailViewOpenTransform();
                 }
             }
             
@@ -9180,19 +10031,33 @@
         
         // 計算記帳盈虧並加入總計
         if(currentPage === 0) {
-            // 總覽頁面：股票盈虧 + 記帳盈虧
+            // 總覽頁面：股票盈虧 + 記帳盈虧（記帳值也需套用台幣/美金切換）
             const journalDailyPnL = calculateJournalDailyPnL();
             const journalTotalPnL = calculateJournalTotalPnL();
-            // 應用偏移值（如果已歸零）
-            totalDailyPnL += journalDailyPnL + getDailyPnLOffset();
-            totalCostPnL += journalTotalPnL + getTotalPnLOffset();
+            const journalDailyWithOffset = journalDailyPnL + getDailyPnLOffset();
+            const journalTotalWithOffset = journalTotalPnL + getTotalPnLOffset();
+            const usdRate = settings && settings.usdRate ? settings.usdRate : 1;
+            if(currentDisplayCurrency === 'USD' && usdRate > 0) {
+                totalDailyPnL += journalDailyWithOffset / usdRate;
+                totalCostPnL += journalTotalWithOffset / usdRate;
+            } else {
+                totalDailyPnL += journalDailyWithOffset;
+                totalCostPnL += journalTotalWithOffset;
+            }
         } else if(currentPage === 1) {
-            // 錢包頁面：只顯示記帳盈虧
+            // 錢包頁面：只顯示記帳盈虧，並套用台幣/美金切換
             const journalDailyPnL = calculateJournalDailyPnL();
             const journalTotalPnL = calculateJournalTotalPnL();
-            // 應用偏移值（如果已歸零）
-            totalDailyPnL = journalDailyPnL + getDailyPnLOffset();
-            totalCostPnL = journalTotalPnL + getTotalPnLOffset();
+            const journalDailyWithOffset = journalDailyPnL + getDailyPnLOffset();
+            const journalTotalWithOffset = journalTotalPnL + getTotalPnLOffset();
+            const usdRate = settings && settings.usdRate ? settings.usdRate : 1;
+            if(currentDisplayCurrency === 'USD' && usdRate > 0) {
+                totalDailyPnL = journalDailyWithOffset / usdRate;
+                totalCostPnL = journalTotalWithOffset / usdRate;
+            } else {
+                totalDailyPnL = journalDailyWithOffset;
+                totalCostPnL = journalTotalWithOffset;
+            }
         }
         // 股票頁面（第2、3、4頁）保持原有邏輯，不加入記帳盈虧
 
@@ -9212,14 +10077,16 @@
             if(Math.abs(totalDailyPnL) > 1) {
                 const s = totalDailyPnL > 0 ? '+' : '';
                 const c = totalDailyPnL > 0 ? 'pnl-up' : 'pnl-down';
-                pnlHtml += `今日: <span class="${c}">${s}${formatAmount(totalDailyPnL)}</span>`;
+                const pct = formatHeaderPnLPercent(totalDailyPnL, displayAmount);
+                pnlHtml += `今日: <span class="${c}">${s}${formatAmount(totalDailyPnL)}${pct}</span>`;
             }
             // 顯示總損益
             if(Math.abs(totalCostPnL) > 1) {
-                if(pnlHtml) pnlHtml += ' / ';
+                if(pnlHtml) pnlHtml += '<br>';
                 const s = totalCostPnL > 0 ? '+' : '';
                 const c = totalCostPnL > 0 ? 'pnl-up' : 'pnl-down';
-                pnlHtml += `總計: <span class="${c}">${s}${formatAmount(totalCostPnL)}</span>`;
+                const pct = formatHeaderPnLPercent(totalCostPnL, displayAmount);
+                pnlHtml += `總計: <span class="${c}">${s}${formatAmount(totalCostPnL)}${pct}</span>`;
             }
             bd.innerHTML = pnlHtml;
         } else {
@@ -9660,6 +10527,34 @@
         // 負債始終鎖定在最底部
     }
 
+    function isDesktopViewport() {
+        return window.matchMedia && window.matchMedia('(min-width: 768px)').matches;
+    }
+    function collapseCurrencyToggle() {
+        const btn = document.getElementById('currencyToggleBtn');
+        if (btn) btn.classList.remove('is-armed');
+    }
+    function handleCurrencyToggleClick(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        const btn = document.getElementById('currencyToggleBtn');
+        if (!btn) return;
+        // 桌面：直接切換；展開由 hover 控制
+        if (isDesktopViewport()) {
+            toggleCurrency();
+            return;
+        }
+        // 手機：第一次點只是展開，第二次點才切換
+        if (!btn.classList.contains('is-armed')) {
+            btn.classList.add('is-armed');
+            return;
+        }
+        btn.classList.remove('is-armed');
+        toggleCurrency();
+    }
+    
     // Currency Toggle Function
     function toggleCurrency() {
         currentDisplayCurrency = currentDisplayCurrency === 'TWD' ? 'USD' : 'TWD';
@@ -9687,7 +10582,11 @@
         if(btn && text) {
             // 顯示當前幣別
             text.innerText = currentDisplayCurrency;
-            btn.title = `當前顯示: ${currentDisplayCurrency}，點擊切換至 ${currentDisplayCurrency === 'TWD' ? 'USD' : 'TWD'}`;
+            if (isDesktopViewport()) {
+                btn.title = `當前顯示: ${currentDisplayCurrency}，滑鼠移上後點擊切換`;
+            } else {
+                btn.title = `當前顯示: ${currentDisplayCurrency}，點一下展開、再點一下切換`;
+            }
         }
     }
     
@@ -9809,6 +10708,22 @@
         chartLevel = 'root';
         currentPage = 0;
         renderAssets();
+
+        // 每日自動備份（雲端）：一天只一次，覆蓋 auto；合計最多保留 5（auto + 手動）
+        try {
+            const serial = localStorage.getItem('rtdb_account_serial');
+            if (serial) {
+                const autoJson = JSON.stringify(buildMoneeBackupExportObject(), null, 2);
+                // 不阻塞 UI
+                setTimeout(() => {
+                    syncMoneeDailyAutoBackupToRtdb(autoJson).catch((e) => {
+                        console.warn('[Monee] auto 雲端備份失敗', e);
+                    });
+                }, 800);
+            }
+        } catch (e) {
+            console.warn('[Monee] auto 雲端備份初始化失敗', e);
+        }
         
         // 檢查並執行固定轉帳（自動日期匯款）
         checkAndExecuteFixedTransfers();
@@ -9857,6 +10772,8 @@
                 
                 lastWidth = currentWidth;
                 lastIsDesktop = currentIsDesktop;
+                
+                syncDetailViewLayoutForViewport();
                 
                 if(chartInstance) {
                     const chartWrapper = document.getElementById('chartWrapper');
@@ -9958,6 +10875,16 @@
         };
         
         window.addEventListener('resize', handleResize);
+        window.addEventListener('resize', () => {
+            collapseCurrencyToggle();
+            updateCurrencyButton();
+        });
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('currencyToggleBtn');
+            if (!btn) return;
+            if (btn.contains(e.target)) return;
+            collapseCurrencyToggle();
+        });
         
         // 監聽窗口大小改變，更新記帳詳情區域高度
         window.addEventListener('resize', () => {
@@ -9971,6 +10898,7 @@
         if(window.matchMedia) {
             const mediaQuery = window.matchMedia('(min-width: 768px)');
             mediaQuery.addEventListener('change', () => {
+                syncDetailViewLayoutForViewport();
                 handleResize();
             });
         }
@@ -9999,28 +10927,6 @@
                     console.log('Service Worker 註冊失敗:', error);
                 });
             
-            // 監聽來自 Service Worker 的消息（背景備份）
-            navigator.serviceWorker.addEventListener('message', (event) => {
-                if(event.data && event.data.type === 'BACKGROUND_BACKUP') {
-                    console.log('收到背景備份請求');
-                    if(settings.cloudBackupEnabled) {
-                        performCloudBackup().catch(err => {
-                            console.error('背景備份失敗:', err);
-                        });
-                    }
-                }
-            });
-        }
-        
-        // 啟動雲端自動備份
-        if(settings.cloudBackupEnabled) {
-            startCloudBackupTimer();
-            // Google Drive：每次開啟 App 自動備份一次
-            if(settings.cloudBackupToken === 'google_drive' && settings.driveAccessToken) {
-                setTimeout(() => {
-                    performCloudBackup().catch(err => console.warn('Google Drive 備份失敗:', err));
-                }, 2000);
-            }
         }
         
         
@@ -10530,6 +11436,7 @@
         if (window.syncDateNotesToFirestore && window.firebaseUserLoggedIn) {
             window.syncDateNotesToFirestore(notes);
         }
+        scheduleMoneeRtdbBackupPush();
     }
     
     // ========== 記帳類型選擇器（必須在 openNewExpenseFromCalendar 之前定義）==========
@@ -12738,12 +13645,14 @@
     // 保存記帳記錄
     function saveJournalRecords(records) {
         if (isUserSwitching) return; // 鎖定攔截
+        if (currentUserId === MONEE_GATE_PLACEHOLDER_USER_ID) return;
         clearJournalDatesCache();
         try {
             localStorage.setItem(`${STORAGE_KEY_JOURNAL}_${currentUserId}`, JSON.stringify(records));
             if (window.syncJournalToFirestore && window.firebaseUserLoggedIn) {
                 window.syncJournalToFirestore(records);
             }
+            scheduleMoneeRtdbBackupPush();
         } catch(e) { console.error(e); }
     }
     
@@ -12909,6 +13818,7 @@
             if (window.syncAccountsToFirestore && window.firebaseUserLoggedIn && !isUserSwitching) {
                 window.syncAccountsToFirestore(accounts);
             }
+            scheduleMoneeRtdbBackupPush();
         }
     }
     
@@ -13008,6 +13918,7 @@
                 console.error('[刪除記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         
         console.log('資料已保存並同步');
         
@@ -13872,6 +14783,7 @@
                 console.error('[記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         renderAssets();
         updateChartData();
         renderCalendar(); // 重新渲染日曆以更新有支出天數的藍色標記
@@ -14051,6 +14963,7 @@
                 console.error('[記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         renderAssets();
         updateChartData();
         renderCalendar();
@@ -14356,6 +15269,7 @@
     function saveFixedExpenses(items) {
         if (!currentUserId) return;
         localStorage.setItem(STORAGE_KEY_FIXED_EXPENSES + '_' + currentUserId, JSON.stringify(items));
+        scheduleMoneeRtdbBackupPush();
     }
     function loadFixedIncomes() {
         try {
@@ -14367,6 +15281,7 @@
     function saveFixedIncomes(items) {
         if (!currentUserId) return;
         localStorage.setItem(STORAGE_KEY_FIXED_INCOMES + '_' + currentUserId, JSON.stringify(items));
+        scheduleMoneeRtdbBackupPush();
     }
     let editingFixedExpenseId = null;
     let editingFixedIncomeId = null;
@@ -14450,6 +15365,7 @@
     function saveDividendRecords(records) {
         const key = `${STORAGE_KEY_DIVIDEND_RECORDS}_${currentUserId}`;
         localStorage.setItem(key, JSON.stringify(records));
+        scheduleMoneeRtdbBackupPush();
     }
     
     const FINMIND_API = 'https://api.finmindtrade.com/api/v4/data';
@@ -15128,6 +16044,7 @@
                 console.error('[記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -15242,6 +16159,7 @@
                 console.error('[記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -15360,6 +16278,7 @@
                 console.error('[記帳同步] 同步失敗:', err);
             });
         }
+        scheduleMoneeRtdbBackupPush();
         
         // 重置編輯ID
         editingJournalRecordId = null;
@@ -16418,6 +17337,7 @@
             if (window.syncFixedTransfersToFirestore && window.firebaseUserLoggedIn) {
                 window.syncFixedTransfersToFirestore(transfers);
             }
+            scheduleMoneeRtdbBackupPush();
         } catch(e) { console.error(e); }
     }
     
@@ -17585,6 +18505,399 @@
     } else {
         window.addEventListener('load', init);
     }
+</script>
+
+<script type="module">
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+import {
+  getDatabase,
+  ref,
+  get,
+  push,
+  set,
+} from "firebase/database";
+
+const PATH_ACCOUNT_INDEX = "accountIndex";
+const ACCT_USER = "username";
+const ACCT_HASH = "passHash";
+
+const LS_ACCOUNT_SERIAL = "rtdb_account_serial";
+const LS_ACCOUNT_NAME = "rtdb_account_username";
+const LS_MEMBER_SERIAL = "rtdb_member_serial";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAh8s9HFb805Sqmfw_K3zITs9Q-ApP0XDA",
+  authDomain: "monee-804d8.firebaseapp.com",
+  databaseURL: "https://monee-804d8-default-rtdb.firebaseio.com",
+  projectId: "monee-804d8",
+  storageBucket: "monee-804d8.firebasestorage.app",
+  messagingSenderId: "829816956035",
+  appId: "1:829816956035:web:b37edc1cdc935178cbe7b6",
+};
+window.MONEE_FIREBASE_CONFIG = window.MONEE_FIREBASE_CONFIG || firebaseConfig;
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+function snapExistsRtdb(snap) {
+  if (!snap) return false;
+  return typeof snap.exists === "function" ? snap.exists() : !!snap.exists;
+}
+
+/** 登入後從 Realtime Database 讀取 moneeAppBackup 並還原本機 */
+async function pullMoneeBackupFromRtdb(accountSerial) {
+  const cfg = window.MONEE_FIREBASE_CONFIG;
+  if (!cfg || !accountSerial) return;
+  const apply = window.applyMoneeImportedBackupObject;
+  if (typeof apply !== "function") {
+    console.warn("[Monee] applyMoneeImportedBackupObject 未就緒，跳過雲端還原");
+    return;
+  }
+  const RTDB_APP = "monee-rtdb-import";
+  const { initializeApp, getApp } = await import("firebase/app");
+  const { getDatabase, ref, get } = await import("firebase/database");
+  let app;
+  try {
+    app = getApp(RTDB_APP);
+  } catch {
+    app = initializeApp(cfg, RTDB_APP);
+  }
+  const rtdb = getDatabase(app);
+  const snap = await get(ref(rtdb, `${accountSerial}/moneeAppBackup`));
+  if (!snapExistsRtdb(snap)) return;
+  const val = snap.val();
+  if (!val || typeof val.content !== "string" || !val.content.trim()) return;
+  let d;
+  try {
+    d = JSON.parse(val.content);
+  } catch (e) {
+    console.error("[Monee] moneeAppBackup 的 JSON 無法解析", e);
+    return;
+  }
+  try {
+    apply(d);
+  } catch (e) {
+    console.error("[Monee] 雲端備份還原失敗", e);
+  }
+}
+
+/**
+ * @param {{ isNewRegistration?: boolean }} [opts]
+ */
+async function enterMainAfterCloudAuth(accountSerial, displayName, opts = {}) {
+  const prev = localStorage.getItem(LS_ACCOUNT_SERIAL);
+  const sameCloud =
+    typeof prev === "string" &&
+    typeof accountSerial === "string" &&
+    prev === accountSerial;
+  if (opts.isNewRegistration || !sameCloud) {
+    window.clearMoneeAppLocalStorage?.();
+  }
+  localStorage.setItem(LS_ACCOUNT_SERIAL, accountSerial);
+  localStorage.setItem(LS_ACCOUNT_NAME, displayName || "");
+  localStorage.removeItem(LS_MEMBER_SERIAL);
+  sessionStorage.setItem("monee_rtdb_session_ok", "1");
+  localStorage.setItem("monee_rtdb_session_ok", "1");
+  if (!sameCloud) {
+    try {
+      await pullMoneeBackupFromRtdb(accountSerial);
+    } catch (e) {
+      console.error("[Monee] 從 Firebase 讀取備份失敗", e);
+    }
+  }
+  location.reload();
+}
+
+if (document.documentElement.classList.contains("monee-gate-pending")) {
+  const rtdb = getDatabase(app);
+  const rootRef = ref(rtdb, "/");
+
+  function snapExists(snap) {
+    if (!snap) return false;
+    return typeof snap.exists === "function" ? snap.exists() : !!snap.exists;
+  }
+
+  async function sha256Hex(text) {
+    const subtle = globalThis.crypto?.subtle;
+    if (!subtle) {
+      throw new Error(
+        "無法雜湊密碼：請以 HTTPS 或 http://localhost 開啟此頁（瀏覽器需啟用 Web Crypto）。",
+      );
+    }
+    const buf = new TextEncoder().encode(text);
+    const hash = await subtle.digest("SHA-256", buf);
+    return [...new Uint8Array(hash)]
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function usernameIndexKey(username) {
+    const t = String(username || "").trim();
+    return t.replace(/[.#$\[\]/\s]/g, "_");
+  }
+
+  function accountIndexRefFor(username) {
+    return ref(rtdb, `${PATH_ACCOUNT_INDEX}/${usernameIndexKey(username)}`);
+  }
+
+  async function resolveAccountFromLoginInput(loginInput) {
+    const trimmed = String(loginInput || "").trim();
+    if (!trimmed) return null;
+
+    const idxSnap = await get(accountIndexRefFor(trimmed));
+    if (snapExists(idxSnap)) {
+      const serial = idxSnap.val();
+      if (typeof serial === "string" && serial)
+        return { serial, label: trimmed };
+    }
+
+    const acctSnap = await get(ref(rtdb, trimmed));
+    if (snapExists(acctSnap)) {
+      const data = acctSnap.val();
+      if (data && typeof data === "object" && typeof data[ACCT_HASH] === "string")
+        return { serial: trimmed, label: data[ACCT_USER] || trimmed };
+    }
+    return null;
+  }
+
+  const gateAuth = document.getElementById("moneeGateAuth");
+  const tabLoginBtn = document.getElementById("moneeGateTabLogin");
+  const tabRegBtn = document.getElementById("moneeGateTabReg");
+  const loginBlock = document.getElementById("moneeGateLoginBlock");
+  const regBlock = document.getElementById("moneeGateRegBlock");
+  const authStatus = document.getElementById("moneeGateAuthStatus");
+
+  if (!gateAuth || !tabLoginBtn || !tabRegBtn || !loginBlock || !regBlock || !authStatus) {
+    console.error("[Monee 雲端閘道] 找不到必要 DOM。");
+  } else {
+    function setAuthErr(msg) {
+      authStatus.textContent = msg || "";
+      authStatus.classList.toggle("err", !!msg);
+    }
+
+    function switchTab(isReg) {
+      loginBlock.classList.toggle("monee-cloud-hidden", isReg);
+      regBlock.classList.toggle("monee-cloud-hidden", !isReg);
+      tabLoginBtn.classList.toggle("primary", !isReg);
+      tabLoginBtn.classList.toggle("ghost", isReg);
+      tabRegBtn.classList.toggle("primary", isReg);
+      tabRegBtn.classList.toggle("ghost", !isReg);
+      setAuthErr("");
+    }
+
+    tabLoginBtn.addEventListener("click", () => switchTab(false));
+    tabRegBtn.addEventListener("click", () => switchTab(true));
+
+    document.getElementById("moneeGateBtnLogin").addEventListener("click", async () => {
+      const loginKey = document.getElementById("moneeGateSerial").value.trim();
+      const password = document.getElementById("moneeGatePassword").value;
+      setAuthErr("");
+      if (!loginKey || !password) {
+        setAuthErr("請輸入帳號／序列碼與密碼。");
+        return;
+      }
+      const btn = document.getElementById("moneeGateBtnLogin");
+      btn.disabled = true;
+      try {
+        const resolved = await resolveAccountFromLoginInput(loginKey);
+        if (!resolved) {
+          setAuthErr("找不到帳號，請確認名稱或節點序列碼。");
+          return;
+        }
+        const acctSnap = await get(ref(rtdb, resolved.serial));
+        if (!snapExists(acctSnap)) {
+          setAuthErr("帳號資料不存在。");
+          return;
+        }
+        const data = acctSnap.val();
+        const hash = await sha256Hex(password);
+        if (typeof data[ACCT_HASH] !== "string" || data[ACCT_HASH] !== hash) {
+          setAuthErr("帳號或密碼錯誤。");
+          return;
+        }
+        await enterMainAfterCloudAuth(resolved.serial, data[ACCT_USER] || resolved.label);
+      } catch (e) {
+        console.error(e);
+        setAuthErr(`登入失敗：${e.message || e}`);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById("moneeGateBtnCreate").addEventListener("click", async () => {
+      const u = document.getElementById("moneeGateRegUser").value.trim();
+      const p1 = document.getElementById("moneeGateRegPassword").value;
+      const p2 = document.getElementById("moneeGateRegPassword2").value;
+      setAuthErr("");
+      if (!u) {
+        setAuthErr("請輸入帳號名稱。");
+        return;
+      }
+      if (usernameIndexKey(u).length < 1) {
+        setAuthErr("帳號名稱格式無效。");
+        return;
+      }
+      if (!p1 || p1.length < 6) {
+        setAuthErr("密碼至少 6 碼。");
+        return;
+      }
+      if (p1 !== p2) {
+        setAuthErr("兩次密碼不一致。");
+        return;
+      }
+
+      const idxRef = accountIndexRefFor(u);
+      const idxSnap = await get(idxRef);
+      if (snapExists(idxSnap)) {
+        setAuthErr("此帳號名稱已被註冊。");
+        return;
+      }
+
+      const btn = document.getElementById("moneeGateBtnCreate");
+      btn.disabled = true;
+      try {
+        const passHash = await sha256Hex(p1);
+        const newAcct = push(rootRef);
+        const serial = newAcct.key;
+        await set(newAcct, {
+          [ACCT_USER]: u,
+          [ACCT_HASH]: passHash,
+        });
+        await set(idxRef, serial);
+        await enterMainAfterCloudAuth(serial, u, { isNewRegistration: true });
+      } catch (e) {
+        console.error(e);
+        setAuthErr(`註冊失敗：${e.message || e}`);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    const skipA = document.getElementById("moneeGateSkipCloud");
+    if (skipA) {
+      skipA.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        sessionStorage.setItem("monee_rtdb_session_ok", "1");
+        localStorage.setItem("monee_rtdb_session_ok", "1");
+        location.reload();
+      });
+    }
+  }
+}
+
+/** 已進入主畫面：參考 firebase-read.html，以 debounce 上傳 + onValue 接收他端更新 */
+if (!document.documentElement.classList.contains("monee-gate-pending")) {
+  const serialLive = localStorage.getItem("rtdb_account_serial");
+  if (serialLive && (sessionStorage.getItem("monee_rtdb_session_ok") || localStorage.getItem("monee_rtdb_session_ok"))) {
+    (async () => {
+      const cfg = window.MONEE_FIREBASE_CONFIG || firebaseConfig;
+      const RTDB_APP = "monee-rtdb-import";
+      const { initializeApp, getApp } = await import("firebase/app");
+      const { getDatabase, ref, onValue } = await import("firebase/database");
+      let appLive;
+      try {
+        appLive = getApp(RTDB_APP);
+      } catch {
+        appLive = initializeApp(cfg, RTDB_APP);
+      }
+      const rtdbLive = getDatabase(appLive);
+      const backupRef = ref(rtdbLive, `${serialLive}/moneeAppBackup`);
+      let lastRemoteSeenAt = null;
+      onValue(
+        backupRef,
+        (snap) => {
+          if (!snapExistsRtdb(snap)) return;
+          const val = snap.val();
+          if (!val || typeof val.content !== "string" || !val.content.trim()) return;
+          const at = typeof val.updatedAt === "string" ? val.updatedAt : "";
+          if (typeof window.moneeBackupNormHash === "function") {
+            window.__moneeLastRemoteBackupNormHash = window.moneeBackupNormHash(
+              val.content,
+            );
+          }
+          if (at && at === window.__moneeLastRtdbPushUpdatedAt) {
+            lastRemoteSeenAt = at;
+            if (at) window.__moneeLastAppliedRemoteUpdatedAt = at;
+            window.moneeLocalEditsSinceRemoteApply = false;
+            if (typeof window.moneeCancelPendingRtdbBackupPush === "function") {
+              window.moneeCancelPendingRtdbBackupPush();
+            }
+            return;
+          }
+          try {
+            if (
+              typeof window.getMoneeRtdbSyncJsonString === "function" &&
+              typeof window.moneeBackupNormHash === "function"
+            ) {
+              const localStr = window.getMoneeRtdbSyncJsonString();
+              if (
+                window.moneeBackupNormHash(val.content) ===
+                window.moneeBackupNormHash(localStr)
+              ) {
+                lastRemoteSeenAt = at || lastRemoteSeenAt;
+                if (at) window.__moneeLastAppliedRemoteUpdatedAt = at;
+                window.moneeLocalEditsSinceRemoteApply = false;
+                if (typeof window.moneeCancelPendingRtdbBackupPush === "function") {
+                  window.moneeCancelPendingRtdbBackupPush();
+                }
+                return;
+              }
+            }
+          } catch (e) {
+            /* 略過比對 */
+          }
+          if (lastRemoteSeenAt === null) {
+            lastRemoteSeenAt = at || "__init__";
+            return;
+          }
+          if (at === lastRemoteSeenAt) return;
+          lastRemoteSeenAt = at;
+          if (typeof window.moneeCancelPendingRtdbBackupPush === "function") {
+            window.moneeCancelPendingRtdbBackupPush();
+          }
+          try {
+            window.moneeApplyingRtdbRemote = true;
+            const parsed = JSON.parse(val.content);
+            const snapFn = window.moneeSnapshotCurrentUserAccountIdsSig;
+            const layoutFn = window.moneeSnapshotCurrentUserPageLayoutSig;
+            const preAccSig =
+              typeof snapFn === "function" ? snapFn() : null;
+            const preLayoutSig =
+              typeof layoutFn === "function" ? layoutFn() : null;
+            if (typeof window.applyMoneeImportedBackupObject === "function") {
+              window.applyMoneeImportedBackupObject(parsed);
+            }
+            let structureChanged = true;
+            if (preAccSig !== null && typeof snapFn === "function") {
+              structureChanged = preAccSig !== snapFn();
+            }
+            let layoutChanged = true;
+            if (preLayoutSig !== null && typeof layoutFn === "function") {
+              layoutChanged = preLayoutSig !== layoutFn();
+            }
+            if (typeof window.moneeRehydrateUiAfterRtdbRemoteSync === "function") {
+              window.moneeRehydrateUiAfterRtdbRemoteSync({
+                structureChanged,
+                layoutChanged,
+              });
+            }
+            if (at) window.__moneeLastAppliedRemoteUpdatedAt = at;
+            window.moneeLocalEditsSinceRemoteApply = false;
+          } catch (e) {
+            console.error("[Monee] 即時套用雲端備份失敗", e);
+          } finally {
+            window.moneeApplyingRtdbRemote = false;
+          }
+        },
+        (err) => console.error("[Monee] moneeAppBackup 即時連線錯誤", err),
+      );
+    })();
+  }
+}
 </script>
 
 </body>
