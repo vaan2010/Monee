@@ -347,7 +347,7 @@
             .sidebar.collapsed ~ .main-content .sidebar-toggle-btn-navbar { display: block !important; position: absolute; top: 50%; transform: translateY(-50%); left: 20px; z-index: 1001; }
             .navbar .btn-group { margin-left: 50px; }
         }
-        .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .sidebar-header { padding: 20px 25px; border-bottom: none; transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .sidebar-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; }
         /* 右側中線凸出把手：僅功能表開啟時顯示，連著右緣 */
         .sidebar-close-btn {
@@ -2342,7 +2342,106 @@
             margin-top: auto;
             flex-shrink: 0;
             padding: 8px 0 max(12px, env(safe-area-inset-bottom));
-            border-top: 1px solid var(--border-color);
+            border-top: none;
+        }
+        .release-notes-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 4000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 18px;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .release-notes-overlay.open { display: flex; }
+        .release-notes-panel {
+            width: min(420px, 100%);
+            max-height: min(78vh, 640px);
+            display: flex;
+            flex-direction: column;
+            border-radius: 18px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+        }
+        .release-notes-header {
+            padding: 18px 20px 12px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .release-notes-kicker {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+        .release-notes-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .release-notes-version {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .release-notes-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .release-notes-close:hover { background: var(--active-bg); color: var(--text-primary); }
+        .release-notes-body {
+            padding: 4px 20px 8px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .release-notes-body ul {
+            margin: 0;
+            padding: 0 0 0 1.15em;
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+        .release-notes-body li { margin: 0 0 10px; }
+        .release-notes-body li:last-child { margin-bottom: 0; }
+        .release-notes-footer {
+            padding: 14px 20px 18px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .release-notes-ok {
+            border: none;
+            border-radius: 12px;
+            padding: 11px 18px;
+            background: var(--accent);
+            color: var(--accent-contrast);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .release-notes-ok:active { transform: scale(0.98); }
+        body.release-notes-open .currency-toggle-btn {
+            display: none !important;
+        }
+        .menu-item .menu-version-tag {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
         }
         /* Footer 的登出項目要和上方 menu-item 完全對齊 */
         .sidebar-footer .menu-item {
@@ -2556,11 +2655,11 @@
                     <div class="menu-item" onclick="openTutorialJournal(); toggleSidebar();"><i class="fas fa-book"></i><span class="menu-text">記帳介紹</span></div>
                 </div>
 
-                <div class="menu-group-label" onclick="toggleMenuSection('theme')">
+                <div class="menu-group-label collapsed" onclick="toggleMenuSection('theme')">
                     <span>主題</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
                 </div>
-                <div class="menu-section" id="menuSection-theme">
+                <div class="menu-section collapsed" id="menuSection-theme">
                     <div class="theme-picker" id="themePicker" aria-label="主題選擇">
                         <button type="button" class="theme-option" data-theme="dark" onclick="selectTheme('dark')">
                             <i class="fas fa-moon" aria-hidden="true"></i>
@@ -2608,10 +2707,35 @@
                         <div class="menu-item" onclick="refreshAllData(); toggleSidebar();"><i class="fas fa-sync-alt"></i><span class="menu-text">立即更新</span></div>
                         <div class="menu-item" onclick="refreshStockInfo(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">重新整理</span></div>
                     </div>
+                    <div class="menu-item" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="menu-text">版本</span>
+                        <span class="menu-version-tag" id="sidebarAppVersion">v1.6.0</span>
+                    </div>
                 </div>
             </div>
             <div class="sidebar-footer">
                 <div class="menu-item" onclick="moneeCloudLogout();" title="登出並清除本機記帳資料，返回登入畫面"><i class="fas fa-sign-out-alt"></i><span class="menu-text">登出</span></div>
+            </div>
+        </div>
+
+        <!-- Release Notes -->
+        <div id="releaseNotesOverlay" class="release-notes-overlay" onclick="if(event.target===this)closeReleaseNotes()">
+            <div class="release-notes-panel" role="dialog" aria-modal="true" aria-labelledby="releaseNotesTitle" onclick="event.stopPropagation()">
+                <div class="release-notes-header">
+                    <div>
+                        <div class="release-notes-kicker">Release Notes</div>
+                        <h3 class="release-notes-title" id="releaseNotesTitle">本次更新</h3>
+                        <div class="release-notes-version" id="releaseNotesVersionLabel">v1.6.0</div>
+                    </div>
+                    <button type="button" class="release-notes-close" onclick="closeReleaseNotes()" aria-label="關閉"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="release-notes-body">
+                    <ul id="releaseNotesList"></ul>
+                </div>
+                <div class="release-notes-footer">
+                    <button type="button" class="release-notes-ok" onclick="closeReleaseNotes()">知道了</button>
+                </div>
             </div>
         </div>
 
@@ -4198,6 +4322,22 @@
         duration: 520,
         easing: 'easeOutQuart'
     };
+
+    // App 版本與 Release Notes（升版後只自動跳出一次）
+    const APP_RELEASE = {
+        version: '1.6.0',
+        title: '介面與操作升級',
+        notes: [
+            '底部「資產／記帳」與上方資產分頁改為 Liquid Glass 膠囊，點選會滑動切換；拖曳時才會變透亮。',
+            '上方分頁字級與間距會隨螢幕寬度適應，窄螢幕不易被切邊。',
+            '修正記帳返回資產時，圓餅圖文字先白後黑的閃爍。',
+            '分頁切換與圓餅 drill-down 增加輕微淡入／位移過渡。',
+            '左右切換分頁時保留目前捲動位置，不再強制回到最上方。',
+            '功能表新增右側收合把手，並可於「系統 → 版本」再次查看更新說明。'
+        ]
+    };
+    const RELEASE_SEEN_KEY = 'monee_release_seen_version';
+    let _releaseNotesFromMenu = false;
     
     // Page Swiper
     let currentPage = 0;
@@ -4917,6 +5057,7 @@
         'invest': true,
         'data-settings': true,
         'tutorial': true,
+        'theme': true,
         'system': true,
         'update': true,
         'data': true,
@@ -12008,6 +12149,7 @@
         applyTheme();
         updateThemeButton();
         updateCurrencyButton();
+        syncSidebarAppVersionLabel();
         chartLevel = 'root';
         currentPage = 0;
         renderAssets();
@@ -12278,8 +12420,10 @@
                 // 完全隱藏後移除元素（可選，如果想保留 DOM 可以註解掉）
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
-                    // 首次使用顯示教學（若未看過）
-                    if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
+                    // 更新後先顯示 Release Notes（每版只自動一次）；關閉後再接教學
+                    if (typeof maybeShowReleaseNotesOnUpdate === 'function') {
+                        maybeShowReleaseNotesOnUpdate();
+                    } else if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
                         openTutorialAssets();
                     }
                     if (typeof recordDailyAssetSnapshot === 'function') recordDailyAssetSnapshot();
@@ -12287,6 +12431,63 @@
                 }, 300); // 等待淡出動畫完成
             }, 1000); // 等待 Monee 字樣動畫完成（1s 動畫）
         }
+    }
+
+    function syncSidebarAppVersionLabel() {
+        const el = document.getElementById('sidebarAppVersion');
+        if (el) el.textContent = 'v' + APP_RELEASE.version;
+        const verLabel = document.getElementById('releaseNotesVersionLabel');
+        if (verLabel) verLabel.textContent = 'v' + APP_RELEASE.version;
+        const title = document.getElementById('releaseNotesTitle');
+        if (title) title.textContent = APP_RELEASE.title || '本次更新';
+    }
+
+    function renderReleaseNotesList() {
+        const list = document.getElementById('releaseNotesList');
+        if (!list) return;
+        list.innerHTML = (APP_RELEASE.notes || []).map(n => `<li>${n}</li>`).join('');
+    }
+
+    function openReleaseNotes(fromMenu) {
+        _releaseNotesFromMenu = !!fromMenu;
+        syncSidebarAppVersionLabel();
+        renderReleaseNotesList();
+        const overlay = document.getElementById('releaseNotesOverlay');
+        if (!overlay) return;
+        document.body.classList.add('release-notes-open');
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeReleaseNotes() {
+        const overlay = document.getElementById('releaseNotesOverlay');
+        if (overlay) {
+            overlay.classList.remove('open');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        document.body.classList.remove('release-notes-open');
+        try {
+            localStorage.setItem(RELEASE_SEEN_KEY, APP_RELEASE.version);
+        } catch (e) {}
+        // 自動跳出關閉後，若尚未看過教學則接續教學
+        if (!_releaseNotesFromMenu && !localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
+            setTimeout(() => openTutorialAssets(), 180);
+        }
+        _releaseNotesFromMenu = false;
+    }
+
+    function maybeShowReleaseNotesOnUpdate() {
+        syncSidebarAppVersionLabel();
+        let seen = '';
+        try { seen = localStorage.getItem(RELEASE_SEEN_KEY) || ''; } catch (e) {}
+        if (seen === APP_RELEASE.version) {
+            // 無新版本：維持原本首次教學流程
+            if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
+                openTutorialAssets();
+            }
+            return;
+        }
+        openReleaseNotes(false);
     }
     
     // Calendar Functions
