@@ -98,6 +98,10 @@
             --glass-fill: rgba(28, 28, 30, 0.52); --glass-border: rgba(255, 255, 255, 0.22);
             --glass-highlight: rgba(255, 255, 255, 0.34); --glass-shadow: rgba(0, 0, 0, 0.38);
             --glass-active-fill: rgba(255, 255, 255, 0.12);
+            --chart-text-color: #ffffff;
+        }
+        :root[data-theme="dark"] {
+            --chart-text-color: #ffffff;
         }
         :root[data-theme="light"] {
             --bg-color: #ffffff; --card-bg: #f5f5f7; --text-primary: #000000; --text-secondary: #999999; --text-third: #c7c7cc;
@@ -108,6 +112,7 @@
             --glass-fill: rgba(255, 255, 255, 0.58); --glass-border: rgba(255, 255, 255, 0.72);
             --glass-highlight: rgba(255, 255, 255, 0.85); --glass-shadow: rgba(0, 0, 0, 0.12);
             --glass-active-fill: rgba(0, 122, 255, 0.14);
+            --chart-text-color: #000000;
         }
         /* 森林／草原淺色：霧綠底＋松針字＋苔蘚強調 */
         :root[data-theme="forest"] {
@@ -119,6 +124,7 @@
             --glass-fill: rgba(244, 249, 242, 0.56); --glass-border: rgba(255, 255, 255, 0.7);
             --glass-highlight: rgba(255, 255, 255, 0.82); --glass-shadow: rgba(26, 43, 28, 0.14);
             --glass-active-fill: rgba(61, 122, 74, 0.16);
+            --chart-text-color: #1a2b1c;
         }
         /* 燕麥奶茶：暖紙感＋焦糖棕強調 */
         :root[data-theme="oat"] {
@@ -130,6 +136,7 @@
             --glass-fill: rgba(255, 251, 244, 0.56); --glass-border: rgba(255, 255, 255, 0.68);
             --glass-highlight: rgba(255, 255, 255, 0.8); --glass-shadow: rgba(46, 36, 32, 0.14);
             --glass-active-fill: rgba(139, 90, 52, 0.15);
+            --chart-text-color: #2E2420;
         }
         /* 珊瑚海灣：冷灰白＋深青綠強調 */
         :root[data-theme="coral"] {
@@ -141,6 +148,7 @@
             --glass-fill: rgba(255, 255, 255, 0.56); --glass-border: rgba(255, 255, 255, 0.72);
             --glass-highlight: rgba(255, 255, 255, 0.85); --glass-shadow: rgba(35, 40, 45, 0.12);
             --glass-active-fill: rgba(20, 117, 112, 0.14);
+            --chart-text-color: #23282D;
         }
         /* 晨霧薰衣草：柔紫白＋深靛紫強調 */
         :root[data-theme="lavender"] {
@@ -152,6 +160,7 @@
             --glass-fill: rgba(255, 255, 255, 0.56); --glass-border: rgba(255, 255, 255, 0.74);
             --glass-highlight: rgba(255, 255, 255, 0.88); --glass-shadow: rgba(37, 38, 69, 0.14);
             --glass-active-fill: rgba(82, 80, 201, 0.14);
+            --chart-text-color: #252645;
         }
         * { box-sizing: border-box; -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
         input, textarea, select, [contenteditable="true"] {
@@ -636,10 +645,17 @@
         #chartWrapper .highcharts-point:hover ~ .highcharts-data-label,
         #chartWrapper .highcharts-point:hover + .highcharts-data-label,
         #chartWrapper .highcharts-point:hover .highcharts-data-label { opacity: 1 !important; }
-        #chartWrapper .highcharts-data-label text { fill: #fff !important; opacity: 1 !important; }
+        #chartWrapper .highcharts-data-label text,
+        #chartWrapper .highcharts-data-label tspan,
+        #chartWrapper .highcharts-title,
+        #chartWrapper .highcharts-title text,
+        #chartWrapper .highcharts-title tspan { fill: var(--chart-text-color) !important; opacity: 1 !important; }
         #chartWrapper .highcharts-point:hover ~ .highcharts-data-label text,
+        #chartWrapper .highcharts-point:hover ~ .highcharts-data-label tspan,
         #chartWrapper .highcharts-point:hover + .highcharts-data-label text,
-        #chartWrapper .highcharts-point:hover .highcharts-data-label text { fill: #fff !important; opacity: 1 !important; }
+        #chartWrapper .highcharts-point:hover + .highcharts-data-label tspan,
+        #chartWrapper .highcharts-point:hover .highcharts-data-label text,
+        #chartWrapper .highcharts-point:hover .highcharts-data-label tspan { fill: var(--chart-text-color) !important; opacity: 1 !important; }
         
         #customTooltip { position: absolute; background: var(--card-bg); color: var(--text-primary); padding: 10px 14px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); pointer-events: none; z-index: 200; display: none; white-space: nowrap; top: 0; left: 0; transform: translate(-50%, -100%); transition: opacity 0.15s, top 0.15s, left 0.15s; margin-top: -15px; border: 1px solid var(--border-color); }
         #customTooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: var(--card-bg) transparent transparent transparent; }
@@ -1393,44 +1409,176 @@
         #pageContainer > .page-item.page-active { position: relative; height: auto; visibility: visible; pointer-events: auto; }
         /* 資產列表滑動動畫中的相鄰頁面：可見，高度撐滿容器（不超過當前頁面高度） */
         #pageContainer > .page-item.page-swipe-visible { visibility: visible; pointer-events: auto; height: 100%; overflow: hidden; }
-        .page-indicator { 
-            display: flex; 
+        /* 資產上方分頁：Liquid Glass 浮動膠囊（隨螢幕流暢縮放） */
+        .page-indicator {
+            --page-tab-font: clamp(12px, 3.7vw, 18px);
+            --page-tab-pad-y: clamp(7px, 2.1vw, 12px);
+            --page-tab-pad-x: clamp(6px, 2.2vw, 20px);
+            --page-tab-gap: clamp(1px, 0.7vw, 4px);
+            --page-bar-pad: clamp(3px, 1vw, 6px);
+            --page-bar-inset: clamp(10px, 3.2vw, 20px);
+            display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px; 
-            padding: 18px 20px 16px 20px; 
-            position: fixed; 
-            top: 60px; 
+            padding: clamp(10px, 2.6vw, 14px) var(--page-bar-inset) clamp(12px, 2.8vw, 16px);
+            position: fixed;
+            top: 60px;
             left: 0;
             right: 0;
-            z-index: 95; 
-            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 90%, transparent 100%);
-            backdrop-filter: blur(10px);
-            overflow-x: auto;
-            overflow-y: hidden;
-            touch-action: pan-x;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
-            scroll-behavior: smooth;
+            z-index: 95;
+            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 88%, transparent 100%);
+            overflow: visible;
+            pointer-events: none;
         }
-        .page-indicator::before,
-        .page-indicator::after {
-            content: '';
-            flex: 1 1 auto;
+        .page-indicator-bar {
+            position: relative;
+            width: 100%;
+            max-width: min(560px, 100%);
             min-width: 0;
-            max-width: calc((100% - 300px) / 2);
+            margin: 0 auto;
+            padding: var(--page-bar-pad);
+            isolation: isolate;
+            border-radius: 999px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.14),
+                0 10px 24px var(--glass-shadow),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: auto;
+            box-sizing: border-box;
         }
-        @media (max-width: 600px) {
-            .page-indicator::before,
-            .page-indicator::after {
-                display: none;
+        .page-indicator-track {
+            position: relative;
+            width: 100%;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .page-indicator-items {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            gap: var(--page-tab-gap);
+            width: 100%;
+        }
+        .page-tab {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: var(--page-tab-pad-y) var(--page-tab-pad-x);
+            border-radius: 999px;
+            font-size: var(--page-tab-font);
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            position: relative;
+            text-align: center;
+        }
+        .page-tab.active {
+            color: var(--text-secondary);
+            font-weight: 600;
+            background: transparent;
+            box-shadow: none;
+        }
+        .page-indicator-lens {
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 2;
+            border-radius: 999px;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+            background: var(--glass-active-fill);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.55),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+            transition:
+                transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.18s ease,
+                border-color 0.18s ease,
+                box-shadow 0.18s ease,
+                opacity 0.14s ease;
+            will-change: transform, width;
+        }
+        .page-indicator-lens.is-visible { opacity: 1; }
+        .page-indicator-lens.is-pressed {
+            transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+            background: color-mix(in srgb, #ffffff 18%, transparent);
+            border-color: rgba(255, 255, 255, 0.72);
+            -webkit-backdrop-filter: blur(10px) saturate(210%) brightness(1.1);
+            backdrop-filter: blur(10px) saturate(210%) brightness(1.1);
+            box-shadow:
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
+                inset 0 -1.5px 0 rgba(255, 255, 255, 0.25),
+                inset 3px 0 8px rgba(255, 255, 255, 0.22),
+                inset -3px 0 8px rgba(255, 255, 255, 0.22),
+                0 6px 18px var(--glass-shadow);
+        }
+        .page-indicator-lens-in {
+            position: absolute;
+            left: 0;
+            top: 0;
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            gap: var(--page-tab-gap);
+            pointer-events: none;
+            will-change: transform;
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+            box-sizing: border-box;
+        }
+        .page-indicator-lens.is-pressed .page-indicator-lens-in {
+            transition: none;
+        }
+        .page-indicator-lens-in .page-tab {
+            color: var(--accent);
+            font-weight: 600;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .page-indicator-bar { background: color-mix(in srgb, var(--card-bg) 92%, transparent); }
+            .page-indicator-lens { background: color-mix(in srgb, var(--card-bg) 88%, var(--accent) 12%); }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .page-indicator-bar {
+                background: var(--card-bg);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
             }
-            .page-indicator {
-                justify-content: flex-start;
+            .page-indicator-lens,
+            .page-indicator-lens.is-pressed {
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+                background: color-mix(in srgb, var(--card-bg) 88%, var(--accent) 12%);
             }
         }
-        
+        @media (prefers-reduced-motion: reduce) {
+            .page-indicator-lens,
+            .page-indicator-lens-in { transition: none; }
+        }
+
         /* 窄螢幕：資產列表金額自適應 */
         /* 窄螢幕：資產列表自適應 */
         @media (max-width: 420px) {
@@ -1455,59 +1603,6 @@
             .item-icon { width: 32px; height: 32px; margin-right: 8px; font-size: 14px; }
             .list-container { margin: 0 10px 10px 10px; }
             .group-header { padding: 15px 14px 8px 14px; }
-        }
-        .page-indicator::-webkit-scrollbar {
-            display: none !important; /* Chrome, Safari, Opera */
-            width: 0 !important;
-            height: 0 !important;
-            background: transparent !important;
-        }
-        .page-indicator::-webkit-scrollbar-track {
-            display: none !important;
-            background: transparent !important;
-        }
-        .page-indicator::-webkit-scrollbar-thumb {
-            display: none !important;
-            background: transparent !important;
-        }
-        .page-tab { 
-            padding: 14px 22px;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            background: rgba(142, 142, 147, 0.1);
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-            white-space: nowrap;
-            flex-shrink: 0;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-        .page-tab.active { 
-            color: #ffffff;
-            background: var(--accent);
-            font-weight: 700;
-            font-size: 18px;
-            box-shadow: 0 2px 8px var(--accent-soft);
-        }
-        
-        @media (min-width: 480px) {
-            .page-tab { 
-                padding: 16px 28px;
-                font-size: 20px;
-            }
-            .page-tab.active { 
-                font-size: 20px;
-            }
-        }
-        .page-tab:active {
-            transform: scale(0.95);
-        }
-        .page-tab:not(.active):hover {
-            background: rgba(142, 142, 147, 0.2);
         }
 
         /* Calendar */
@@ -2467,8 +2562,17 @@
                 </div>
             </div>
 
-            <div class="page-indicator" style="display: none;">
-                <!-- 分頁按鈕將由 JavaScript 動態生成 -->
+            <div class="page-indicator" id="pageIndicator" style="display: none;">
+                <div class="page-indicator-bar" id="pageIndicatorBar">
+                    <div class="page-indicator-track" id="pageIndicatorTrack">
+                        <div class="page-indicator-items" id="pageIndicatorItems">
+                            <!-- 分頁按鈕將由 JavaScript 動態生成 -->
+                        </div>
+                        <div class="page-indicator-lens" id="pageIndicatorLens" aria-hidden="true">
+                            <div class="page-indicator-lens-in" id="pageIndicatorLensIn"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="content-grid">
@@ -5030,29 +5134,33 @@
     
     // 渲染分頁指示器（只顯示啟用的分頁，按照順序）
     function renderPageIndicator() {
-        const indicator = document.querySelector('.page-indicator');
-        if(!indicator) return;
+        const indicator = document.getElementById('pageIndicator') || document.querySelector('.page-indicator');
+        const items = document.getElementById('pageIndicatorItems');
+        if(!indicator || !items) return;
         
-        indicator.innerHTML = '';
+        items.innerHTML = '';
         
         // 按照排序後的順序顯示
         const orderedPages = getOrderedPages();
         
         orderedPages.forEach((pageIndex) => {
-            const pageName = PAGE_NAMES[pageIndex];
             const shortName = pageIndex === 0 ? '總覽' : (pageIndex === 1 ? '錢包' : (pageIndex === 2 ? '美股' : (pageIndex === 3 ? '台股' : '加密')));
             const tab = document.createElement('button');
             tab.className = `page-tab ${currentPage === pageIndex ? 'active' : ''}`;
             tab.setAttribute('data-page', pageIndex);
             tab.type = 'button';
             tab.textContent = shortName;
-            indicator.appendChild(tab);
+            items.appendChild(tab);
         });
         
         // 確保分頁指示器顯示（如果之前被隱藏）
         if(orderedPages.length > 0) {
             indicator.style.display = 'flex';
         }
+        requestAnimationFrame(() => {
+            if (typeof rebuildPageIndicatorLensClone === 'function') rebuildPageIndicatorLensClone();
+            if (typeof syncLiquidPageIndicatorLens === 'function') syncLiquidPageIndicatorLens(false);
+        });
     }
     
     // 切換分頁顯示
@@ -5660,7 +5768,7 @@
             }
             // 清除標題
             if (chartInstance) {
-                chartInstance.setTitle({text:'',style:{color:'#fff',fontSize:'14px'},align:'center',verticalAlign:'middle',y:10});
+                chartInstance.setTitle({text:'',style:{color:getChartTextColor(),fontSize:'14px'},align:'center',verticalAlign:'middle',y:10});
                 // 清除所有系列
                 while(chartInstance.series.length > 0) {
                     chartInstance.series[0].remove(false);
@@ -5798,10 +5906,10 @@
                 }
             });
             const chartTextColor = getChartTextColor();
-            const dataLabels = document.querySelectorAll('#chartWrapper .highcharts-data-label, #chartWrapper .highcharts-data-label text');
+            const dataLabels = document.querySelectorAll('#chartWrapper .highcharts-data-label, #chartWrapper .highcharts-data-label text, #chartWrapper .highcharts-data-label tspan');
             dataLabels.forEach(label => {
                 label.style.setProperty('opacity', '1', 'important');
-                if(label.tagName === 'text') {
+                if(label.tagName === 'text' || label.tagName === 'tspan') {
                     label.style.setProperty('fill', chartTextColor, 'important');
                 }
             });
@@ -10613,40 +10721,37 @@
         updateActivePageClass();
         
         // 更新分頁指示器（使用 data-page 屬性匹配，而不是 DOM 索引）
-        document.querySelectorAll('.page-tab').forEach((tab) => {
+        const pageItems = document.getElementById('pageIndicatorItems');
+        (pageItems ? pageItems.querySelectorAll('.page-tab') : document.querySelectorAll('.page-tab')).forEach((tab) => {
             const tabPageIndex = parseInt(tab.getAttribute('data-page'));
             tab.classList.toggle('active', tabPageIndex === pageIndex);
         });
+        if (typeof syncLiquidPageIndicatorLens === 'function') {
+            requestAnimationFrame(() => syncLiquidPageIndicatorLens(true));
+        }
         
         // 確保選中的標籤在可見範圍內（但不居中）
         const ensureTabVisible = () => {
-            const activeTab = document.querySelector(`.page-tab[data-page="${pageIndex}"]`);
-            const indicator = document.querySelector('.page-indicator');
+            const activeTab = (pageItems || document).querySelector(`.page-tab[data-page="${pageIndex}"]`);
+            const track = document.getElementById('pageIndicatorTrack');
             
-            if(!activeTab || !indicator) return;
+            if(!activeTab || !track) return;
             
-            const tabRect = activeTab.getBoundingClientRect();
-            const indicatorRect = indicator.getBoundingClientRect();
+            const left = activeTab.offsetLeft;
+            const right = left + activeTab.offsetWidth;
+            const viewLeft = track.scrollLeft;
+            const viewRight = viewLeft + track.clientWidth;
             
-            // 檢查標籤是否在可見範圍內
-            const isVisible = tabRect.left >= indicatorRect.left && tabRect.right <= indicatorRect.right;
-            
-            if(!isVisible) {
-                // 如果標籤在左側被切掉，滾動到左側
-                if(tabRect.left < indicatorRect.left) {
-                    indicator.scrollTo({
-                        left: activeTab.offsetLeft - 10,
-                        behavior: 'smooth'
-                    });
-                }
-                // 如果標籤在右側被切掉，滾動到右側
-                else if(tabRect.right > indicatorRect.right) {
-                    const scrollLeft = activeTab.offsetLeft + activeTab.offsetWidth - indicator.clientWidth + 10;
-                    indicator.scrollTo({
-                        left: Math.max(0, scrollLeft),
-                        behavior: 'smooth'
-                    });
-                }
+            if(left < viewLeft) {
+                track.scrollTo({
+                    left: Math.max(0, left - 8),
+                    behavior: 'smooth'
+                });
+            } else if(right > viewRight) {
+                track.scrollTo({
+                    left: Math.max(0, right - track.clientWidth + 8),
+                    behavior: 'smooth'
+                });
             }
         };
         
@@ -10959,55 +11064,9 @@
         initPageIndicatorTap();
     }
 
-    // 上方分頁：用 touchend 辨識點擊，避免橫向捲動容器把第一次 click 吃掉
+    // 上方分頁 Liquid Glass：點擊／左右拖曳切換（由 initLiquidPageIndicator 處理）
     function initPageIndicatorTap() {
-        const indicator = document.querySelector('.page-indicator');
-        if (!indicator || indicator._pageTabTapBound) return;
-        indicator._pageTabTapBound = true;
-
-        let startX = 0, startY = 0, moved = false, handledByTouch = false;
-
-        indicator.addEventListener('touchstart', (e) => {
-            const tab = e.target && e.target.closest && e.target.closest('.page-tab');
-            if (!tab) return;
-            const t = e.touches[0];
-            startX = t.clientX;
-            startY = t.clientY;
-            moved = false;
-            handledByTouch = false;
-        }, { passive: true });
-
-        indicator.addEventListener('touchmove', (e) => {
-            if (!e.touches[0]) return;
-            if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
-                moved = true;
-            }
-        }, { passive: true });
-
-        indicator.addEventListener('touchend', (e) => {
-            const tab = e.target && e.target.closest && e.target.closest('.page-tab');
-            if (!tab || moved) return;
-            const pageIndex = parseInt(tab.getAttribute('data-page'), 10);
-            if (isNaN(pageIndex)) return;
-            handledByTouch = true;
-            e.preventDefault(); // 擋住後續 ghost click，避免點兩次
-            switchToPage(pageIndex);
-        }, { passive: false });
-
-        indicator.addEventListener('click', (e) => {
-            if (handledByTouch) {
-                handledByTouch = false;
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-            }
-            const tab = e.target && e.target.closest && e.target.closest('.page-tab');
-            if (!tab) return;
-            const pageIndex = parseInt(tab.getAttribute('data-page'), 10);
-            if (isNaN(pageIndex)) return;
-            e.preventDefault();
-            switchToPage(pageIndex);
-        });
+        initLiquidPageIndicator();
     }
     
     function renderAssets() { 
@@ -11774,6 +11833,14 @@
         return THEME_CHART_TEXT[currentTheme] || (currentTheme === 'dark' ? '#fff' : '#000');
     }
     
+    function applyChartTextColorToDom(textColor) {
+        const color = textColor || getChartTextColor();
+        const dataLabels = document.querySelectorAll('#chartWrapper .highcharts-data-label text, #chartWrapper .highcharts-data-label tspan, #chartWrapper .highcharts-title, #chartWrapper .highcharts-title text, #chartWrapper .highcharts-title tspan');
+        dataLabels.forEach(label => {
+            label.style.setProperty('fill', color, 'important');
+        });
+    }
+
     function updateChartTextColor() {
         if(!chartInstance) return;
         
@@ -11804,23 +11871,11 @@
             });
         }
         
-        // 強制更新所有文字元素的顏色
-        setTimeout(() => {
-            const dataLabels = document.querySelectorAll('#chartWrapper .highcharts-data-label text, #chartWrapper .highcharts-title text');
-            dataLabels.forEach(label => {
-                label.style.setProperty('fill', textColor, 'important');
-            });
-            
-            // 更新 disableChartHover 中的顏色設置
-            const hoverLabels = document.querySelectorAll('#chartWrapper .highcharts-data-label, #chartWrapper .highcharts-data-label text');
-            hoverLabels.forEach(label => {
-                if(label.tagName === 'text') {
-                    label.style.setProperty('fill', textColor, 'important');
-                }
-            });
-        }, 100);
-        
+        // 立即套用（避免 redraw 後短暫露出錯誤色），再補一幀給新產生的 label
+        applyChartTextColorToDom(textColor);
         chartInstance.redraw();
+        applyChartTextColorToDom(textColor);
+        requestAnimationFrame(() => applyChartTextColorToDom(textColor));
     }
     
     // 4. Start the app only after everything is defined
@@ -11839,6 +11894,7 @@
         initSwiper();
         initJournalSwipe(); // 初始化記帳詳情的滑動手勢
         initLiquidTabBar();
+        initLiquidPageIndicator();
         initSelectionAndSidebarGuards();
         applyTheme();
         updateThemeButton();
@@ -12387,6 +12443,219 @@
         });
     }
 
+    // 資產上方分頁 Liquid Glass（僅左右、1:1 同框，寬度跟最近 tab）
+    let _liquidPageIndicatorState = null;
+
+    function rebuildPageIndicatorLensClone() {
+        const track = document.getElementById('pageIndicatorTrack');
+        const items = document.getElementById('pageIndicatorItems');
+        const lensIn = document.getElementById('pageIndicatorLensIn');
+        if (!track || !items || !lensIn) return;
+        lensIn.innerHTML = '';
+        Array.from(items.children).forEach(btn => {
+            const clone = btn.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.classList.remove('active');
+            clone.setAttribute('tabindex', '-1');
+            clone.setAttribute('aria-hidden', 'true');
+            clone.disabled = true;
+            lensIn.appendChild(clone);
+        });
+        const rect = track.getBoundingClientRect();
+        const itemsW = items.offsetWidth || rect.width;
+        const itemsH = items.offsetHeight || rect.height;
+        lensIn.style.width = itemsW + 'px';
+        lensIn.style.height = itemsH + 'px';
+        lensIn.style.gap = getComputedStyle(items).gap || '0px';
+        // 鏡面內分頁需與底層等寬等分，避免字級／padding 因 vw 變化後錯位
+        Array.from(lensIn.children).forEach((clone, i) => {
+            const src = items.children[i];
+            if (!src) return;
+            clone.style.flex = '1 1 0';
+            clone.style.minWidth = '0';
+            clone.style.width = src.offsetWidth + 'px';
+        });
+    }
+
+    function getPageIndicatorMetrics() {
+        const bar = document.getElementById('pageIndicatorBar');
+        const track = document.getElementById('pageIndicatorTrack');
+        const items = document.getElementById('pageIndicatorItems');
+        if (!bar || !track || !items) return null;
+        const trackRect = track.getBoundingClientRect();
+        const totalWidth = items.offsetWidth || trackRect.width;
+        const tabs = Array.from(items.querySelectorAll('.page-tab'));
+        return {
+            bar,
+            track,
+            items,
+            trackRect,
+            totalWidth,
+            tabs: tabs.map(tab => {
+                const left = tab.offsetLeft;
+                const width = tab.offsetWidth;
+                const height = tab.offsetHeight;
+                return {
+                    el: tab,
+                    key: tab.getAttribute('data-page'),
+                    left,
+                    width,
+                    height,
+                    center: left + width / 2
+                };
+            })
+        };
+    }
+
+    function renderLiquidPageIndicatorLens(targetLeftX, opts) {
+        const options = opts || {};
+        const lens = document.getElementById('pageIndicatorLens');
+        const lensIn = document.getElementById('pageIndicatorLensIn');
+        const metrics = getPageIndicatorMetrics();
+        if (!lens || !lensIn || !metrics || metrics.tabs.length === 0) return null;
+
+        const firstTab = metrics.tabs[0];
+        const lastTab = metrics.tabs[metrics.tabs.length - 1];
+        // 先用目標中心找最近 tab，再用該 tab 寬高（各分頁寬度不同）
+        const probeCenter = targetLeftX + (options.widthHint || firstTab.width) / 2;
+        const nearest = findNearestTab(metrics, probeCenter);
+        const w = nearest.width;
+        const h = nearest.height;
+        const minLeft = firstTab.left;
+        const maxLeft = lastTab.left;
+        const lx = Math.max(minLeft, Math.min(maxLeft, targetLeftX));
+        const pressed = !!options.pressed;
+        const visible = options.visible !== false;
+
+        lens.style.width = w + 'px';
+        lens.style.height = h + 'px';
+        lens.style.transform = `translate3d(${lx.toFixed(1)}px, 0px, 0)`;
+        lensIn.style.transform = `translate3d(${(-lx).toFixed(1)}px, 0px, 0)`;
+        lens.classList.toggle('is-visible', visible);
+        lens.classList.toggle('is-pressed', pressed);
+        applyTabBarItemsMask(metrics.items, lx, w, metrics.totalWidth);
+
+        return findNearestTab(metrics, lx + w / 2);
+    }
+
+    function syncLiquidPageIndicatorLens(animate) {
+        const metrics = getPageIndicatorMetrics();
+        const lens = document.getElementById('pageIndicatorLens');
+        const lensIn = document.getElementById('pageIndicatorLensIn');
+        if (!metrics || !lens || !lensIn) return;
+        if (lensIn.children.length === 0 || lensIn.children.length !== metrics.tabs.length) {
+            rebuildPageIndicatorLensClone();
+        } else {
+            const itemsW = metrics.items.offsetWidth || metrics.trackRect.width;
+            const itemsH = metrics.items.offsetHeight || metrics.trackRect.height;
+            lensIn.style.width = itemsW + 'px';
+            lensIn.style.height = itemsH + 'px';
+            lensIn.style.gap = getComputedStyle(metrics.items).gap || '0px';
+        }
+        const active = metrics.tabs.find(t => t.el.classList.contains('active')) || metrics.tabs[0];
+        if (!active) return;
+        if (animate === false) {
+            lens.style.transition = 'none';
+            lensIn.style.transition = 'none';
+        }
+        renderLiquidPageIndicatorLens(active.left, { pressed: false, visible: true, widthHint: active.width });
+        if (animate === false) {
+            requestAnimationFrame(() => {
+                lens.style.transition = '';
+                lensIn.style.transition = '';
+            });
+        }
+    }
+
+    function initLiquidPageIndicator() {
+        const bar = document.getElementById('pageIndicatorBar');
+        const track = document.getElementById('pageIndicatorTrack');
+        const lens = document.getElementById('pageIndicatorLens');
+        if (!bar || !track || !lens || bar._liquidBound) return;
+        bar._liquidBound = true;
+
+        rebuildPageIndicatorLensClone();
+        syncLiquidPageIndicatorLens(false);
+
+        const state = {
+            dragging: false,
+            pointerId: null,
+            startClientX: 0,
+            startLensLeft: 0,
+            moved: false
+        };
+        _liquidPageIndicatorState = state;
+
+        function onDown(e) {
+            if (e.button != null && e.button !== 0) return;
+            const metrics = getPageIndicatorMetrics();
+            if (!metrics || metrics.tabs.length === 0) return;
+            const rect = track.getBoundingClientRect();
+            const x = (e.clientX - rect.left) + track.scrollLeft;
+            const active = metrics.tabs.find(t => t.el.classList.contains('active')) || metrics.tabs[0];
+            const pressedTab = findNearestTab(metrics, x);
+            const initLeft = (pressedTab.key === active.key) ? active.left : (x - pressedTab.width / 2);
+
+            state.dragging = true;
+            state.pointerId = e.pointerId;
+            state.startClientX = e.clientX;
+            state.startLensLeft = initLeft;
+            state.moved = false;
+            bar.setPointerCapture?.(e.pointerId);
+            renderLiquidPageIndicatorLens(initLeft, { pressed: true, visible: true, widthHint: pressedTab.width });
+            e.preventDefault();
+        }
+
+        function onMove(e) {
+            if (!state.dragging || (state.pointerId != null && e.pointerId !== state.pointerId)) return;
+            const dx = e.clientX - state.startClientX;
+            if (Math.abs(dx) > 5) state.moved = true;
+            renderLiquidPageIndicatorLens(state.startLensLeft + dx, { pressed: true, visible: true });
+            e.preventDefault();
+        }
+
+        function onUp(e) {
+            if (!state.dragging || (state.pointerId != null && e.pointerId !== state.pointerId)) return;
+            const metrics = getPageIndicatorMetrics();
+            const rect = track.getBoundingClientRect();
+            const dx = e.clientX - state.startClientX;
+            let targetTab = null;
+
+            if (metrics && metrics.tabs.length > 0) {
+                if (!state.moved) {
+                    targetTab = findNearestTab(metrics, (e.clientX - rect.left) + track.scrollLeft);
+                } else {
+                    const probe = state.startLensLeft + dx;
+                    targetTab = findNearestTab(metrics, probe + (metrics.tabs[0].width / 2));
+                    // 用最近 tab 的實際中心再確認一次
+                    targetTab = findNearestTab(metrics, targetTab.center);
+                }
+            }
+
+            state.dragging = false;
+            try { bar.releasePointerCapture?.(e.pointerId); } catch (err) {}
+            state.pointerId = null;
+
+            if (targetTab) {
+                const pageIndex = parseInt(targetTab.key, 10);
+                if (!isNaN(pageIndex)) switchToPage(pageIndex);
+                renderLiquidPageIndicatorLens(targetTab.left, { pressed: false, visible: true, widthHint: targetTab.width });
+            } else {
+                syncLiquidPageIndicatorLens(true);
+            }
+            e.preventDefault();
+        }
+
+        bar.addEventListener('pointerdown', onDown);
+        bar.addEventListener('pointermove', onMove);
+        bar.addEventListener('pointerup', onUp);
+        bar.addEventListener('pointercancel', onUp);
+        window.addEventListener('resize', () => {
+            rebuildPageIndicatorLensClone();
+            syncLiquidPageIndicatorLens(false);
+        });
+    }
+
     function switchToCalendarPage(showCalendar) {
         const calendarPage = document.getElementById('calendarPage');
         const contentGrid = document.querySelector('.content-grid');
@@ -12406,8 +12675,7 @@
             calendarTabBtn?.classList.add('active');
             if (typeof syncLiquidTabBarLens === 'function') syncLiquidTabBarLens(true);
             if(pageIndicator) {
-                pageIndicator.innerHTML = '';
-                pageIndicator.style.display = 'none';  // 完全隱藏頁面指示器
+                pageIndicator.style.display = 'none';  // 只隱藏，保留內部 Liquid Glass 結構
             }
             if(navbarTitle) {
                 navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">記帳';
@@ -12548,18 +12816,15 @@
                 pageIndicator.style.display = 'flex';  // 恢復顯示
                 // 保存當前頁面索引，避免閃爍
                 const savedPage = currentPage;
-                // 根據 pageVisibility 動態生成分頁按鈕，只顯示啟用的分頁
-                let tabsHTML = '';
-                PAGE_TYPES.forEach((type, index) => {
-                    if(isPageEnabled(index)) {
-                        const pageName = PAGE_NAMES[index];
-                        const isActive = index === savedPage ? 'active' : '';
-                        tabsHTML += `<button type="button" class="page-tab ${isActive}" data-page="${index}">${pageName}</button>`;
-                    }
-                });
-                pageIndicator.innerHTML = tabsHTML;
+                // 依順序重建分頁按鈕（保留 Liquid Glass 結構）
+                renderPageIndicator();
                 // 然後調用 switchToPage 來更新內容
                 switchToPage(savedPage);
+                requestAnimationFrame(() => {
+                    if (typeof syncLiquidPageIndicatorLens === 'function') syncLiquidPageIndicatorLens(false);
+                });
+                // 立即套用正確圖表文字色，避免先白後黑閃爍
+                if (typeof updateChartTextColor === 'function') updateChartTextColor();
             }
             if(navbarTitle) {
                 navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">Monee';
