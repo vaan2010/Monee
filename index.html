@@ -93,11 +93,23 @@
             --bg-color: #000000; --card-bg: #1c1c1e; --text-primary: #ffffff; --text-secondary: #8e8e93; --text-third: #57575e;
             --color-bank: #64d2ff; --color-stock: #bf5af2; --color-twstock: #0a84ff; --color-crypto: #ff9f0a; --color-debt: #ff453a;
             --color-up: #30d158; --color-down: #ff453a; --border-color: #2c2c2e; --active-bg: #3a3a3c;
+            --accent: #0a84ff; --accent-2: #5e5ce6; --accent-contrast: #ffffff;
+            --accent-soft: rgba(10, 132, 255, 0.2); --accent-muted: var(--accent-muted); --accent-border: rgba(10, 132, 255, 0.45);
         }
         :root[data-theme="light"] {
             --bg-color: #ffffff; --card-bg: #f5f5f7; --text-primary: #000000; --text-secondary: #999999; --text-third: #c7c7cc;
             --color-bank: #007aff; --color-stock: #af52de; --color-twstock: #007aff; --color-crypto: #ff9500; --color-debt: #ff3b30;
             --color-up: #34c759; --color-down: #ff3b30; --border-color: #d1d1d6; --active-bg: #e5e5ea;
+            --accent: #007aff; --accent-2: #5856d6; --accent-contrast: #ffffff;
+            --accent-soft: rgba(0, 122, 255, 0.18); --accent-muted: rgba(0, 122, 255, 0.12); --accent-border: rgba(0, 122, 255, 0.45);
+        }
+        /* 森林／草原淺色：霧綠底＋松針字＋苔蘚強調 */
+        :root[data-theme="forest"] {
+            --bg-color: #e7f0e4; --card-bg: #f4f9f2; --text-primary: #1a2b1c; --text-secondary: #5d735e; --text-third: #95a894;
+            --color-bank: #4a8f9c; --color-stock: #7d6b9a; --color-twstock: #3d7a4a; --color-crypto: #c4893a; --color-debt: #c45d4a;
+            --color-up: #2f7d4a; --color-down: #c45d4a; --border-color: #c5d6c2; --active-bg: #d5e5d1;
+            --accent: #3d7a4a; --accent-2: #5a8f4a; --accent-contrast: #ffffff;
+            --accent-soft: rgba(61, 122, 74, 0.18); --accent-muted: rgba(61, 122, 74, 0.12); --accent-border: rgba(61, 122, 74, 0.45);
         }
         * { box-sizing: border-box; -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
         input, textarea, select, [contenteditable="true"] {
@@ -127,14 +139,14 @@
         /* Sidebar */
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: opacity 0.15s, visibility 0.15s; backdrop-filter: blur(2px); }
         .sidebar-overlay.active { opacity: 1; visibility: visible; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.12s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 2px 0 15px rgba(0,0,0,0.5); padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
-        .sidebar.active { left: 0; }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.12s; box-shadow: none; padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        .sidebar.active { left: 0; box-shadow: 2px 0 15px rgba(0,0,0,0.28); }
         @media (min-width: 768px) {
             .sidebar-overlay { display: block !important; }
-            .sidebar { position: fixed; left: -280px; z-index: 999; }
-            .sidebar.active { left: 0; }
-            .sidebar:not(.collapsed):not(.active) { left: 0; }
-            .sidebar.collapsed { left: -280px; }
+            .sidebar { position: fixed; left: -280px; z-index: 999; box-shadow: none; }
+            .sidebar.active { left: 0; box-shadow: 2px 0 15px rgba(0,0,0,0.28); }
+            .sidebar:not(.collapsed):not(.active) { left: 0; box-shadow: 2px 0 15px rgba(0,0,0,0.28); }
+            .sidebar.collapsed { left: -280px; box-shadow: none; }
         }
         
         .content-grid { display: flex; flex-direction: column; width: 100%; max-width: 100%; overflow-x: hidden; min-height: 0; }
@@ -265,7 +277,7 @@
         .navbar h1 { font-size: 20px; margin: 0; font-weight: 700; position: absolute; left: calc(50% - 15px); transform: translateX(-50%); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
         .navbar h1 .title-logo { width: 40px; height: 40px; object-fit: contain; }
         .btn-group { display: flex; gap: 15px; }
-        .btn-icon { background: none; border: none; color: #0a84ff; font-size: 20px; cursor: pointer; padding: 5px; }
+        .btn-icon { background: none; border: none; color: var(--accent); font-size: 20px; cursor: pointer; padding: 5px; }
         .btn-icon.active { color: var(--color-up); }
 
         .sidebar-toggle-btn-desktop { display: none; }
@@ -280,15 +292,59 @@
         .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; }
         .sidebar-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); flex: 1; }
         .user-avatar-container { position: relative; cursor: pointer; }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid #0a84ff; object-fit: cover; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: var(--border-color); font-size: 24px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid var(--accent); object-fit: cover; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: var(--border-color); font-size: 24px; }
         .user-avatar-container:hover .user-avatar { transform: scale(1.1); border-color: #64d2ff; }
         .user-avatar-container:active .user-avatar { transform: scale(0.95); }
         .sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; transition: opacity 0.3s; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
         .sidebar-overlay.active { touch-action: none; }
         .menu-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); cursor: pointer; transition: background 0.2s; }
         .menu-item:hover { background: var(--border-color); }
-        .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: #0a84ff; font-size: 18px; }
+        .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: var(--accent); font-size: 18px; }
         .menu-text { flex: 1; }
+        .theme-picker { padding: 4px 16px 10px 16px; display: flex; flex-direction: column; gap: 6px; }
+        .theme-picker-label {
+            padding: 4px 9px 2px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.02em;
+        }
+        .theme-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        }
+        .theme-option i { width: 20px; text-align: center; color: var(--accent); font-size: 15px; }
+        .theme-option .theme-option-name { flex: 1; }
+        .theme-option .theme-option-badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border-radius: 999px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+        .theme-option:not(.is-current):hover { background: var(--active-bg); border-color: var(--accent-border); }
+        .theme-option:not(.is-current):active { transform: scale(0.98); }
+        .theme-option.is-current {
+            border-color: var(--accent);
+            background: var(--accent-muted);
+            cursor: default;
+            pointer-events: none;
+            opacity: 0.95;
+        }
         .menu-label { 
             padding: 12px 25px; 
             font-size: 16px; 
@@ -336,7 +392,7 @@
         .menu-section:not(.collapsed) { max-height: 1000px; }
         .page-visibility-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); }
         .page-visibility-item label { display: flex; align-items: center; cursor: pointer; width: 100%; flex: 1; }
-        .page-visibility-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: #0a84ff; }
+        .page-visibility-item input[type="checkbox"] { width: 20px; height: 20px; margin-right: 15px; cursor: pointer; accent-color: var(--accent); }
         .page-visibility-item span { flex: 1; }
         .page-visibility-item .drag-handle { 
             color: #666; 
@@ -360,7 +416,7 @@
         .eye-toggle-btn { 
             background: none; 
             border: none; 
-            color: #0a84ff; 
+            color: var(--accent); 
             font-size: 16px; 
             cursor: pointer; 
             padding: 4px; 
@@ -469,7 +525,7 @@
         .item-eye-btn {
             background: none;
             border: none;
-            color: #0a84ff;
+            color: var(--accent);
             font-size: clamp(10px, 1.5vw, 14px);
             cursor: pointer;
             padding: clamp(2px, 0.3vw, 4px);
@@ -543,7 +599,7 @@
         .tt-header { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; font-weight: 500; }
         .tt-body { font-size: 15px; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; }
         .tt-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .chart-back-btn { position: absolute; top: 10px; left: 20px; z-index: 201; background: rgba(44, 44, 46, 0.9); color: #0a84ff; border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: none; backdrop-filter: blur(10px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .chart-back-btn { position: absolute; top: 10px; left: 20px; z-index: 201; background: rgba(44, 44, 46, 0.9); color: var(--accent); border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: none; backdrop-filter: blur(10px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
         .group-header { padding: 15px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); background-color: var(--bg-color); display: flex; justify-content: space-between; text-transform: uppercase; min-width: 0; gap: 8px; }
         .group-header > span:first-child { flex-shrink: 0; }
@@ -561,7 +617,7 @@
         #group-debt .list-item.sortable-chosen { cursor: pointer !important; }
         .item-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; flex-shrink: 0; align-self: flex-start; margin-top: 0; overflow: hidden; }
         .item-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-        .icon-bank { color: var(--color-bank); background: rgba(100, 210, 255, 0.15); } .icon-crypto { color: var(--color-crypto); background: rgba(255, 159, 10, 0.15); } .icon-stock { color: var(--color-stock); background: rgba(191, 90, 242, 0.15); } .icon-twstock { color: var(--color-twstock); background: rgba(10, 132, 255, 0.15); } .icon-debt { color: var(--color-debt); background: rgba(255, 69, 58, 0.15); }
+        .icon-bank { color: var(--color-bank); background: rgba(100, 210, 255, 0.15); } .icon-crypto { color: var(--color-crypto); background: rgba(255, 159, 10, 0.15); } .icon-stock { color: var(--color-stock); background: rgba(191, 90, 242, 0.15); } .icon-twstock { color: var(--color-twstock); background: var(--accent-muted); } .icon-debt { color: var(--color-debt); background: rgba(255, 69, 58, 0.15); }
         .item-content { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
         
         /* ===== 美股/台股/加密貨幣：純 Flex 佈局（無絕對定位）===== */
@@ -706,7 +762,7 @@
 
         .tab-bar { position: fixed; bottom: 0; width: 100%; background: var(--card-bg); backdrop-filter: blur(20px); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 200; }
         .tab-item { color: var(--text-secondary); text-align: center; font-size: 10px; background: none; border: none; width: 30%; }
-        .tab-item i { font-size: 20px; margin-bottom: 4px; display: block; } .tab-item.active { color: #0a84ff; }
+        .tab-item i { font-size: 20px; margin-bottom: 4px; display: block; } .tab-item.active { color: var(--accent); }
         .fa-spin-fast { animation: fa-spin 1s infinite linear; }
         
         /* Currency Toggle Button */
@@ -839,9 +895,9 @@
         }
         .line-chart-range-selector .range-btn:hover { background: var(--active-bg); }
         .line-chart-range-selector .range-btn.active {
-            background: #0a84ff;
+            background: var(--accent);
             color: #fff;
-            border-color: #0a84ff;
+            border-color: var(--accent);
         }
         
         /* 資產成長率顯示 */
@@ -919,7 +975,7 @@
             border-radius: 3px; overflow: hidden;
         }
         #lineChartLoadingOverlay .loading-bar-fill {
-            height: 100%; background: #0a84ff; border-radius: 3px;
+            height: 100%; background: var(--accent); border-radius: 3px;
             transition: width 0.15s ease-out; width: 0%;
         }
         #lineChartWrapper .highcharts-plot-background,
@@ -995,7 +1051,7 @@
             transition: background 0.15s;
         }
         .chart-view-dropdown .dropdown-item:hover { background: var(--active-bg); }
-        .chart-view-dropdown .dropdown-item.active { background: rgba(10, 132, 255, 0.2); color: #0a84ff; }
+        .chart-view-dropdown .dropdown-item.active { background: var(--accent-soft); color: var(--accent); }
 
         /* 收支趨勢圖頂部：支出/收入各占一半，下拉勾選細項 */
         /* 切換樣式：在 .linechart-header-row 加上 style-1 / style-2 / style-3 / style-4 */
@@ -1248,10 +1304,10 @@
         }
         .page-tab.active { 
             color: #ffffff;
-            background: #0a84ff;
+            background: var(--accent);
             font-weight: 700;
             font-size: 18px;
-            box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3);
+            box-shadow: 0 2px 8px var(--accent-soft);
         }
         
         @media (min-width: 480px) {
@@ -1274,11 +1330,11 @@
         .calendar-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); border-radius: 12px; padding: 10px; }
         .calendar-header { display: flex; flex-direction: column; align-items: stretch; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
         .calendar-nav-btn { background: transparent; border: none; color: var(--text-primary); font-size: 18px; cursor: pointer; padding: 6px; }
-        .calendar-nav-btn:hover { color: #0a84ff; }
+        .calendar-nav-btn:hover { color: var(--accent); }
         .calendar-today-btn {
-            background: rgba(10, 132, 255, 0.2);
-            border: 1px solid #0a84ff;
-            color: #0a84ff;
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            color: var(--accent);
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
@@ -1292,10 +1348,10 @@
             justify-content: center;
             flex-shrink: 0;
         }
-        .calendar-today-btn:hover { background: rgba(10, 132, 255, 0.3); }
+        .calendar-today-btn:hover { background: var(--accent-soft); }
         .calendar-today-btn:active { transform: scale(0.95); }
         .calendar-month-year { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-primary); cursor: pointer; position: relative; }
-        .calendar-month-year:hover { color: #0a84ff; }
+        .calendar-month-year:hover { color: var(--accent); }
         #calendarMonthYearDropdown { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; z-index: 1000; min-width: 220px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); padding: 12px; max-height: 280px; overflow-y: auto; }
         .calendar-month-year.open #calendarMonthYearDropdown { display: block; }
         .calendar-myyear-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
@@ -1303,8 +1359,8 @@
         #calendarYearSelect { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-primary); font-size: 14px; }
         .calendar-month-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .calendar-month-grid button { padding: 8px; border: none; border-radius: 8px; background: var(--bg-color); color: var(--text-primary); font-size: 14px; cursor: pointer; white-space: nowrap; min-width: 44px; text-align: center; }
-        .calendar-month-grid button:hover { background: rgba(10, 132, 255, 0.2); color: #0a84ff; }
-        .calendar-month-grid button.active { background: #0a84ff; color: #fff; }
+        .calendar-month-grid button:hover { background: var(--accent-soft); color: var(--accent); }
+        .calendar-month-grid button.active { background: var(--accent); color: var(--accent-contrast); }
         .calendar-dropdown { font-size: 12px; opacity: 0.6; }
         .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
         .calendar-weekday { text-align: center; font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 3px 0; }
@@ -1314,14 +1370,14 @@
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: 0.3s; border-radius: 26px; }
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: 0.3s; border-radius: 50%; }
-        .switch input:checked + .slider { background-color: #0a84ff; }
+        .switch input:checked + .slider { background-color: var(--accent); }
         .switch input:checked + .slider:before { transform: translateX(18px); }
         .calendar-day:hover { background: rgba(142, 142, 147, 0.2); }
         .calendar-day.other-month { color: var(--text-secondary); opacity: 0.4; }
-        .calendar-day.today { background: #0a84ff; color: #fff; font-weight: 600; }
-        .calendar-day.selected { background: rgba(10, 132, 255, 0.2); color: #0a84ff; font-weight: 600; }
+        .calendar-day.today { background: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+        .calendar-day.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
         .calendar-day.has-event { position: relative; }
-        .calendar-day.has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #30d158; }
+        .calendar-day.has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--color-up); }
 
         /* 本月總覽 */
         .calendar-month-summary {
@@ -1406,8 +1462,8 @@
             text-overflow: ellipsis;
             max-width: 42vw;
         }
-        .calendar-sticky-bar .sticky-chip.today-chip { border-color: rgba(10, 132, 255, 0.45); }
-        .calendar-sticky-bar .sticky-chip.today-chip .chip-val { color: #0a84ff; }
+        .calendar-sticky-bar .sticky-chip.today-chip { border-color: var(--accent-border); }
+        .calendar-sticky-bar .sticky-chip.today-chip .chip-val { color: var(--accent); }
         .calendar-sticky-bar .sticky-chip.selected-chip { flex: 1; }
         .calendar-sticky-bar .sticky-top-btn {
             flex-shrink: 0;
@@ -1483,9 +1539,9 @@
             cursor: pointer;
         }
         .journal-empty-actions button.primary {
-            background: rgba(10, 132, 255, 0.15);
-            border-color: rgba(10, 132, 255, 0.4);
-            color: #0a84ff;
+            background: var(--accent-muted);
+            border-color: var(--accent-border);
+            color: var(--accent);
         }
 
         /* 記帳視圖切換 FAB：右下角向上展開 */
@@ -1562,7 +1618,7 @@
         }
         .journal-fab-option:hover { background: var(--active-bg); transform: scale(1.02); }
         .journal-fab-option:active { transform: scale(0.98); }
-        .journal-fab-option i { font-size: 18px; color: #0a84ff; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.125em; min-width: 1.125em; text-align: center; }
+        .journal-fab-option i { font-size: 18px; color: var(--accent); line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.125em; min-width: 1.125em; text-align: center; }
         .journal-fab-option span { line-height: 1.25; display: inline-flex; align-items: center; }
         @media (max-width: 767px) {
             .journal-fab-wrapper { bottom: 90px; right: 15px; }
@@ -1596,13 +1652,13 @@
             border: 1px solid var(--border-color); background: var(--bg-color);
             color: var(--text-primary); font-size: 15px; outline: none;
         }
-        .monee-dialog-input:focus { border-color: #0a84ff; }
+        .monee-dialog-input:focus { border-color: var(--accent); }
         .monee-dialog-actions {
             display: flex; gap: 8px; border-top: 1px solid var(--border-color);
             margin: 0 -18px -14px; padding: 0;
         }
         .monee-dialog-actions button {
-            flex: 1; border: none; background: transparent; color: #0a84ff;
+            flex: 1; border: none; background: transparent; color: var(--accent);
             font-size: 16px; font-weight: 600; padding: 14px 8px; cursor: pointer;
         }
         .monee-dialog-actions button + button { border-left: 1px solid var(--border-color); }
@@ -1747,7 +1803,7 @@
         .form-label { font-size: 16px; color: var(--text-primary); min-width: 80px; }
         .form-input { background: transparent; border: none; color: var(--text-secondary); text-align: right; font-size: 16px; outline: none; width: 100%; }
         select.form-input { appearance: none; direction: rtl; }
-        .calc-btn { background: var(--border-color); border: none; color: #0a84ff; font-size: 18px; cursor: pointer; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .calc-btn { background: var(--border-color); border: none; color: var(--accent); font-size: 18px; cursor: pointer; padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
         .calc-btn:hover { background: var(--card-bg); transform: scale(1.05); }
         .calc-btn:active { transform: scale(0.95); }
         
@@ -1755,21 +1811,21 @@
         .calc-key { background: var(--border-color); border: none; color: var(--text-primary); font-size: 24px; font-weight: 400; cursor: pointer; padding: 20px; border-radius: 12px; transition: transform 0.05s, background 0.05s; user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         .calc-key:hover { background: var(--card-bg); }
         .calc-key:active, .calc-key.pressed { background: var(--card-bg); transform: scale(0.95); }
-        .calc-key-function { background: var(--card-bg); color: #0a84ff; font-size: 18px; }
+        .calc-key-function { background: var(--card-bg); color: var(--accent); font-size: 18px; }
         .calc-key-function:active, .calc-key-function.pressed { background: var(--active-bg); }
-        .calc-key-operator { background: #0a84ff; color: #fff; font-size: 24px; font-weight: 500; }
+        .calc-key-operator { background: var(--accent); color: #fff; font-size: 24px; font-weight: 500; }
         .calc-key-operator:active, .calc-key-operator.pressed { background: #0970d6; }
-        .calc-key-equals { background: #0a84ff; color: #fff; font-size: 24px; font-weight: 500; }
+        .calc-key-equals { background: var(--accent); color: #fff; font-size: 24px; font-weight: 500; }
         .calc-key-equals:active, .calc-key-equals.pressed { background: #0970d6; }
         .delete-btn-area { margin-top: 30px; padding: 0 16px; padding-bottom: 50px; }
         .btn-delete { width: 100%; background: var(--card-bg); color: var(--color-debt); border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 500; }
         .hint-text { color: var(--text-secondary); font-size: 12px; margin-top: 8px; padding: 0 20px; opacity: 0.7; }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #30d158; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: 600; font-size: 14px; z-index: 2000; display: none; }
         .ai-btn-area { margin: 15px 16px 0 16px; }
-        .btn-ai { width: 100%; background: linear-gradient(135deg, #0a84ff, #5e5ce6); color: #fff; border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+        .btn-ai { width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-contrast); border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
         .btn-ai:disabled { background: var(--card-bg); color: var(--text-secondary); cursor: not-allowed; opacity: 0.6; }
         .progress-container { width: 100%; height: 4px; background: var(--border-color); border-radius: 2px; margin-top: 10px; overflow: hidden; display: none; }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, #0a84ff, #5e5ce6); width: 0%; transition: width 0.3s ease; border-radius: 2px; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; transition: width 0.3s ease; border-radius: 2px; }
 
         /* Detail View */
         #detailView { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); display: flex; flex-direction: column; }
@@ -1877,7 +1933,7 @@
         .spotlight-actions { display: flex; gap: 10px; margin-top: 12px; }
         .spotlight-actions button { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .spotlight-skip { background: transparent; color: var(--text-secondary); }
-        .spotlight-next { background: #0a84ff; color: #fff; }
+        .spotlight-next { background: var(--accent); color: #fff; }
 
         /* 支出 AI 匯入教學範例 */
         #expenseAiTutorialOverlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; animation: spotlightFadeIn 0.25s ease; }
@@ -1893,12 +1949,12 @@
         .expense-ai-carousel-inner { display: flex; transition: transform 0.35s ease; }
         .expense-ai-carousel-slide { min-width: 100%; padding: 12px 20px; box-sizing: border-box; }
         .expense-ai-carousel-slide img { width: 100%; height: auto; border-radius: 12px; display: block; vertical-align: top; max-height: 50vh; object-fit: contain; background: #1c1c1e; }
-        .expense-ai-carousel-slide .slide-label { font-size: 14px; font-weight: 600; color: #0a84ff; text-align: center; margin-top: 10px; }
+        .expense-ai-carousel-slide .slide-label { font-size: 14px; font-weight: 600; color: var(--accent); text-align: center; margin-top: 10px; }
         .expense-ai-carousel-dots { display: flex; justify-content: center; gap: 8px; padding: 12px; }
         .expense-ai-carousel-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-color); cursor: pointer; transition: background 0.2s; }
-        .expense-ai-carousel-dots span.active { background: #0a84ff; }
+        .expense-ai-carousel-dots span.active { background: var(--accent); }
         #expenseAiTutorialModal .tutorial-close { padding: 12px 20px 20px; text-align: center; }
-        #expenseAiTutorialModal .tutorial-close button { padding: 10px 32px; border-radius: 10px; border: none; background: #0a84ff; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+        #expenseAiTutorialModal .tutorial-close button { padding: 10px 32px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
         /* ===== Monee 雲端登入閘道 ===== */
         html.monee-gate-pending #loadingOverlay,
         html.monee-gate-pending .app-container,
@@ -1927,7 +1983,7 @@
             flex: 1; padding: 10px; border-radius: 10px; border: none;
             font-size: 15px; font-weight: 600; cursor: pointer;
         }
-        .monee-cloud-tabs button.primary { background: #0a84ff; color: #fff; }
+        .monee-cloud-tabs button.primary { background: var(--accent); color: #fff; }
         .monee-cloud-tabs button.ghost { background: var(--border-color); color: var(--text-primary); }
         .monee-cloud-field { margin-bottom: 12px; }
         .monee-cloud-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
@@ -1935,7 +1991,7 @@
             width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color);
             background: var(--bg-color); color: var(--text-primary); font-size: 16px; box-sizing: border-box;
         }
-        .monee-cloud-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: #0a84ff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .monee-cloud-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
         .monee-cloud-btn.secondary { background: var(--border-color); color: var(--text-primary); }
         .monee-cloud-status { font-size: 13px; color: var(--text-secondary); margin-top: 10px; min-height: 1.2em; }
         .monee-cloud-status.err { color: #ff453a; }
@@ -2058,7 +2114,7 @@
     </div>
     
     <div id="migrationToast" class="toast">資料已還原</div>
-    <div id="importProgressToast" class="toast" style="background: #0a84ff; display: none;">
+    <div id="importProgressToast" class="toast" style="background: var(--accent); display: none;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden;">
                 <div id="importProgressBar" style="height: 100%; background: #fff; width: 0%; transition: width 0.3s;"></div>
@@ -2069,7 +2125,7 @@
     <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleFileImport(event)">
     <div id="refreshStockOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1999; display: none; backdrop-filter: blur(4px);"></div>
     <div id="importOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1999; display: none; backdrop-filter: blur(4px);"></div>
-    <div id="refreshStockProgressToast" class="toast" style="background: #0a84ff; display: none; z-index: 2001;">
+    <div id="refreshStockProgressToast" class="toast" style="background: var(--accent); display: none; z-index: 2001;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden;">
                 <div id="refreshStockProgressBar" style="height: 100%; background: #fff; width: 0%; transition: width 0.3s;"></div>
@@ -2155,6 +2211,30 @@
                     <div class="menu-item" onclick="openTutorialJournal(); toggleSidebar();"><i class="fas fa-book"></i><span class="menu-text">記帳介紹</span></div>
                 </div>
 
+                <div class="menu-group-label" onclick="toggleMenuSection('theme')">
+                    <span>主題</span>
+                    <i class="fas fa-chevron-down collapse-icon"></i>
+                </div>
+                <div class="menu-section" id="menuSection-theme">
+                    <div class="theme-picker" id="themePicker" aria-label="主題選擇">
+                        <button type="button" class="theme-option" data-theme="dark" onclick="selectTheme('dark')">
+                            <i class="fas fa-moon" aria-hidden="true"></i>
+                            <span class="theme-option-name">深色模式</span>
+                            <span class="theme-option-badge" hidden>使用中</span>
+                        </button>
+                        <button type="button" class="theme-option" data-theme="light" onclick="selectTheme('light')">
+                            <i class="fas fa-sun" aria-hidden="true"></i>
+                            <span class="theme-option-name">淺色模式</span>
+                            <span class="theme-option-badge" hidden>使用中</span>
+                        </button>
+                        <button type="button" class="theme-option" data-theme="forest" onclick="selectTheme('forest')">
+                            <i class="fas fa-leaf" aria-hidden="true"></i>
+                            <span class="theme-option-name">森林模式</span>
+                            <span class="theme-option-badge" hidden>使用中</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="menu-group-label collapsed" onclick="toggleMenuSection('system')">
                     <span>系統</span>
                     <i class="fas fa-chevron-down collapse-icon"></i>
@@ -2168,7 +2248,6 @@
                         <div class="menu-item" onclick="refreshAllData(); toggleSidebar();"><i class="fas fa-sync-alt"></i><span class="menu-text">立即更新</span></div>
                         <div class="menu-item" onclick="refreshStockInfo(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">重新整理</span></div>
                     </div>
-                    <div class="menu-item" onclick="toggleTheme(); toggleSidebar();"><i class="fas fa-moon" id="themeIcon"></i><span class="menu-text" id="themeText">深色模式</span></div>
                 </div>
             </div>
             <div class="sidebar-footer">
@@ -2812,7 +2891,7 @@
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button onclick="closeDatePicker()" style="flex: 1; padding: 12px; background: var(--border-color); color: var(--text-primary); border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
-                    <button onclick="confirmDatePicker()" style="flex: 1; padding: 12px; background: #0a84ff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">確定</button>
+                    <button onclick="confirmDatePicker()" style="flex: 1; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">確定</button>
                 </div>
             </div>
         </div>
@@ -2829,7 +2908,7 @@
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #ffd60a; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#ffd60a')" onmouseover="this.style.borderColor='#ffd60a'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #30d158; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#30d158')" onmouseover="this.style.borderColor='#30d158'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #64d2ff; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#64d2ff')" onmouseover="this.style.borderColor='#64d2ff'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
-                    <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #0a84ff; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#0a84ff')" onmouseover="this.style.borderColor='#0a84ff'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
+                    <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#0a84ff')" onmouseover="this.style.borderColor='#0a84ff'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #5e5ce6; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#5e5ce6')" onmouseover="this.style.borderColor='#5e5ce6'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #bf5af2; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#bf5af2')" onmouseover="this.style.borderColor='#bf5af2'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
                     <div style="cursor: pointer; width: 50px; height: 50px; border-radius: 50%; background: #ff375f; border: 3px solid transparent; transition: all 0.2s;" onclick="selectTagColor('#ff375f')" onmouseover="this.style.borderColor='#ff375f'; this.style.transform='scale(1.1)'" onmouseout="this.style.borderColor='transparent'; this.style.transform='scale(1)'"></div>
@@ -2871,7 +2950,7 @@
                     <textarea id="dateNoteInput" style="width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-primary); font-size: 16px; resize: vertical; box-sizing: border-box;" placeholder="輸入記事內容..."></textarea>
                 </div>
                 <div style="display: flex; gap: 12px;">
-                    <button onclick="saveDateNoteFromEditor()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
+                    <button onclick="saveDateNoteFromEditor()" style="flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
                     <button onclick="closeDateNoteEditor()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
                 </div>
             </div>
@@ -2961,7 +3040,7 @@
                                 <span style="color: var(--text-secondary); font-size: 24px; font-weight: 500;">$</span>
                                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
                                     <input type="text" id="incomeAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: var(--text-primary); padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
-                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('incomeAmount')" type="button" title="計算機" style="background: rgba(10, 132, 255, 0.15); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 18px;"></i></button>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('incomeAmount')" type="button" title="計算機" style="background: var(--accent-muted); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: var(--accent); font-size: 18px;"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -3038,7 +3117,7 @@
                     <h1 style="font-size: 34px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">新增支出</h1>
                     <div id="expenseDate" style="font-size: 15px; color: var(--text-secondary); font-weight: 400;"></div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
-                        <button type="button" onclick="triggerExpenseImageUpload()" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(10, 132, 255, 0.15); border: 1px solid rgba(10, 132, 255, 0.4); border-radius: 10px; color: #0a84ff; font-size: 15px; font-weight: 600; cursor: pointer;">
+                        <button type="button" onclick="triggerExpenseImageUpload()" style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--accent-muted); border: 1px solid var(--accent-border); border-radius: 10px; color: var(--accent); font-size: 15px; font-weight: 600; cursor: pointer;">
                             <i class="fas fa-camera"></i>
                             <span>AI 批量匯入</span>
                         </button>
@@ -3090,7 +3169,7 @@
                                 <span style="color: var(--text-secondary); font-size: 24px; font-weight: 500;">$</span>
                                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
                                     <input type="text" id="expenseAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: var(--text-primary); padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
-                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('expenseAmount')" type="button" title="計算機" style="background: rgba(10, 132, 255, 0.15); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 18px;"></i></button>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('expenseAmount')" type="button" title="計算機" style="background: var(--accent-muted); border: none; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: var(--accent); font-size: 18px;"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -3207,7 +3286,7 @@
             <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
                 <button class="btn-icon" onclick="closeTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
-                <button class="btn-icon" style="font-weight:bold; color: #0a84ff;" onclick="saveTransfer()">儲存</button>
+                <button class="btn-icon" style="font-weight:bold; color: var(--accent);" onclick="saveTransfer()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                 <!-- 大標題區域 -->
@@ -3273,7 +3352,7 @@
                                 <span style="color: #8e8e93; font-size: 24px; font-weight: 500;">$</span>
                                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
                                     <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: #ffffff; padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
-                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: #0a84ff; font-size: 20px;"></i></button>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: var(--accent); font-size: 20px;"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -3546,7 +3625,7 @@
             <div style="padding: 20px; background: var(--bg-color);">
                 <div id="userListContainer" style="margin-bottom: 30px;"></div>
                 <div style="border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px;">
-                    <button class="btn-primary" onclick="createNewUser()" style="width: 100%; padding: 15px; background: #0a84ff; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 15px;">
+                    <button class="btn-primary" onclick="createNewUser()" style="width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 15px;">
                         <i class="fas fa-plus"></i> 新增使用者
                     </button>
                 </div>
@@ -3573,7 +3652,7 @@
                     </button>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button onclick="saveUserEdit()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">儲存</button>
+                    <button onclick="saveUserEdit()" style="flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">儲存</button>
                     <button onclick="closeUserEditModal(); editingUserId = null;" style="flex: 1; padding: 12px; background: var(--border-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">取消</button>
                 </div>
             </div>
@@ -3603,11 +3682,11 @@
                         <div id="avatarCropWrapper" style="position: relative; width: 100%; max-width: 300px; height: 300px; margin: 0 auto; background: var(--card-bg); border-radius: 12px; overflow: hidden; cursor: move;">
                             <canvas id="avatarCropCanvas" style="display: block; width: 100%; max-width: 300px; height: 300px; pointer-events: none;"></canvas>
                             <div id="avatarCropOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                                <div id="avatarCropCircle" style="position: absolute; border: 3px solid #0a84ff; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); pointer-events: none;"></div>
+                                <div id="avatarCropCircle" style="position: absolute; border: 3px solid var(--accent); border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); pointer-events: none;"></div>
                             </div>
                         </div>
                         <div style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button onclick="confirmAvatarCrop()" style="flex: 1; padding: 12px; background: #0a84ff; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">確認</button>
+                            <button onclick="confirmAvatarCrop()" style="flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">確認</button>
                             <button onclick="cancelAvatarCrop()" style="flex: 1; padding: 12px; background: var(--border-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">取消</button>
                         </div>
                     </div>
@@ -7188,12 +7267,13 @@
         // 每天一個點（不採樣；90天／1年／全部也完整顯示）
         let chartDates = filteredDates;
         
-        // 準備各系列資料（總資產線依主題變色，避免淺色主題白線看不清）
-        const isLightTheme = (settings.theme || 'dark') === 'light';
-        const totalLineColor = isLightTheme ? '#1c1c1e' : '#ffffff';
-        const axisMuted = isLightTheme ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.1)';
-        const gridMuted = isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
-        const crosshairColor = isLightTheme ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)';
+        // 準備各系列資料（總資產線依主題變色，避免淺色／森林主題白線看不清）
+        const isLightTheme = typeof isLightLikeTheme === 'function' ? isLightLikeTheme() : ((settings.theme || 'dark') !== 'dark');
+        const themeNow = settings.theme || 'dark';
+        const totalLineColor = themeNow === 'forest' ? '#1a2b1c' : (isLightTheme ? '#1c1c1e' : '#ffffff');
+        const axisMuted = isLightTheme ? 'rgba(26,43,28,0.16)' : 'rgba(255,255,255,0.1)';
+        const gridMuted = isLightTheme ? 'rgba(26,43,28,0.07)' : 'rgba(255,255,255,0.06)';
+        const crosshairColor = isLightTheme ? 'rgba(26,43,28,0.22)' : 'rgba(255,255,255,0.2)';
         const allSeriesConfig = [
             { key: 'total', name: '總資產', color: totalLineColor, dashStyle: 'Solid', lineWidth: 2, zIndex: 5 },
             { key: 'bank', name: '錢包', color: TYPE_COLORS.bank, dashStyle: 'Solid', lineWidth: 2, zIndex: 4 },
@@ -7470,9 +7550,10 @@
         }
         
         // 準備今日標記的 plotLines（如果今天在圖表範圍內）
+        const accentColor = (typeof getAccentColor === 'function') ? getAccentColor() : '#0a84ff';
         const todayPlotLine = todayIndex >= 0 ? {
             value: todayIndex,
-            color: '#0a84ff',
+            color: accentColor,
             width: 2,
             dashStyle: 'Dash',
             zIndex: 10,
@@ -7481,7 +7562,7 @@
                 align: 'right',
                 x: -5,
                 style: {
-                    color: '#0a84ff',
+                    color: accentColor,
                     fontSize: '11px',
                     fontWeight: '600'
                 },
@@ -7529,7 +7610,7 @@
                 verticalAlign: 'top',
                 floating: false,
                 itemStyle: { color: chartTextColor, fontSize: '11px', fontWeight: 'normal' },
-                itemHoverStyle: { color: '#0a84ff' },
+                itemHoverStyle: { color: (typeof getAccentColor==='function'?getAccentColor():'#0a84ff') },
                 symbolRadius: 2,
                 padding: 0,
                 margin: 8
@@ -8132,9 +8213,9 @@
             }
             listEl.innerHTML = backups.map((b) => {
                 const isAuto = (b.id === 'auto' || b.kind === 'auto');
-                const border = isAuto ? '2px solid #0a84ff' : '1px solid var(--border-color)';
+                const border = isAuto ? ('2px solid ' + (typeof getAccentColor==='function'?getAccentColor():'#0a84ff')) : '1px solid var(--border-color)';
                 const badge = isAuto
-                    ? `<div style="display:flex; align-items:center; gap:6px; color:#0a84ff; font-weight:800; font-size:12px; margin-bottom:6px;"><i class="fas fa-bolt"></i><span>AUTO</span></div>`
+                    ? `<div style="display:flex; align-items:center; gap:6px; color:var(--accent); font-weight:800; font-size:12px; margin-bottom:6px;"><i class="fas fa-bolt"></i><span>AUTO</span></div>`
                     : '';
                 return `
                     <button data-id="${b.id}" style="width: 100%; text-align: left; margin-bottom: 8px; padding: 12px; border-radius: 10px; border: ${border}; background: var(--bg-color); color: var(--text-primary); cursor: pointer;">
@@ -8169,11 +8250,11 @@
             <div style="width: min(520px, 92vw); margin: auto; padding: 16px; box-sizing: border-box;">
                 <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
                     <button id="btnCloudRestore" style="width: clamp(110px, 32vw, 150px); height: clamp(110px, 32vw, 150px); border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); color: var(--text-primary); cursor: pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; padding: 12px; box-sizing: border-box; transition: transform 0.12s ease, background 0.12s ease;">
-                        <i class="fas fa-cloud" style="font-size: 22px; color:#0a84ff;"></i>
+                        <i class="fas fa-cloud" style="font-size: 22px; color:var(--accent);"></i>
                         <div style="font-size: 15px; font-weight: 700; line-height: 1.1; text-align:center;">雲端還原</div>
                     </button>
                     <button id="btnLocalRestore" style="width: clamp(110px, 32vw, 150px); height: clamp(110px, 32vw, 150px); border: 1px solid var(--border-color); border-radius: 16px; background: var(--card-bg); color: var(--text-primary); cursor: pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; padding: 12px; box-sizing: border-box; transition: transform 0.12s ease, background 0.12s ease;">
-                        <i class="fas fa-file-upload" style="font-size: 22px; color:#0a84ff;"></i>
+                        <i class="fas fa-file-upload" style="font-size: 22px; color:var(--accent);"></i>
                         <div style="font-size: 15px; font-weight: 700; line-height: 1.1; text-align:center;">本地還原</div>
                     </button>
                 </div>
@@ -8463,11 +8544,11 @@
         users.forEach(user => {
             const isCurrent = user.id === currentUserId;
             const userItem = document.createElement('div');
-            userItem.style.cssText = 'display: flex; align-items: center; padding: 15px; margin-bottom: 10px; background: var(--card-bg); border-radius: 12px; cursor: pointer; border: 2px solid ' + (isCurrent ? '#0a84ff' : 'transparent') + ';';
+            userItem.style.cssText = 'display: flex; align-items: center; padding: 15px; margin-bottom: 10px; background: var(--card-bg); border-radius: 12px; cursor: pointer; border: 2px solid ' + (isCurrent ? (typeof getAccentColor==='function'?getAccentColor():'#0a84ff') : 'transparent') + ';';
             userItem.onclick = () => switchUser(user.id);
             
             const avatar = document.createElement('div');
-            avatar.style.cssText = 'width: 50px; height: 50px; border-radius: 50%; background: var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 15px; border: 2px solid ' + (isCurrent ? '#0a84ff' : 'var(--border-color)') + ';';
+            avatar.style.cssText = 'width: 50px; height: 50px; border-radius: 50%; background: var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 24px; margin-right: 15px; border: 2px solid ' + (isCurrent ? (typeof getAccentColor==='function'?getAccentColor():'#0a84ff') : 'var(--border-color)') + ';';
             if (user.avatar.startsWith('data:image')) {
                 const img = document.createElement('img');
                 img.src = user.avatar;
@@ -8492,7 +8573,7 @@
             btnGroup.style.cssText = 'display: flex; gap: 10px; align-items: center;';
             
             const editBtn = document.createElement('button');
-            editBtn.style.cssText = 'background: none; border: none; color: #0a84ff; font-size: 18px; padding: 5px 10px; cursor: pointer;';
+            editBtn.style.cssText = 'background: none; border: none; color: var(--accent); font-size: 18px; padding: 5px 10px; cursor: pointer;';
             editBtn.innerHTML = '<i class="fas fa-edit"></i>';
             editBtn.onclick = (e) => { e.stopPropagation(); openUserEditModal(user.id); };
             editBtn.title = '編輯使用者';
@@ -8832,7 +8913,7 @@
             const avatarBtn = document.createElement('button');
             avatarBtn.style.cssText = 'width: 80px; height: 80px; border-radius: 50%; background: #2c2c2e; border: 2px solid #3a3a3c; font-size: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;';
             avatarBtn.textContent = avatar;
-            avatarBtn.onmouseover = () => { avatarBtn.style.borderColor = '#0a84ff'; avatarBtn.style.transform = 'scale(1.1)'; };
+            avatarBtn.onmouseover = () => { avatarBtn.style.borderColor = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff'); avatarBtn.style.transform = 'scale(1.1)'; };
             avatarBtn.onmouseout = () => { avatarBtn.style.borderColor = '#3a3a3c'; avatarBtn.style.transform = 'scale(1)'; };
             avatarBtn.onclick = () => selectAvatar(avatar);
             container.appendChild(avatarBtn);
@@ -9949,7 +10030,7 @@
             }));
             const images = await Promise.all(promises);
             progressBar.style.width = '60%';
-            status.innerText = `AI 分析中...`; status.style.color = "#0a84ff";
+            status.innerText = `AI 分析中...`; status.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
             const broker = document.getElementById('brokerSelect').value;
             const accountType = document.getElementById('inpType').value;
             const isTWStock = accountType === 'twstock';
@@ -9979,7 +10060,7 @@
             progressBar.style.width = '80%';
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...images] }] }) });
             progressBar.style.width = '90%';
-            status.innerText = `處理結果中...`; status.style.color = "#0a84ff";
+            status.innerText = `處理結果中...`; status.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
             const data = await resp.json(); if(data.error) throw new Error(data.error.message);
             if(!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0] || !data.candidates[0].content.parts[0].text) {
                 throw new Error("AI 回應格式錯誤，請重試");
@@ -11284,55 +11365,115 @@
     }
     
     
-    function toggleTheme() {
-        if(!settings.theme) {
-            settings.theme = 'dark';
-        }
-        settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
-        
-        // 根據主題自動切換圖表字體顏色
-        if(settings.theme === 'dark') {
-            settings.chartTextColor = 'white';
-        } else {
-            settings.chartTextColor = 'black';
-        }
-        
+    const THEME_ORDER = ['dark', 'light', 'forest'];
+
+    function isLightLikeTheme(theme) {
+        const t = theme || settings.theme || 'dark';
+        return t === 'light' || t === 'forest';
+    }
+
+    function getAccentColor() {
+        try {
+            const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            if (v) return v;
+        } catch (e) {}
+        return '#0a84ff';
+    }
+
+    function syncTypeColorsFromTheme() {
+        try {
+            const s = getComputedStyle(document.documentElement);
+            const map = {
+                bank: '--color-bank',
+                stock: '--color-stock',
+                twstock: '--color-twstock',
+                crypto: '--color-crypto',
+                debt: '--color-debt'
+            };
+            Object.keys(map).forEach(key => {
+                const val = s.getPropertyValue(map[key]).trim();
+                if (val && typeof TYPE_COLORS !== 'undefined') TYPE_COLORS[key] = val;
+            });
+        } catch (e) {}
+    }
+
+    function selectTheme(theme, opts) {
+        const options = opts || {};
+        if (!THEME_ORDER.includes(theme)) return;
+        const current = settings.theme || 'dark';
+        if (theme === current) return; // 不能再點當前主題
+
+        settings.theme = theme;
+        settings.chartTextColor = theme === 'dark' ? 'white' : 'black';
         saveSettings();
         applyTheme();
         updateThemeButton();
         updateChartTextColor();
-        // 折線圖需重繪：線色／Y 軸文字／格線都會隨主題變
-        if(currentChartMode === 'line') {
+
+        if (currentChartMode === 'line') {
             requestAnimationFrame(() => renderAssetLineChart());
         }
+        try {
+            if (typeof journalViewMode !== 'undefined' && journalViewMode === 'chart' && typeof renderMonthlyCharts === 'function') {
+                requestAnimationFrame(() => renderMonthlyCharts());
+            }
+            if (typeof journalViewMode !== 'undefined' && journalViewMode === 'calendar' && typeof renderCalendar === 'function') {
+                requestAnimationFrame(() => renderCalendar());
+            }
+            if (typeof journalViewMode !== 'undefined' && journalViewMode === 'linechart' && typeof renderJournalMonthlyLineChart === 'function') {
+                requestAnimationFrame(() => renderJournalMonthlyLineChart());
+            }
+        } catch (e) {}
+
+        if (options.closeSidebar !== false && typeof toggleSidebar === 'function') {
+            // 選完主題後關閉側邊欄，與其他選單行為一致
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('active')) toggleSidebar();
+        }
+    }
+
+    // 相容舊呼叫
+    function toggleTheme() {
+        const current = settings.theme || 'dark';
+        const idx = THEME_ORDER.indexOf(current);
+        const next = THEME_ORDER[(idx < 0 ? 0 : idx + 1) % THEME_ORDER.length];
+        selectTheme(next);
     }
     
     function applyTheme() {
         const root = document.documentElement;
         const currentTheme = settings.theme || 'dark';
         root.setAttribute('data-theme', currentTheme);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', getAccentColor());
+        syncTypeColorsFromTheme();
+        updateThemeButton();
     }
     
     function updateThemeButton() {
-        const icon = document.getElementById('themeIcon');
-        const text = document.getElementById('themeText');
         const currentTheme = settings.theme || 'dark';
-        
-        if(icon && text) {
-            if(currentTheme === 'dark') {
-                icon.className = 'fas fa-moon';
-                text.innerText = '深色模式';
-            } else {
-                icon.className = 'fas fa-sun';
-                text.innerText = '淺色模式';
+        const picker = document.getElementById('themePicker');
+        if (!picker) return;
+        picker.querySelectorAll('.theme-option').forEach(btn => {
+            const theme = btn.getAttribute('data-theme');
+            const isCurrent = theme === currentTheme;
+            btn.classList.toggle('is-current', isCurrent);
+            btn.disabled = isCurrent;
+            btn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
+            const badge = btn.querySelector('.theme-option-badge');
+            if (badge) {
+                if (isCurrent) badge.removeAttribute('hidden');
+                else badge.setAttribute('hidden', '');
             }
-        }
+        });
     }
     
     // 根據主題獲取圖表文字顏色
     function getChartTextColor() {
         const currentTheme = settings.theme || 'dark';
-        return currentTheme === 'dark' ? '#fff' : '#000';
+        if (currentTheme === 'dark') return '#fff';
+        if (currentTheme === 'forest') return '#1a2b1c';
+        return '#000';
     }
     
     function updateChartTextColor() {
@@ -12331,8 +12472,8 @@
                                 t.style.color = 'var(--color-up)'; // 綠色
                                 t.style.border = '2px solid var(--color-up)';
                             } else if(tab === 'transfer') {
-                                t.style.color = '#0a84ff'; // 藍色
-                                t.style.border = '2px solid #0a84ff';
+                                t.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff'); // 藍色
+                                t.style.border = '2px solid ' + (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                             } else if(tab === 'fixed') {
                                 t.style.color = '#ffd60a'; // 黃色
                                 t.style.border = '2px solid #ffd60a';
@@ -12491,7 +12632,7 @@
             if(hasJournalRecord && !hasTransfer) {
                 // 如果有記帳記錄但沒有固定轉帳，顯示一個通用標記
                 dayBtn.classList.add('has-fixed-transfer');
-                dayBtn.style.borderBottom = '3px solid #0a84ff';
+                dayBtn.style.borderBottom = '3px solid ' + (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
             } else if(hasJournalRecord && hasTransfer) {
                 // 如果兩者都有，保持固定轉帳的顏色標記
             }
@@ -14147,7 +14288,7 @@
         // 先顯示該類型的記帳記錄
         records.forEach(record => {
             const detailItem = document.createElement('div');
-            let borderColor = '#0a84ff';
+            let borderColor = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
             let icon = '';
             let title = '';
             
@@ -14174,7 +14315,7 @@
                     </div>
                     <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
+                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: var(--accent); font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -14202,13 +14343,13 @@
                     </div>
                     <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
+                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: var(--accent); font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 `;
             } else if(record.type === 'transfer') {
-                borderColor = '#0a84ff';
+                borderColor = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                 const displayTitle = record.title || '轉帳';
                 const fromAccount = accounts.find(acc => acc.id === record.fromAccountId);
                 const toAccount = accounts.find(acc => acc.id === record.toAccountId);
@@ -14235,7 +14376,7 @@
                     </div>
                     <div style="display: flex; justify-content: flex-end; width: 100%;">
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: #0a84ff; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
+                            <button onclick="event.stopPropagation(); editJournalRecord('${record.id}')" style="background: none; border: none; color: var(--accent); font-size: 16px; padding: 4px 8px; cursor: pointer;" title="編輯"><i class="fas fa-edit"></i></button>
                             <button onclick="event.stopPropagation(); deleteJournalRecord('${record.id}')" style="background: none; border: none; color: #ff453a; font-size: 16px; padding: 4px 8px; cursor: pointer;" title="刪除"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
@@ -15556,7 +15697,7 @@
             })));
             const prompt = `分析以下多張支出/消費紀錄截圖。每張圖片可能包含多筆交易，每筆通常有：日期(如 2026/02/10)、類別(如 消費店家、交通/運輸)、標題/店家名稱、金額(TWD)。請提取「所有圖片」中的每筆紀錄，合併成一個清單。類別請對應到以下其一：飲食、交通、購物、娛樂、醫療、教育、房租、水電、其他支出。（消費店家→購物，交通/運輸→交通）回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或店家名","amount":數字}, ...]}。若只有一筆也請用 records 陣列。`;
             statusEl.textContent = `AI 分析中 (${files.length} 張)...`;
-            statusEl.style.color = '#0a84ff';
+            statusEl.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${settings.geminiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -16077,8 +16218,8 @@
         if(transferTab) {
             transferTab.classList.add('active');
             transferTab.style.background = 'var(--card-bg)';
-            transferTab.style.color = '#0a84ff';
-            transferTab.style.border = '2px solid #0a84ff';
+            transferTab.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
+            transferTab.style.border = '2px solid ' + (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
         }
         
         if(modalWrapper) {
@@ -18414,7 +18555,7 @@
             
             if(distance < 25) {
                 // 在中心區域
-                item.style.color = '#0a84ff';
+                item.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                 item.style.fontWeight = '600';
                 item.style.fontSize = '20px';
                 
@@ -18461,7 +18602,7 @@
                     scrollToSelectedDate(tempSelectedDate);
                 };
                 if(y === year) {
-                    yearItem.style.color = '#0a84ff';
+                    yearItem.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                     yearItem.style.fontWeight = '600';
                 }
                 yearPicker.appendChild(yearItem);
@@ -18481,7 +18622,7 @@
                     scrollToSelectedDate(tempSelectedDate);
                 };
                 if(m === month) {
-                    monthItem.style.color = '#0a84ff';
+                    monthItem.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                     monthItem.style.fontWeight = '600';
                     monthItem.style.fontSize = '20px';
                 }
@@ -18512,7 +18653,7 @@
                 scrollToSelectedDate(tempSelectedDate);
             };
             if(d === currentDay) {
-                dayItem.style.color = '#0a84ff';
+                dayItem.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
                 dayItem.style.fontWeight = '600';
                 dayItem.style.fontSize = '20px';
             }
