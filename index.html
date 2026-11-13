@@ -182,7 +182,7 @@
         
         /* Layout */
         .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; padding-top: 150px; padding-bottom: 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; padding-top: calc(60px + var(--page-indicator-space, 72px)); padding-bottom: 0; }
         .main-content::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
         .main-content::-webkit-scrollbar-track { display: none !important; background: transparent !important; }
         .main-content::-webkit-scrollbar-thumb { display: none !important; background: transparent !important; }
@@ -258,7 +258,7 @@
             .hamburger-btn { display: none !important; }
             .sidebar-toggle-btn-desktop { display: block !important; }
             .sidebar.collapsed .sidebar-header, .sidebar.collapsed .sidebar-menu { opacity: 0; pointer-events: none; }
-            .main-content { display: grid; grid-template-rows: auto 1fr; overflow: hidden; width: 100%; padding-top: 150px; }
+            .main-content { display: grid; grid-template-rows: auto 1fr; overflow: hidden; width: 100%; padding-top: calc(60px + var(--page-indicator-space, 72px)); }
             .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; height: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: start; }
             .content-grid::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
             .content-grid::-webkit-scrollbar-track { display: none !important; background: transparent !important; }
@@ -900,11 +900,11 @@
                 inset 0 -1px 0 rgba(0, 0, 0, 0.05),
                 0 2px 8px rgba(0, 0, 0, 0.06);
             transition:
-                transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.18s ease,
-                border-color 0.18s ease,
-                box-shadow 0.18s ease,
-                opacity 0.14s ease;
+                transform 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.22s ease,
+                border-color 0.22s ease,
+                box-shadow 0.22s ease,
+                opacity 0.18s ease;
             will-change: transform;
         }
         .tab-bar-lens.is-visible { opacity: 1; }
@@ -931,7 +931,7 @@
             gap: 4px;
             pointer-events: none;
             will-change: transform;
-            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .tab-bar-lens.is-pressed .tab-bar-lens-in {
             transition: none;
@@ -1409,26 +1409,29 @@
         #pageContainer > .page-item.page-active { position: relative; height: auto; visibility: visible; pointer-events: auto; }
         /* 資產列表滑動動畫中的相鄰頁面：可見，高度撐滿容器（不超過當前頁面高度） */
         #pageContainer > .page-item.page-swipe-visible { visibility: visible; pointer-events: auto; height: 100%; overflow: hidden; }
-        /* 資產上方分頁：Liquid Glass 浮動膠囊（隨螢幕流暢縮放） */
+        /* 資產上方分頁：Liquid Glass 浮動膠囊（隨螢幕流暢縮放；外框高度=實際佔位） */
         .page-indicator {
-            --page-tab-font: clamp(12px, 3.7vw, 18px);
-            --page-tab-pad-y: clamp(7px, 2.1vw, 12px);
-            --page-tab-pad-x: clamp(6px, 2.2vw, 20px);
-            --page-tab-gap: clamp(1px, 0.7vw, 4px);
-            --page-bar-pad: clamp(3px, 1vw, 6px);
-            --page-bar-inset: clamp(10px, 3.2vw, 20px);
+            /* 字偏大一點好讀；左右 padding／gap 收斂，避免變擠 */
+            --page-tab-font: clamp(14px, 4.25vw, 18px);
+            --page-tab-pad-y: clamp(8px, 2.2vw, 12px);
+            --page-tab-pad-x: clamp(2px, 1.1vw, 12px);
+            --page-tab-gap: clamp(0px, 0.35vw, 3px);
+            --page-bar-pad: clamp(3px, 0.9vw, 5px);
+            --page-bar-inset: clamp(8px, 2.4vw, 18px);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: clamp(10px, 2.6vw, 14px) var(--page-bar-inset) clamp(12px, 2.8vw, 16px);
+            /* 上下留白收斂，避免漸層外框比玻璃膠囊看起來「多佔一塊」 */
+            padding: clamp(8px, 2vw, 12px) var(--page-bar-inset) clamp(8px, 2vw, 12px);
             position: fixed;
             top: 60px;
             left: 0;
             right: 0;
             z-index: 95;
-            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 88%, transparent 100%);
+            background: linear-gradient(to bottom, var(--bg-color) 0%, var(--bg-color) 78%, transparent 100%);
             overflow: visible;
             pointer-events: none;
+            box-sizing: border-box;
         }
         .page-indicator-bar {
             position: relative;
@@ -1468,6 +1471,7 @@
             justify-content: space-between;
             gap: var(--page-tab-gap);
             width: 100%;
+            box-sizing: border-box;
         }
         .page-tab {
             flex: 1 1 0;
@@ -1475,9 +1479,11 @@
             padding: var(--page-tab-pad-y) var(--page-tab-pad-x);
             border-radius: 999px;
             font-size: var(--page-tab-font);
-            font-weight: 600;
-            line-height: 1.2;
-            color: var(--text-secondary);
+            font-weight: 650;
+            font-variation-settings: "wght" 650;
+            line-height: 1.15;
+            letter-spacing: 0.01em;
+            color: color-mix(in srgb, var(--text-primary) 42%, var(--text-secondary));
             background: transparent;
             border: none;
             cursor: pointer;
@@ -1489,10 +1495,11 @@
             touch-action: none;
             position: relative;
             text-align: center;
+            box-sizing: border-box;
         }
         .page-tab.active {
-            color: var(--text-secondary);
-            font-weight: 600;
+            color: color-mix(in srgb, var(--text-primary) 42%, var(--text-secondary));
+            font-weight: 650;
             background: transparent;
             box-shadow: none;
         }
@@ -1505,30 +1512,32 @@
             overflow: hidden;
             pointer-events: none;
             opacity: 0;
+            box-sizing: border-box;
             background: var(--glass-active-fill);
-            border: 1px solid rgba(255, 255, 255, 0.28);
+            /* 用 inset 模擬邊線，避免 border 讓外框尺寸與 tab 差 2px */
+            border: none;
             box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.28),
                 inset 0 1px 0 rgba(255, 255, 255, 0.55),
                 inset 0 -1px 0 rgba(0, 0, 0, 0.05),
                 0 2px 8px rgba(0, 0, 0, 0.06);
             transition:
-                transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                height 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                background 0.18s ease,
-                border-color 0.18s ease,
-                box-shadow 0.18s ease,
-                opacity 0.14s ease;
-            will-change: transform, width;
+                transform 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+                width 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+                height 0.52s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.22s ease,
+                box-shadow 0.22s ease,
+                opacity 0.18s ease;
+            will-change: transform, width, height;
         }
         .page-indicator-lens.is-visible { opacity: 1; }
         .page-indicator-lens.is-pressed {
-            transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
+            transition: background 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
             background: color-mix(in srgb, #ffffff 18%, transparent);
-            border-color: rgba(255, 255, 255, 0.72);
             -webkit-backdrop-filter: blur(10px) saturate(210%) brightness(1.1);
             backdrop-filter: blur(10px) saturate(210%) brightness(1.1);
             box-shadow:
+                inset 0 0 0 1px rgba(255, 255, 255, 0.72),
                 inset 0 1.5px 0 rgba(255, 255, 255, 0.85),
                 inset 0 -1.5px 0 rgba(255, 255, 255, 0.25),
                 inset 3px 0 8px rgba(255, 255, 255, 0.22),
@@ -1545,7 +1554,7 @@
             gap: var(--page-tab-gap);
             pointer-events: none;
             will-change: transform;
-            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
             box-sizing: border-box;
         }
         .page-indicator-lens.is-pressed .page-indicator-lens-in {
@@ -1553,7 +1562,8 @@
         }
         .page-indicator-lens-in .page-tab {
             color: var(--accent);
-            font-weight: 600;
+            font-weight: 700;
+            font-variation-settings: "wght" 700;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -5160,6 +5170,7 @@
         requestAnimationFrame(() => {
             if (typeof rebuildPageIndicatorLensClone === 'function') rebuildPageIndicatorLensClone();
             if (typeof syncLiquidPageIndicatorLens === 'function') syncLiquidPageIndicatorLens(false);
+            if (typeof syncPageIndicatorLayoutSpace === 'function') syncPageIndicatorLayoutSpace();
         });
     }
     
@@ -12373,13 +12384,9 @@
             if (e.button != null && e.button !== 0) return;
             const metrics = getTabBarMetrics();
             if (!metrics || metrics.tabs.length === 0) return;
-            const rect = track.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const w = metrics.tabs[0].width;
-            // 若點到的是目前選中 tab，從當前 left 拖起；否則直接移動到手指處
+            // 點選時鏡頭留在目前位置，鬆手再滑過去；拖曳才跟手
             const active = metrics.tabs.find(t => t.el.classList.contains('active')) || metrics.tabs[0];
-            const pressedTab = findNearestTab(metrics, x);
-            const initLeft = (pressedTab.key === active.key) ? active.left : (x - w / 2);
+            const initLeft = active.left;
 
             state.dragging = true;
             state.pointerId = e.pointerId;
@@ -12387,7 +12394,8 @@
             state.startLensLeft = initLeft;
             state.moved = false;
             bar.setPointerCapture?.(e.pointerId);
-            renderLiquidTabLens(initLeft, { pressed: true, visible: true });
+            // 點選不變白；開始拖曳後才進入 pressed 鏡面
+            renderLiquidTabLens(initLeft, { pressed: false, visible: true });
             e.preventDefault();
         }
 
@@ -12395,7 +12403,9 @@
             if (!state.dragging || (state.pointerId != null && e.pointerId !== state.pointerId)) return;
             const dx = e.clientX - state.startClientX;
             if (Math.abs(dx) > 5) state.moved = true;
-            renderLiquidTabLens(state.startLensLeft + dx, { pressed: true, visible: true });
+            if (state.moved) {
+                renderLiquidTabLens(state.startLensLeft + dx, { pressed: true, visible: true });
+            }
             e.preventDefault();
         }
 
@@ -12405,6 +12415,7 @@
             const rect = track.getBoundingClientRect();
             const dx = e.clientX - state.startClientX;
             let targetTab = null;
+            const currentLeft = state.moved ? (state.startLensLeft + dx) : state.startLensLeft;
 
             if (metrics && metrics.tabs.length > 0) {
                 if (!state.moved) {
@@ -12415,7 +12426,7 @@
                     const w = metrics.tabs[0].width;
                     const minLeft = metrics.tabs[0].left;
                     const maxLeft = metrics.tabs[metrics.tabs.length - 1].left;
-                    const clampedLeft = Math.max(minLeft, Math.min(maxLeft, state.startLensLeft + dx));
+                    const clampedLeft = Math.max(minLeft, Math.min(maxLeft, currentLeft));
                     targetTab = findNearestTab(metrics, clampedLeft + w / 2);
                 }
             }
@@ -12424,12 +12435,16 @@
             try { bar.releasePointerCapture?.(e.pointerId); } catch (err) {}
             state.pointerId = null;
 
-            if (targetTab) {
-                activateTabFromKey(targetTab.key);
-                renderLiquidTabLens(targetTab.left, { pressed: false, visible: true });
-            } else {
-                syncLiquidTabBarLens(true);
-            }
+            // 先解除 pressed（恢復 transform transition），下一幀再滑到目標
+            renderLiquidTabLens(currentLeft, { pressed: false, visible: true });
+            requestAnimationFrame(() => {
+                if (targetTab) {
+                    activateTabFromKey(targetTab.key);
+                    renderLiquidTabLens(targetTab.left, { pressed: false, visible: true });
+                } else {
+                    syncLiquidTabBarLens(true);
+                }
+            });
             e.preventDefault();
         }
 
@@ -12443,8 +12458,22 @@
         });
     }
 
-    // 資產上方分頁 Liquid Glass（僅左右、1:1 同框，寬度跟最近 tab）
+    // 資產上方分頁 Liquid Glass（僅左右、1:1 同框；佔位高度同步到內容 padding）
     let _liquidPageIndicatorState = null;
+
+    function syncPageIndicatorLayoutSpace() {
+        const indicator = document.getElementById('pageIndicator') || document.querySelector('.page-indicator');
+        const root = document.documentElement;
+        if (!indicator || !root) return;
+        const hidden = indicator.style.display === 'none' || getComputedStyle(indicator).display === 'none';
+        if (hidden) {
+            root.style.setProperty('--page-indicator-space', '0px');
+            return;
+        }
+        // 用實際外框高度，讓 main-content 留白與看得見的 bar 一致
+        const h = Math.ceil(indicator.getBoundingClientRect().height);
+        root.style.setProperty('--page-indicator-space', (h > 0 ? h : 72) + 'px');
+    }
 
     function rebuildPageIndicatorLensClone() {
         const track = document.getElementById('pageIndicatorTrack');
@@ -12459,22 +12488,16 @@
             clone.setAttribute('tabindex', '-1');
             clone.setAttribute('aria-hidden', 'true');
             clone.disabled = true;
-            lensIn.appendChild(clone);
-        });
-        const rect = track.getBoundingClientRect();
-        const itemsW = items.offsetWidth || rect.width;
-        const itemsH = items.offsetHeight || rect.height;
-        lensIn.style.width = itemsW + 'px';
-        lensIn.style.height = itemsH + 'px';
-        lensIn.style.gap = getComputedStyle(items).gap || '0px';
-        // 鏡面內分頁需與底層等寬等分，避免字級／padding 因 vw 變化後錯位
-        Array.from(lensIn.children).forEach((clone, i) => {
-            const src = items.children[i];
-            if (!src) return;
             clone.style.flex = '1 1 0';
             clone.style.minWidth = '0';
-            clone.style.width = src.offsetWidth + 'px';
+            clone.style.width = 'auto';
+            lensIn.appendChild(clone);
         });
+        const itemsRect = items.getBoundingClientRect();
+        lensIn.style.width = itemsRect.width + 'px';
+        lensIn.style.height = itemsRect.height + 'px';
+        lensIn.style.gap = getComputedStyle(items).gap || '0px';
+        syncPageIndicatorLayoutSpace();
     }
 
     function getPageIndicatorMetrics() {
@@ -12483,25 +12506,27 @@
         const items = document.getElementById('pageIndicatorItems');
         if (!bar || !track || !items) return null;
         const trackRect = track.getBoundingClientRect();
-        const totalWidth = items.offsetWidth || trackRect.width;
+        const itemsRect = items.getBoundingClientRect();
         const tabs = Array.from(items.querySelectorAll('.page-tab'));
         return {
             bar,
             track,
             items,
             trackRect,
-            totalWidth,
+            itemsRect,
+            totalWidth: itemsRect.width,
             tabs: tabs.map(tab => {
-                const left = tab.offsetLeft;
-                const width = tab.offsetWidth;
-                const height = tab.offsetHeight;
+                const r = tab.getBoundingClientRect();
+                const left = r.left - trackRect.left;
+                const top = r.top - trackRect.top;
                 return {
                     el: tab,
                     key: tab.getAttribute('data-page'),
                     left,
-                    width,
-                    height,
-                    center: left + width / 2
+                    top,
+                    width: r.width,
+                    height: r.height,
+                    center: left + r.width / 2
                 };
             })
         };
@@ -12516,7 +12541,6 @@
 
         const firstTab = metrics.tabs[0];
         const lastTab = metrics.tabs[metrics.tabs.length - 1];
-        // 先用目標中心找最近 tab，再用該 tab 寬高（各分頁寬度不同）
         const probeCenter = targetLeftX + (options.widthHint || firstTab.width) / 2;
         const nearest = findNearestTab(metrics, probeCenter);
         const w = nearest.width;
@@ -12524,16 +12548,21 @@
         const minLeft = firstTab.left;
         const maxLeft = lastTab.left;
         const lx = Math.max(minLeft, Math.min(maxLeft, targetLeftX));
+        // Y 也對齊實際 tab，避免鏡頭與格子上下錯位
+        const ly = nearest.top;
         const pressed = !!options.pressed;
         const visible = options.visible !== false;
 
         lens.style.width = w + 'px';
         lens.style.height = h + 'px';
-        lens.style.transform = `translate3d(${lx.toFixed(1)}px, 0px, 0)`;
-        lensIn.style.transform = `translate3d(${(-lx).toFixed(1)}px, 0px, 0)`;
+        lens.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0)`;
+        // lensIn 對齊 items 原點（相對 track）
+        const itemsLeft = metrics.itemsRect.left - metrics.trackRect.left;
+        const itemsTop = metrics.itemsRect.top - metrics.trackRect.top;
+        lensIn.style.transform = `translate3d(${(itemsLeft - lx).toFixed(1)}px, ${(itemsTop - ly).toFixed(1)}px, 0)`;
         lens.classList.toggle('is-visible', visible);
         lens.classList.toggle('is-pressed', pressed);
-        applyTabBarItemsMask(metrics.items, lx, w, metrics.totalWidth);
+        applyTabBarItemsMask(metrics.items, lx - itemsLeft, w, metrics.totalWidth);
 
         return findNearestTab(metrics, lx + w / 2);
     }
@@ -12546,10 +12575,8 @@
         if (lensIn.children.length === 0 || lensIn.children.length !== metrics.tabs.length) {
             rebuildPageIndicatorLensClone();
         } else {
-            const itemsW = metrics.items.offsetWidth || metrics.trackRect.width;
-            const itemsH = metrics.items.offsetHeight || metrics.trackRect.height;
-            lensIn.style.width = itemsW + 'px';
-            lensIn.style.height = itemsH + 'px';
+            lensIn.style.width = metrics.itemsRect.width + 'px';
+            lensIn.style.height = metrics.itemsRect.height + 'px';
             lensIn.style.gap = getComputedStyle(metrics.items).gap || '0px';
         }
         const active = metrics.tabs.find(t => t.el.classList.contains('active')) || metrics.tabs[0];
@@ -12559,6 +12586,7 @@
             lensIn.style.transition = 'none';
         }
         renderLiquidPageIndicatorLens(active.left, { pressed: false, visible: true, widthHint: active.width });
+        syncPageIndicatorLayoutSpace();
         if (animate === false) {
             requestAnimationFrame(() => {
                 lens.style.transition = '';
@@ -12590,11 +12618,9 @@
             if (e.button != null && e.button !== 0) return;
             const metrics = getPageIndicatorMetrics();
             if (!metrics || metrics.tabs.length === 0) return;
-            const rect = track.getBoundingClientRect();
-            const x = (e.clientX - rect.left) + track.scrollLeft;
+            // 點選時鏡頭留在目前位置，鬆手再滑過去；拖曳才跟手
             const active = metrics.tabs.find(t => t.el.classList.contains('active')) || metrics.tabs[0];
-            const pressedTab = findNearestTab(metrics, x);
-            const initLeft = (pressedTab.key === active.key) ? active.left : (x - pressedTab.width / 2);
+            const initLeft = active.left;
 
             state.dragging = true;
             state.pointerId = e.pointerId;
@@ -12602,7 +12628,8 @@
             state.startLensLeft = initLeft;
             state.moved = false;
             bar.setPointerCapture?.(e.pointerId);
-            renderLiquidPageIndicatorLens(initLeft, { pressed: true, visible: true, widthHint: pressedTab.width });
+            // 點選不變白；開始拖曳後才進入 pressed 鏡面
+            renderLiquidPageIndicatorLens(initLeft, { pressed: false, visible: true, widthHint: active.width });
             e.preventDefault();
         }
 
@@ -12610,7 +12637,9 @@
             if (!state.dragging || (state.pointerId != null && e.pointerId !== state.pointerId)) return;
             const dx = e.clientX - state.startClientX;
             if (Math.abs(dx) > 5) state.moved = true;
-            renderLiquidPageIndicatorLens(state.startLensLeft + dx, { pressed: true, visible: true });
+            if (state.moved) {
+                renderLiquidPageIndicatorLens(state.startLensLeft + dx, { pressed: true, visible: true });
+            }
             e.preventDefault();
         }
 
@@ -12620,14 +12649,17 @@
             const rect = track.getBoundingClientRect();
             const dx = e.clientX - state.startClientX;
             let targetTab = null;
+            const currentLeft = state.moved ? (state.startLensLeft + dx) : state.startLensLeft;
+            const currentHint = metrics && metrics.tabs.length
+                ? findNearestTab(metrics, currentLeft + (metrics.tabs[0].width / 2)).width
+                : undefined;
 
             if (metrics && metrics.tabs.length > 0) {
                 if (!state.moved) {
                     targetTab = findNearestTab(metrics, (e.clientX - rect.left) + track.scrollLeft);
                 } else {
-                    const probe = state.startLensLeft + dx;
+                    const probe = currentLeft;
                     targetTab = findNearestTab(metrics, probe + (metrics.tabs[0].width / 2));
-                    // 用最近 tab 的實際中心再確認一次
                     targetTab = findNearestTab(metrics, targetTab.center);
                 }
             }
@@ -12636,13 +12668,17 @@
             try { bar.releasePointerCapture?.(e.pointerId); } catch (err) {}
             state.pointerId = null;
 
-            if (targetTab) {
-                const pageIndex = parseInt(targetTab.key, 10);
-                if (!isNaN(pageIndex)) switchToPage(pageIndex);
-                renderLiquidPageIndicatorLens(targetTab.left, { pressed: false, visible: true, widthHint: targetTab.width });
-            } else {
-                syncLiquidPageIndicatorLens(true);
-            }
+            // 先解除 pressed（恢復 transform transition），下一幀再滑到目標
+            renderLiquidPageIndicatorLens(currentLeft, { pressed: false, visible: true, widthHint: currentHint });
+            requestAnimationFrame(() => {
+                if (targetTab) {
+                    const pageIndex = parseInt(targetTab.key, 10);
+                    if (!isNaN(pageIndex)) switchToPage(pageIndex);
+                    renderLiquidPageIndicatorLens(targetTab.left, { pressed: false, visible: true, widthHint: targetTab.width });
+                } else {
+                    syncLiquidPageIndicatorLens(true);
+                }
+            });
             e.preventDefault();
         }
 
@@ -12653,7 +12689,9 @@
         window.addEventListener('resize', () => {
             rebuildPageIndicatorLensClone();
             syncLiquidPageIndicatorLens(false);
+            syncPageIndicatorLayoutSpace();
         });
+        requestAnimationFrame(syncPageIndicatorLayoutSpace);
     }
 
     function switchToCalendarPage(showCalendar) {
@@ -12676,6 +12714,7 @@
             if (typeof syncLiquidTabBarLens === 'function') syncLiquidTabBarLens(true);
             if(pageIndicator) {
                 pageIndicator.style.display = 'none';  // 只隱藏，保留內部 Liquid Glass 結構
+                if (typeof syncPageIndicatorLayoutSpace === 'function') syncPageIndicatorLayoutSpace();
             }
             if(navbarTitle) {
                 navbarTitle.innerHTML = '<img src="./favico.png" alt="Logo" class="title-logo">記帳';
@@ -12822,6 +12861,7 @@
                 switchToPage(savedPage);
                 requestAnimationFrame(() => {
                     if (typeof syncLiquidPageIndicatorLens === 'function') syncLiquidPageIndicatorLens(false);
+                    if (typeof syncPageIndicatorLayoutSpace === 'function') syncPageIndicatorLayoutSpace();
                 });
                 // 立即套用正確圖表文字色，避免先白後黑閃爍
                 if (typeof updateChartTextColor === 'function') updateChartTextColor();
