@@ -10,6 +10,18 @@
 
 > 每次新增功能或修改時，請在此處加上日期與說明。
 
+### 2026-11-14
+
+- **載入頁配合主題色**：開頁前先讀取已儲存主題套用 `data-theme`；載入遮罩背景／文字／轉圈改跟主題變數走，避免先閃深色
+- **美股 ETF icon**：優先 FMP 產品圖（如 SPY／QQQ／VOO）；沒有再退回發行商（SPDR／Invesco／Vanguard 等）
+
+### 2026-11-13
+
+- **台股 logo（免費、免 Key）**：改以 Financial Modeling Prep `image-stock/2330.TW.png`（上櫃 `.TWO`）為主；Finnhub 僅作備援。不需 Finnhub Key 也可顯示
+- **ETF 發行商 logo**：ETF／基金改顯示投信或資產管理公司 logo（如元大→2885、國泰→2882）；依名稱前綴或熱門代號對照，免 Key
+- **美股／加密貨幣 logo 本機快取**：成功載入後寫入 localStorage data URL，並以 Service Worker 快取外連圖
+- **失敗時保留舊圖**：重新整理或 CDN 暫時失敗時不覆蓋既有 logo；圖片 `onerror` 會先改試本機快取，不再立刻清掉
+
 ### 2025-02-23
 
 - **新增銀行支援**：新增 9 家銀行至 `BANK_DATA`

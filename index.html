@@ -7,6 +7,50 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a84ff">
     <title>Monee</title>
+    <!-- 開頁前先套用已儲存主題，避免載入畫面閃成預設深色 -->
+    <script>
+    (function () {
+        try {
+            var ALLOWED = { dark: 1, light: 1, forest: 1, oat: 1, coral: 1, lavender: 1 };
+            var BG = {
+                dark: '#000000',
+                light: '#ffffff',
+                forest: '#e7f0e4',
+                oat: '#F6F0E6',
+                coral: '#F4F6F7',
+                lavender: '#F4F3FB'
+            };
+            var ACCENT = {
+                dark: '#0a84ff',
+                light: '#007aff',
+                forest: '#3d7a4a',
+                oat: '#8B5A34',
+                coral: '#147570',
+                lavender: '#5250C9'
+            };
+            var theme = 'dark';
+            function readTheme(raw) {
+                if (!raw) return null;
+                try {
+                    var s = JSON.parse(raw);
+                    if (s && s.theme && ALLOWED[s.theme]) return s.theme;
+                } catch (e) {}
+                return null;
+            }
+            var uid = localStorage.getItem('my_assets_current_user');
+            if (uid) {
+                theme = readTheme(localStorage.getItem('my_assets_stable_settings_' + uid)) || theme;
+            }
+            if (theme === 'dark') {
+                theme = readTheme(localStorage.getItem('my_assets_stable_settings')) || theme;
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.backgroundColor = BG[theme] || BG.dark;
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', ACCENT[theme] || ACCENT.dark);
+        } catch (e) {}
+    })();
+    </script>
     <!-- Firebase 模組：對應 npm 文件的 import { ... } from "firebase/app"（瀏覽器需 import map） -->
     <script type="importmap">
     {
@@ -101,6 +145,14 @@
             --chart-text-color: #ffffff;
         }
         :root[data-theme="dark"] {
+            --bg-color: #000000; --card-bg: #1c1c1e; --text-primary: #ffffff; --text-secondary: #8e8e93; --text-third: #57575e;
+            --color-bank: #64d2ff; --color-stock: #bf5af2; --color-twstock: #0a84ff; --color-crypto: #ff9f0a; --color-debt: #ff453a;
+            --color-up: #30d158; --color-down: #ff453a; --border-color: #2c2c2e; --active-bg: #3a3a3c;
+            --accent: #0a84ff; --accent-2: #5e5ce6; --accent-contrast: #ffffff;
+            --accent-soft: rgba(10, 132, 255, 0.2); --accent-muted: rgba(10, 132, 255, 0.15); --accent-border: rgba(10, 132, 255, 0.45);
+            --glass-fill: rgba(28, 28, 30, 0.52); --glass-border: rgba(255, 255, 255, 0.22);
+            --glass-highlight: rgba(255, 255, 255, 0.34); --glass-shadow: rgba(0, 0, 0, 0.38);
+            --glass-active-fill: rgba(255, 255, 255, 0.12);
             --chart-text-color: #ffffff;
         }
         :root[data-theme="light"] {
@@ -166,6 +218,7 @@
         input, textarea, select, [contenteditable="true"] {
             -webkit-user-select: text !important; user-select: text !important; -webkit-touch-callout: default !important;
         }
+        html { background-color: var(--bg-color); }
         body { background-color: var(--bg-color); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; overflow-x: hidden; }
         body.sidebar-open .main-content { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
         body.sidebar-open { overscroll-behavior: none; }
@@ -715,7 +768,17 @@
         #group-debt .list-item { cursor: pointer !important; }
         #group-debt .list-item.sortable-chosen { cursor: pointer !important; }
         .item-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 18px; flex-shrink: 0; align-self: flex-start; margin-top: 0; overflow: hidden; }
-        .item-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+        /* FMP／外連 logo 多為滿版圖，略縮避免看起來比原本 Finnhub 圖「撑满」圓形 */
+        .item-icon img {
+            width: 72%;
+            height: 72%;
+            max-width: 30px;
+            max-height: 30px;
+            object-fit: contain;
+            border-radius: 6px;
+            display: block;
+            flex-shrink: 0;
+        }
         .icon-bank { color: var(--color-bank); background: rgba(100, 210, 255, 0.15); } .icon-crypto { color: var(--color-crypto); background: rgba(255, 159, 10, 0.15); } .icon-stock { color: var(--color-stock); background: rgba(191, 90, 242, 0.15); } .icon-twstock { color: var(--color-twstock); background: var(--accent-muted); } .icon-debt { color: var(--color-debt); background: rgba(255, 69, 58, 0.15); }
         .item-content { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
         
@@ -1653,6 +1716,7 @@
             .price-label { font-size: 10px; }
             .list-item { padding: 12px 12px; }
             .item-icon { width: 36px; height: 36px; margin-right: 10px; font-size: 16px; }
+            .item-icon img { max-width: 26px; max-height: 26px; }
         }
         @media (max-width: 360px) {
             .amount-val { font-size: 14px !important; }
@@ -1664,6 +1728,7 @@
             .item-row-compact { font-size: 9px; }
             .price-label { font-size: 9px; }
             .item-icon { width: 32px; height: 32px; margin-right: 8px; font-size: 14px; }
+            .item-icon img { max-width: 22px; max-height: 22px; }
             .list-container { margin: 0 10px 10px 10px; }
             .group-header { padding: 15px 14px 8px 14px; }
         }
@@ -2073,7 +2138,7 @@
             width: 50px;
             height: 50px;
             border: 4px solid var(--border-color);
-            border-top-color: var(--text-primary);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -4211,6 +4276,8 @@
     const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
     const STORAGE_KEY_DIVIDEND_RECORDS = 'my_assets_dividend_records'; // 除權息：持股股數、手動輸入金額
     const STORAGE_KEY_TWSTOCK_DAILY = 'my_assets_twstock_daily'; // 台股每日持股快照（用於除權息歷史自動帶入股數）
+    const STORAGE_KEY_LOGO_CACHE = 'my_assets_logo_cache_v1'; // 美股／加密貨幣 logo 本機 data URL 快取
+    const MONEE_LOGO_CACHE_NAME = 'monee-logos-v1'; // 與 service-worker.js 對應的 Cache API 名稱
     /** 顯示雲端閘道且尚無本機使用者列時，僅供主程式初始化佔位，不可寫入 localStorage */
     const MONEE_GATE_PLACEHOLDER_USER_ID = '__monee_gate__';
     
@@ -7354,6 +7421,148 @@
             return null;
         }
     }
+    /** 記憶台股對應 Finnhub 後綴：'TW'（上市）或 'TWO'（上櫃） */
+    const twFinnhubMarketCache = Object.create(null);
+
+    function inferTWFinnhubMarketFromTicker(item) {
+        if (!item) return null;
+        const ex = String(item.exchange || item.market || item.type || '').toUpperCase();
+        if (ex.includes('TPEX') || ex.includes('OTC') || ex === 'TWO' || ex.includes('櫃')) return 'TWO';
+        if (ex.includes('TWSE') || ex.includes('TSE') || ex === 'TW' || ex.includes('市')) return 'TW';
+        return null;
+    }
+
+    async function resolveTWFinnhubMarket(symbol, preferredMarket) {
+        const sym = String(symbol || '').trim();
+        if (!/^\d{4}$/.test(sym)) return null;
+        if (preferredMarket === 'TW' || preferredMarket === 'TWO') {
+            twFinnhubMarketCache[sym] = preferredMarket;
+            return preferredMarket;
+        }
+        if (twFinnhubMarketCache[sym] === 'TW' || twFinnhubMarketCache[sym] === 'TWO') {
+            return twFinnhubMarketCache[sym];
+        }
+        try {
+            const list = await fetchTWStockTickers();
+            const hit = (list || []).find((item) => String(item.symbol || '') === sym);
+            const inferred = inferTWFinnhubMarketFromTicker(hit);
+            if (inferred) {
+                twFinnhubMarketCache[sym] = inferred;
+                return inferred;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    /** 台股 logo 圖源（免 API Key）：Financial Modeling Prep CDN */
+    function buildTwStockFmpLogoUrl(symbol, market) {
+        return `https://financialmodelingprep.com/image-stock/${symbol}.${market}.png`;
+    }
+
+    /**
+     * 取得台股 logo（免費、免 Key）。
+     * 優先 FMP：`2330.TW.png`／上櫃 `.TWO.png`；可選再試 Finnhub profile2。
+     * @returns {Promise<{ logo: string, market: 'TW'|'TWO', name?: string }|null>}
+     */
+    async function fetchTWStockLogoProfile(symbol, preferredMarket) {
+        if (!symbol) return null;
+        const sym = String(symbol).trim();
+        if (!/^\d{4}$/.test(sym)) return null;
+
+        const known = await resolveTWFinnhubMarket(sym, preferredMarket);
+        const order = known === 'TWO' ? ['TWO', 'TW'] : ['TW', 'TWO'];
+
+        // 1) FMP 圖檔：免 Key、CORS 可用，且 404 可分辨無效代號
+        for (let i = 0; i < order.length; i++) {
+            const market = order[i];
+            const url = buildTwStockFmpLogoUrl(sym, market);
+            try {
+                const ok = await probeImageUrl(url, 7000);
+                if (ok) {
+                    twFinnhubMarketCache[sym] = market;
+                    return { logo: url, market: market, name: null };
+                }
+            } catch (e) {}
+            if (i < order.length - 1) await new Promise((r) => setTimeout(r, 80));
+        }
+
+        // 2) 備援：若有 Finnhub Key，再試 profile2（其 CDN 有時不穩）
+        if (settings.apiKey) {
+            for (let i = 0; i < order.length; i++) {
+                const market = order[i];
+                try {
+                    const profile = await fetchUSStockProfile(`${sym}.${market}`);
+                    if (profile && profile.logo) {
+                        const ok = await probeImageUrl(profile.logo, 7000);
+                        if (ok) {
+                            twFinnhubMarketCache[sym] = market;
+                            return { logo: profile.logo, market: market, name: profile.name || null };
+                        }
+                    }
+                } catch (e) {}
+                if (i < order.length - 1) await new Promise((r) => setTimeout(r, 120));
+            }
+        }
+        return null;
+    }
+
+    /** 避免列表重繪時對同一代號重複請求 */
+    const twLogoInflight = Object.create(null);
+    /** 查無 logo 的冷卻（毫秒時間戳） */
+    const twLogoMissUntil = Object.create(null);
+
+    async function ensureTwStockLogo(acc, opts) {
+        if (!acc || acc.type !== 'twstock' || !acc.symbol) return false;
+        const options = opts || {};
+        const sym = String(acc.symbol).trim();
+        const key = getAssetLogoCacheKey(acc.type, sym);
+        if (!options.force && acc.logo && getCachedLogoDataUrl(key)) return true;
+        // 若只有壞掉的舊外連（例如失效 Finnhub CDN），允許 force 或無快取時重抓
+        if (!options.force && acc.logo && String(acc.logo).includes('finnhub') && !getCachedLogoDataUrl(key)) {
+            // 繼續往下用 FMP 重試
+        } else if (!options.force && acc.logo && !getCachedLogoDataUrl(key)) {
+            // 已有 URL：先嘗試套用／快取，不立刻當 miss
+        }
+        if (!options.force && twLogoMissUntil[sym] && Date.now() < twLogoMissUntil[sym]) return false;
+        if (twLogoInflight[sym]) return twLogoInflight[sym];
+
+        twLogoInflight[sym] = (async () => {
+            try {
+                // ETF：台股 ETF 多半沒有獨立 logo，改套用發行商圖
+                if (isLikelyEtfAsset(acc)) {
+                    const issuer = resolveEtfIssuer(acc);
+                    if (issuer && issuer.logoUrl) {
+                        delete twLogoMissUntil[sym];
+                        const applied = await applyAccountLogo(acc, issuer.logoUrl);
+                        if (!applied) acc.logo = issuer.logoUrl;
+                        queueIssuerLogoCache(issuer);
+                        return !!(acc.logo);
+                    }
+                    twLogoMissUntil[sym] = Date.now() + 30 * 60 * 1000;
+                    return false;
+                }
+
+                const found = await fetchTWStockLogoProfile(sym, acc.twMarket || null);
+                if (!found || !found.logo) {
+                    twLogoMissUntil[sym] = Date.now() + 30 * 60 * 1000;
+                    return false;
+                }
+                delete twLogoMissUntil[sym];
+                if (found.market) acc.twMarket = found.market;
+                const applied = await applyAccountLogo(acc, found.logo);
+                if (!applied && !acc.logo) acc.logo = found.logo;
+                // 即使 probe 偶發失敗，FMP URL 仍寫入以便列表直接顯示
+                if (!acc.logo) acc.logo = found.logo;
+                else if (found.logo && acc.logo !== found.logo && String(acc.logo).includes('finnhub')) {
+                    acc.logo = found.logo;
+                }
+                return !!(acc.logo);
+            } finally {
+                delete twLogoInflight[sym];
+            }
+        })();
+        return twLogoInflight[sym];
+    }
     function cleanCompanyName(name) {
         if(!name) return name;
         // 移除常見的公司後綴（不區分大小寫）
@@ -7363,6 +7572,485 @@
         name = name.replace(/\s+(INC|INCORPORATED|CORP|CORPORATION|LTD|LIMITED|LLC|CO|COMPANY|PLC|SA|AG|NV|BV|LP|LLP)\.?$/i, '');
         return name.trim();
     }
+    /** @type {Record<string, { dataUrl: string, sourceUrl: string, updatedAt: number }>} */
+    let moneeLogoCacheMem = Object.create(null);
+    try {
+        const _logoBoot = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGO_CACHE) || '{}');
+        if (_logoBoot && typeof _logoBoot === 'object') moneeLogoCacheMem = _logoBoot;
+    } catch (e) { moneeLogoCacheMem = Object.create(null); }
+
+    function normalizeLogoSymbol(symbol) {
+        return String(symbol || '')
+            .replace('COINBASE:', '')
+            .replace('OKEX:', '')
+            .replace('-USD', '')
+            .replace('-USDT', '')
+            .trim()
+            .toUpperCase();
+    }
+
+    function getAssetLogoCacheKey(type, symbol) {
+        return `${type || 'stock'}:${normalizeLogoSymbol(symbol)}`;
+    }
+
+    function persistLogoCacheMem() {
+        try {
+            localStorage.setItem(STORAGE_KEY_LOGO_CACHE, JSON.stringify(moneeLogoCacheMem));
+        } catch (e) {
+            // Quota 滿時淘汰最舊項目後再試一次
+            try {
+                const entries = Object.entries(moneeLogoCacheMem).sort((a, b) => (a[1].updatedAt || 0) - (b[1].updatedAt || 0));
+                const drop = Math.max(1, Math.floor(entries.length / 5));
+                for (let i = 0; i < drop; i++) delete moneeLogoCacheMem[entries[i][0]];
+                localStorage.setItem(STORAGE_KEY_LOGO_CACHE, JSON.stringify(moneeLogoCacheMem));
+            } catch (e2) {}
+        }
+    }
+
+    function getCachedLogoDataUrl(cacheKey) {
+        const hit = cacheKey && moneeLogoCacheMem[cacheKey];
+        return hit && hit.dataUrl ? hit.dataUrl : null;
+    }
+
+    function putLogoCacheEntry(cacheKey, dataUrl, sourceUrl) {
+        if (!cacheKey || !dataUrl || !String(dataUrl).startsWith('data:image')) return;
+        moneeLogoCacheMem[cacheKey] = {
+            dataUrl,
+            sourceUrl: sourceUrl || (moneeLogoCacheMem[cacheKey] && moneeLogoCacheMem[cacheKey].sourceUrl) || '',
+            updatedAt: Date.now()
+        };
+        persistLogoCacheMem();
+    }
+
+    function blobToDataUrl(blob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function imageUrlToDataUrl(url) {
+        return new Promise((resolve) => {
+            if (!url) return resolve(null);
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const w = img.naturalWidth || 64;
+                    const h = img.naturalHeight || 64;
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/png'));
+                } catch (e) {
+                    resolve(null);
+                }
+            };
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
+    }
+
+    async function fetchLogoAsDataUrl(url) {
+        if (!url || String(url).startsWith('data:')) return url || null;
+        try {
+            const res = await fetch(url, { mode: 'cors', credentials: 'omit', cache: 'force-cache' });
+            if (res.ok) {
+                const blob = await res.blob();
+                if (blob && blob.size > 0) {
+                    const dataUrl = await blobToDataUrl(blob);
+                    if (dataUrl) return dataUrl;
+                }
+            }
+        } catch (e) {}
+        return imageUrlToDataUrl(url);
+    }
+
+    function probeImageUrl(url, timeoutMs) {
+        return new Promise((resolve) => {
+            if (!url) return resolve(false);
+            if (String(url).startsWith('data:image')) return resolve(true);
+            let done = false;
+            const finish = (ok) => {
+                if (done) return;
+                done = true;
+                resolve(!!ok);
+            };
+            const img = new Image();
+            const t = setTimeout(() => finish(false), timeoutMs || 8000);
+            img.onload = () => { clearTimeout(t); finish(true); };
+            img.onerror = () => { clearTimeout(t); finish(false); };
+            img.src = url;
+        });
+    }
+
+    async function ensureLogoInCacheApi(url) {
+        if (!url || !('caches' in window) || String(url).startsWith('data:')) return;
+        try {
+            const cache = await caches.open(MONEE_LOGO_CACHE_NAME);
+            const req = new Request(url, { mode: 'no-cors', credentials: 'omit' });
+            const hit = await cache.match(req) || await cache.match(url);
+            if (hit) return;
+            const res = await fetch(req);
+            // opaque (status 0) 也可放入 Cache，供之後 <img>／SW 使用
+            if (res) await cache.put(url, res);
+        } catch (e) {}
+    }
+
+    /**
+     * 寫入／更新帳戶 logo：遠端圖可載入才替換；失敗時保留舊 URL 與本機快取。
+     * @returns {Promise<boolean>} 是否成功套用新 logo
+     */
+    async function applyAccountLogo(acc, logoUrl) {
+        if (!acc || !logoUrl) return false;
+        const key = getAssetLogoCacheKey(acc.type, acc.symbol);
+        const prevLogo = acc.logo || null;
+        const prevCached = getCachedLogoDataUrl(key);
+
+        const ok = await probeImageUrl(logoUrl);
+        if (!ok) {
+            // 新圖載不進來：保留舊圖
+            if (!acc.logo && prevCached) {
+                // 無 URL 但有快取時維持現狀即可
+            }
+            return false;
+        }
+
+        acc.logo = logoUrl;
+        ensureLogoInCacheApi(logoUrl);
+
+        const dataUrl = await fetchLogoAsDataUrl(logoUrl);
+        if (dataUrl) {
+            putLogoCacheEntry(key, dataUrl, logoUrl);
+            return true;
+        }
+
+        // 遠端看得到但無法轉成 data URL（多半 CORS）：至少保留 URL，舊 data 快取不刪
+        if (!prevCached && prevLogo && prevLogo !== logoUrl) {
+            // 無舊快取也沒關係，URL 已更新；SW 之後仍可能快取成功載入的回應
+        }
+        return true;
+    }
+
+    /** 美股產品 logo（含 ETF）：FMP 免 Key */
+    function buildUsStockFmpLogoUrl(symbol) {
+        return `https://financialmodelingprep.com/image-stock/${normalizeLogoSymbol(symbol)}.png`;
+    }
+
+    const usLogoInflight = Object.create(null);
+    const usLogoMissUntil = Object.create(null);
+
+    async function ensureUsStockLogo(acc, opts) {
+        if (!acc || acc.type !== 'stock' || !acc.symbol) return false;
+        const options = opts || {};
+        const sym = normalizeLogoSymbol(acc.symbol);
+        const key = getAssetLogoCacheKey('stock', sym);
+        if (!options.force && acc.logo && getCachedLogoDataUrl(key) && !String(acc.logo).includes('finnhub')) return true;
+        if (!options.force && usLogoMissUntil[sym] && Date.now() < usLogoMissUntil[sym]) return false;
+        if (usLogoInflight[sym]) return usLogoInflight[sym];
+
+        usLogoInflight[sym] = (async () => {
+            try {
+                // 1) 產品圖（SPY／QQQ 等美股 ETF 常有獨立 logo）
+                const productUrl = buildUsStockFmpLogoUrl(sym);
+                const productOk = await probeImageUrl(productUrl, 7000);
+                if (productOk) {
+                    delete usLogoMissUntil[sym];
+                    const applied = await applyAccountLogo(acc, productUrl);
+                    if (!applied) acc.logo = productUrl;
+                    return !!(acc.logo);
+                }
+
+                // 2) ETF：退回發行商 logo
+                if (isLikelyEtfAsset(acc)) {
+                    const issuer = resolveEtfIssuer(acc);
+                    if (issuer && issuer.logoUrl) {
+                        delete usLogoMissUntil[sym];
+                        const applied = await applyAccountLogo(acc, issuer.logoUrl);
+                        if (!applied) acc.logo = issuer.logoUrl;
+                        queueIssuerLogoCache(issuer);
+                        return !!(acc.logo);
+                    }
+                }
+
+                usLogoMissUntil[sym] = Date.now() + 30 * 60 * 1000;
+                return false;
+            } finally {
+                delete usLogoInflight[sym];
+            }
+        })();
+        return usLogoInflight[sym];
+    }
+
+    function queueAccountLogoCache(acc) {
+        if (!acc) return;
+        if (acc.type === 'twstock') {
+            const key = getAssetLogoCacheKey(acc.type, acc.symbol);
+            const cached = getCachedLogoDataUrl(key);
+            const logoStr = String(acc.logo || '');
+            const isBrokenFinnhub = logoStr.includes('finnhub');
+            const isFmp = logoStr.includes('financialmodelingprep.com');
+
+            // 已有 FMP／本機快取：只補 Cache API
+            if (cached && isFmp) {
+                ensureLogoInCacheApi(acc.logo);
+                return;
+            }
+            if (cached && acc.logo && !isBrokenFinnhub) {
+                ensureLogoInCacheApi(acc.logo);
+                return;
+            }
+
+            // 無圖、或舊 Finnhub 圖床：改抓免費 FMP／發行商
+            const sym = String(acc.symbol || '').trim();
+            if (isBrokenFinnhub) delete twLogoMissUntil[sym];
+            ensureTwStockLogo(acc, { force: isBrokenFinnhub })
+                .then((ok) => {
+                    if (ok) {
+                        try { saveData(); } catch (e) {}
+                        if (!isSorting) renderAssets();
+                    }
+                })
+                .catch(() => {});
+            return;
+        }
+        if (acc.type === 'stock') {
+            const key = getAssetLogoCacheKey(acc.type, acc.symbol);
+            const cached = getCachedLogoDataUrl(key);
+            const logoStr = String(acc.logo || '');
+            const isBrokenFinnhub = logoStr.includes('finnhub');
+            if (cached && acc.logo && !isBrokenFinnhub) {
+                ensureLogoInCacheApi(acc.logo);
+                return;
+            }
+            if (isBrokenFinnhub) delete usLogoMissUntil[normalizeLogoSymbol(acc.symbol)];
+            // 無圖、壞圖、或美股 ETF：補產品圖／發行商
+            if (!acc.logo || isBrokenFinnhub || isLikelyEtfAsset(acc)) {
+                ensureUsStockLogo(acc, { force: isBrokenFinnhub })
+                    .then((ok) => {
+                        if (ok) {
+                            try { saveData(); } catch (e) {}
+                            if (!isSorting) renderAssets();
+                        }
+                    })
+                    .catch(() => {});
+            }
+            return;
+        }
+        if (acc.type !== 'crypto' || !acc.logo) return;
+        const key = getAssetLogoCacheKey(acc.type, acc.symbol);
+        if (getCachedLogoDataUrl(key)) {
+            ensureLogoInCacheApi(acc.logo);
+            return;
+        }
+        applyAccountLogo(acc, acc.logo).catch(() => {});
+    }
+
+    function warmAllAccountLogoCaches() {
+        if (!Array.isArray(accounts)) return;
+        accounts.forEach((acc) => {
+            if (acc.type === 'stock' || acc.type === 'crypto' || acc.type === 'twstock') {
+                queueAccountLogoCache(acc);
+            }
+        });
+    }
+
+    function resolveAssetLogoSrc(acc) {
+        if (!acc || (acc.type !== 'stock' && acc.type !== 'crypto' && acc.type !== 'twstock')) return null;
+
+        const key = getAssetLogoCacheKey(acc.type, acc.symbol);
+        const cached = getCachedLogoDataUrl(key);
+        const remote = acc.logo || '';
+
+        // 已有專屬／產品 logo（美股 ETF 的 SPY／QQQ 圖會走這裡，優先於發行商）
+        if (cached) return { src: cached, key, remote };
+        if (remote && !String(remote).includes('finnhub')) return { src: remote, key, remote };
+        if (remote) return { src: remote, key, remote };
+
+        // 台股 ETF：本身多半沒圖 → 發行商
+        if (acc.type === 'twstock' && isLikelyEtfAsset(acc)) {
+            const issuer = resolveEtfIssuer(acc);
+            if (issuer && issuer.logoUrl) {
+                const issuerKey = getAssetLogoCacheKey('issuer', issuer.id);
+                const issuerCached = getCachedLogoDataUrl(issuerKey);
+                queueIssuerLogoCache(issuer);
+                if (issuerCached) return { src: issuerCached, key: issuerKey, remote: issuer.logoUrl };
+                return { src: issuer.logoUrl, key: issuerKey, remote: issuer.logoUrl };
+            }
+        }
+
+        // 美股 ETF：背景抓產品圖；暫時先顯示發行商
+        if (acc.type === 'stock' && isLikelyEtfAsset(acc)) {
+            queueAccountLogoCache(acc);
+            const issuer = resolveEtfIssuer(acc);
+            if (issuer && issuer.logoUrl) {
+                const issuerKey = getAssetLogoCacheKey('issuer', issuer.id);
+                const issuerCached = getCachedLogoDataUrl(issuerKey);
+                queueIssuerLogoCache(issuer);
+                if (issuerCached) return { src: issuerCached, key: issuerKey, remote: issuer.logoUrl };
+                return { src: issuer.logoUrl, key: issuerKey, remote: issuer.logoUrl };
+            }
+        }
+
+        return null;
+    }
+
+    function escapeHtmlAttr(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;');
+    }
+
+    /** 名稱／代號判斷是否像 ETF／基金 */
+    function isLikelyEtfAsset(acc) {
+        if (!acc) return false;
+        const name = String(acc.name || '');
+        const sym = String(acc.symbol || '').trim();
+        if (/ETF|ETN|指數|基金|受益|投信|高息|高股息/i.test(name)) return true;
+        // 台股常見 ETF 代號段：00xx、02xx（債券／槓反等）
+        if (acc.type === 'twstock' && /^(00|02)\d{2}$/.test(sym)) return true;
+        // 美股常見 ETF 代號
+        if (acc.type === 'stock' && /^(SPY|SPYG|SPYV|QQQ|QQQM|VOO|VTI|VT|VEA|VWO|IWM|IVV|DIA|ARKK|ARKW|ARKG|SCHD|SCHX|JEPI|JEPQ|QYLD|XLK|XLF|XLE|XLV|SMH|SOXX|TQQQ|SQQQ|UVXY)$/i.test(sym)) return true;
+        return false;
+    }
+
+    /**
+     * ETF 發行商對照：用投信／資產管理公司 logo（免費 FMP 母公司圖）。
+     * 台股 ETF 本身通常沒有獨立 logo，改顯示發行商品牌。
+     */
+    const ETF_ISSUERS = {
+        yuanta:   { id: 'yuanta',   name: '元大', logoUrl: 'https://financialmodelingprep.com/image-stock/2885.TW.png' },
+        fubon:    { id: 'fubon',    name: '富邦', logoUrl: 'https://financialmodelingprep.com/image-stock/2881.TW.png' },
+        cathay:   { id: 'cathay',   name: '國泰', logoUrl: 'https://financialmodelingprep.com/image-stock/2882.TW.png' },
+        capital:  { id: 'capital',  name: '群益', logoUrl: 'https://financialmodelingprep.com/image-stock/6005.TW.png' },
+        fuhhwa:   { id: 'fuhhwa',   name: '復華', logoUrl: 'https://financialmodelingprep.com/image-stock/2888.TW.png' },
+        ctbc:     { id: 'ctbc',     name: '中信', logoUrl: 'https://financialmodelingprep.com/image-stock/2891.TW.png' },
+        sinopac:  { id: 'sinopac',  name: '永豐', logoUrl: 'https://financialmodelingprep.com/image-stock/2890.TW.png' },
+        kgi:      { id: 'kgi',      name: '凱基', logoUrl: 'https://financialmodelingprep.com/image-stock/2883.TW.png' },
+        taishin:  { id: 'taishin',  name: '台新', logoUrl: 'https://financialmodelingprep.com/image-stock/2887.TW.png' },
+        mega:     { id: 'mega',     name: '兆豐', logoUrl: 'https://financialmodelingprep.com/image-stock/2886.TW.png' },
+        first:    { id: 'first',    name: '第一金', logoUrl: 'https://financialmodelingprep.com/image-stock/2892.TW.png' },
+        skfh:     { id: 'skfh',     name: '新光', logoUrl: 'https://financialmodelingprep.com/image-stock/2888.TW.png' },
+        president:{ id: 'president',name: '統一', logoUrl: 'https://financialmodelingprep.com/image-stock/1216.TW.png' },
+        blackrock:{ id: 'blackrock',name: 'iShares', logoUrl: 'https://financialmodelingprep.com/image-stock/BLK.png' },
+        invesco:  { id: 'invesco',  name: 'Invesco', logoUrl: 'https://financialmodelingprep.com/image-stock/IVZ.png' },
+        statestreet: { id: 'statestreet', name: 'SPDR', logoUrl: 'https://financialmodelingprep.com/image-stock/STT.png' },
+        vanguard: { id: 'vanguard', name: 'Vanguard', logoUrl: 'https://www.google.com/s2/favicons?domain=vanguard.com&sz=128' },
+        schwab:   { id: 'schwab',   name: 'Schwab', logoUrl: 'https://financialmodelingprep.com/image-stock/SCHW.png' },
+        ark:      { id: 'ark',      name: 'ARK', logoUrl: 'https://www.google.com/s2/favicons?domain=ark-funds.com&sz=128' },
+        jpmorgan: { id: 'jpmorgan', name: 'JPMorgan', logoUrl: 'https://financialmodelingprep.com/image-stock/JPM.png' },
+        globalx:  { id: 'globalx',  name: 'Global X', logoUrl: 'https://www.google.com/s2/favicons?domain=globalxetfs.com&sz=128' },
+        vaneck:   { id: 'vaneck',   name: 'VanEck', logoUrl: 'https://www.google.com/s2/favicons?domain=vaneck.com&sz=128' }
+    };
+
+    const ETF_ISSUER_NAME_RULES = [
+        { re: /^元大/, id: 'yuanta' },
+        { re: /^富邦/, id: 'fubon' },
+        { re: /^國泰/, id: 'cathay' },
+        { re: /^群益/, id: 'capital' },
+        { re: /^復華/, id: 'fuhhwa' },
+        { re: /^中信|^台灣工銀|^CTBC/i, id: 'ctbc' },
+        { re: /^永豐/, id: 'sinopac' },
+        { re: /^凱基/, id: 'kgi' },
+        { re: /^台新/, id: 'taishin' },
+        { re: /^兆豐/, id: 'mega' },
+        { re: /^第一金|^第一/, id: 'first' },
+        { re: /^新光/, id: 'skfh' },
+        { re: /^統一/, id: 'president' },
+        { re: /iShares|BlackRock/i, id: 'blackrock' },
+        { re: /Invesco|PowerShares/i, id: 'invesco' },
+        { re: /SPDR|State Street/i, id: 'statestreet' },
+        { re: /Vanguard/i, id: 'vanguard' },
+        { re: /Schwab/i, id: 'schwab' },
+        { re: /\bARK\b|ARK Invest/i, id: 'ark' },
+        { re: /JPMorgan|J\.?P\.?\s*Morgan/i, id: 'jpmorgan' },
+        { re: /Global\s*X/i, id: 'globalx' }
+    ];
+
+    /** 熱門 ETF 代號 → 發行商（名稱尚未帶出發行商時用） */
+    const ETF_SYMBOL_ISSUER = {
+        '0050': 'yuanta', '0051': 'yuanta', '0052': 'yuanta', '0053': 'yuanta',
+        '0055': 'yuanta', '0056': 'yuanta', '0057': 'yuanta', '0061': 'yuanta',
+        '006203': 'yuanta', '006208': 'cathay', '00631L': 'yuanta', '00632R': 'yuanta',
+        '00646': 'yuanta', '00692': 'fubon', '00713': 'fuhhwa', '00731': 'fuhhwa',
+        '00850': 'yuanta', '00878': 'cathay', '00892': 'fuhhwa', '00895': 'fuhhwa',
+        '00897': 'yuanta', '00898': 'yuanta', '00900': 'fubon', '00905': 'fuhhwa',
+        '00915': 'capital', '00918': 'capital', '00919': 'capital', '00922': 'capital',
+        '00923': 'capital', '00927': 'capital', '00929': 'fuhhwa', '00930': 'fuhhwa',
+        '00932': 'fuhhwa', '00934': 'sinopac', '00936': 'capital', '00939': 'capital',
+        '00940': 'yuanta', '00943': 'capital', '00944': 'capital', '00946': 'capital',
+        '00947': 'capital', '00952': 'capital',
+        'SPY': 'statestreet', 'SPYG': 'statestreet', 'SPYV': 'statestreet', 'DIA': 'statestreet',
+        'QQQ': 'invesco', 'QQQM': 'invesco', 'TQQQ': 'invesco', 'SQQQ': 'invesco',
+        'IVV': 'blackrock', 'IWM': 'blackrock', 'EFA': 'blackrock', 'EEM': 'blackrock',
+        'XLK': 'statestreet', 'XLF': 'statestreet', 'XLE': 'statestreet', 'XLV': 'statestreet',
+        'VOO': 'vanguard', 'VTI': 'vanguard', 'VT': 'vanguard', 'VEA': 'vanguard', 'VWO': 'vanguard',
+        'SCHD': 'schwab', 'SCHX': 'schwab',
+        'ARKK': 'ark', 'ARKW': 'ark', 'ARKG': 'ark',
+        'JEPI': 'jpmorgan', 'JEPQ': 'jpmorgan',
+        'QYLD': 'globalx', 'SMH': 'vaneck', 'SOXX': 'blackrock'
+    };
+
+    function resolveEtfIssuer(acc) {
+        if (!acc || !isLikelyEtfAsset(acc)) return null;
+        const sym = normalizeLogoSymbol(acc.symbol);
+        const bySym = ETF_SYMBOL_ISSUER[sym];
+        if (bySym && ETF_ISSUERS[bySym]) return ETF_ISSUERS[bySym];
+
+        const name = String(acc.name || '');
+        for (let i = 0; i < ETF_ISSUER_NAME_RULES.length; i++) {
+            const rule = ETF_ISSUER_NAME_RULES[i];
+            if (rule.re.test(name) && ETF_ISSUERS[rule.id]) return ETF_ISSUERS[rule.id];
+        }
+        return null;
+    }
+
+    function queueIssuerLogoCache(issuer) {
+        if (!issuer || !issuer.logoUrl) return;
+        const key = getAssetLogoCacheKey('issuer', issuer.id);
+        if (getCachedLogoDataUrl(key)) {
+            ensureLogoInCacheApi(issuer.logoUrl);
+            return;
+        }
+        applyAccountLogo({ type: 'issuer', symbol: issuer.id, logo: null }, issuer.logoUrl).catch(() => {});
+    }
+
+    /** 圖片載入失敗：先改試本機快取／遠端舊址，都不行才暫時顯示通用 icon（不清除快取） */
+    window.handleAssetLogoError = function(img, faIconClass) {
+        if (!img) return;
+        const key = img.dataset.logoKey || '';
+        const remote = img.dataset.logoRemote || '';
+        const cached = key ? getCachedLogoDataUrl(key) : null;
+        const current = img.getAttribute('src') || '';
+        const currentIsData = current.startsWith('data:');
+        const step = img.dataset.logoStep || '0';
+
+        if (step === '0') {
+            if (!currentIsData && cached && cached !== current) {
+                img.dataset.logoStep = '1';
+                img.src = cached;
+                return;
+            }
+            if (currentIsData && remote && remote !== current) {
+                img.dataset.logoStep = '1';
+                img.src = remote;
+                return;
+            }
+        }
+
+        const parent = img.parentElement;
+        if (parent) {
+            const icon = faIconClass || 'fa-chart-line';
+            parent.innerHTML = `<i class="fas ${icon}"></i>`;
+        }
+    };
+
     async function fetchUSStockProfile(symbol) {
         if(!settings.apiKey || !symbol) return null;
         try {
@@ -7407,9 +8095,10 @@
                 if(t==='twstock') {
                     document.getElementById('inpName').value = s;
                     if(nameQueryTimer) clearTimeout(nameQueryTimer);
-                    // 支援代碼（4位數字）或名稱（如台積電）查詢
+                    // 支援代碼（4位數字）或名稱（如台積電）查詢；logo 走免費 Finnhub（.TW／.TWO）
                     nameQueryTimer = setTimeout(async () => {
                         const raw = document.getElementById('inpSymbol').value.trim();
+                        let code = raw;
                         if(/^\d{4}$/.test(raw)) {
                             const companyName = await fetchTWStockName(raw);
                             if(companyName) document.getElementById('inpName').value = companyName;
@@ -7418,6 +8107,19 @@
                             if(found) {
                                 document.getElementById('inpSymbol').value = found.symbol;
                                 document.getElementById('inpName').value = found.name;
+                                code = found.symbol;
+                            } else {
+                                code = '';
+                            }
+                        }
+                        if(/^\d{4}$/.test(String(code))) {
+                            const logoProfile = await fetchTWStockLogoProfile(code);
+                            if(logoProfile && logoProfile.logo) {
+                                document.getElementById('inpSymbol').setAttribute('data-logo', logoProfile.logo);
+                                if(logoProfile.market) {
+                                    document.getElementById('inpSymbol').setAttribute('data-tw-market', logoProfile.market);
+                                }
+                                applyAccountLogo({ type: 'twstock', symbol: code, logo: null, twMarket: logoProfile.market }, logoProfile.logo).catch(() => {});
                             }
                         }
                     }, 800);
@@ -7434,6 +8136,7 @@
                             // 儲存 logo URL 到隱藏欄位或直接保存（稍後在 saveAccount 中處理）
                             if(profile.logo) {
                                 document.getElementById('inpSymbol').setAttribute('data-logo', profile.logo);
+                                applyAccountLogo({ type: 'stock', symbol: s, logo: null }, profile.logo).catch(() => {});
                             }
                         }
                     }, 800);
@@ -7447,14 +8150,15 @@
                         const logoUrl = await fetchCryptoLogo(s);
                         if(logoUrl) {
                             document.getElementById('inpSymbol').setAttribute('data-logo', logoUrl);
+                            applyAccountLogo({ type: 'crypto', symbol: s, logo: null }, logoUrl).catch(() => {});
                         }
                     }, 800);
                 } 
             } 
         } 
     }
-    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; let newA; if(!editingId && (t==='stock'||t==='twstock')){ const existingSame=accounts.find(x=>x.type===t&&String(x.symbol||'').trim().toUpperCase()===s); if(existingSame){ const oldBal=parseFloat(existingSame.balance)||0; const oldCost=parseFloat(existingSame.cost)||0; const newBal=oldBal+b; const mergedCost=newBal>0?(oldBal*oldCost+b*cost)/newBal:cost; const mergedTx=(existingSame.transactions||[]).concat(window.tempTransactions||[]); existingSame.balance=newBal; existingSame.cost=mergedCost; existingSame.transactions=mergedTx; if(logoUrl)existingSame.logo=logoUrl; newA=existingSame; } } if(!newA){ newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); } saveData(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; if(pendingJournalModalType === 'batchExpense' || pendingJournalModalType === 'batchIncome') window.pendingNewAccountForBatch = newA;
-        closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
+    function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; let newA; if(!editingId && (t==='stock'||t==='twstock')){ const existingSame=accounts.find(x=>x.type===t&&String(x.symbol||'').trim().toUpperCase()===s); if(existingSame){ const oldBal=parseFloat(existingSame.balance)||0; const oldCost=parseFloat(existingSame.cost)||0; const newBal=oldBal+b; const mergedCost=newBal>0?(oldBal*oldCost+b*cost)/newBal:cost; const mergedTx=(existingSame.transactions||[]).concat(window.tempTransactions||[]); existingSame.balance=newBal; existingSame.cost=mergedCost; existingSame.transactions=mergedTx; if(logoUrl)existingSame.logo=logoUrl; if(t==='twstock'){ const m=document.getElementById('inpSymbol').getAttribute('data-tw-market'); if(m)existingSame.twMarket=m; } newA=existingSame; } } if(!newA){ newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null, twMarket: t==='twstock' ? (document.getElementById('inpSymbol').getAttribute('data-tw-market') || (existingAcc && existingAcc.twMarket) || null) : ((existingAcc && existingAcc.twMarket) || null) }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); } saveData(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; if(pendingJournalModalType === 'batchExpense' || pendingJournalModalType === 'batchIncome') window.pendingNewAccountForBatch = newA;
+        closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(typeof queueAccountLogoCache==='function') queueAccountLogoCache(newA); if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
     async function deleteAccount() { 
         const acc = accounts.find(x => x.id === editingId);
         if (!acc) return;
@@ -10793,7 +11497,14 @@
                 const profile = await fetchUSStockProfile(sym);
                 if(profile) {
                     if(profile.name) acc.name = profile.name;
-                    if(profile.logo) acc.logo = profile.logo;
+                    // 僅在新 logo 可載入時才替換；失敗保留舊 URL／本機快取
+                    if(profile.logo) {
+                        const applied = await applyAccountLogo(acc, profile.logo);
+                        if(!applied && !acc.logo) {
+                            // 完全沒有舊圖時仍記下 URL，之後 warm／SW 可能補上
+                            acc.logo = profile.logo;
+                        }
+                    }
                     updated++;
                 }
                 // 避免請求過快，添加延遲
@@ -10817,6 +11528,18 @@
                         acc.name = companyName;
                         updated++;
                     }
+                    // 台股 logo：FMP 免 Key（2330.TW.png）；失敗保留舊圖
+                    {
+                        const logoProfile = await fetchTWStockLogoProfile(sym, acc.twMarket || null);
+                        if(logoProfile && logoProfile.logo) {
+                            if(logoProfile.market) acc.twMarket = logoProfile.market;
+                            const applied = await applyAccountLogo(acc, logoProfile.logo);
+                            if(!applied) acc.logo = logoProfile.logo;
+                            else acc.logo = logoProfile.logo;
+                            updated++;
+                        }
+                        await new Promise(r => setTimeout(r, 200));
+                    }
                 }
                 // 避免請求過快，添加延遲
                 await new Promise(r => setTimeout(r, 150));
@@ -10835,7 +11558,8 @@
                 const sym = acc.symbol;
                 const logoUrl = await fetchCryptoLogo(sym);
                 if(logoUrl) {
-                    acc.logo = logoUrl;
+                    const applied = await applyAccountLogo(acc, logoUrl);
+                    if(!applied && !acc.logo) acc.logo = logoUrl;
                     updated++;
                 }
                 // 避免請求過快，添加延遲
@@ -11813,11 +12537,18 @@
                 let itemHidden = localStorage.getItem(`itemHidden_${acc.id}`) === 'true';
                 let eyeIcon = itemHidden ? 'fa-eye-slash' : 'fa-eye';
                 
-                // 美股和加密貨幣且有 logo 時顯示 logo，否則顯示 icon
+                // 美股／台股／加密貨幣：個股用公司 logo；ETF 用發行商 logo；都沒有才用通用 icon
                 let iconHtml = '';
-                if((acc.type === 'stock' || acc.type === 'crypto') && acc.logo) {
-                    iconHtml = `<div class="item-icon ${g.s}"><img src="${acc.logo}" alt="${acc.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas ${g.i}\\'></i>';"></div>`;
+                const logoResolved = (acc.type === 'stock' || acc.type === 'crypto' || acc.type === 'twstock') ? resolveAssetLogoSrc(acc) : null;
+                if(logoResolved && logoResolved.src) {
+                    if(acc.logo && !getCachedLogoDataUrl(logoResolved.key)) queueAccountLogoCache(acc);
+                    // 台股若仍掛著失效的 Finnhub 圖床，背景改抓 FMP／發行商
+                    if(acc.type === 'twstock' && acc.logo && String(acc.logo).includes('finnhub')) queueAccountLogoCache(acc);
+                    if(acc.type === 'twstock' && isLikelyEtfAsset(acc) && !acc.logo) queueAccountLogoCache(acc);
+                    if(acc.type === 'stock' && isLikelyEtfAsset(acc) && !acc.logo) queueAccountLogoCache(acc);
+                    iconHtml = `<div class="item-icon ${g.s}"><img src="${escapeHtmlAttr(logoResolved.src)}" alt="${escapeHtmlAttr(acc.name)}" data-logo-key="${escapeHtmlAttr(logoResolved.key)}" data-logo-remote="${escapeHtmlAttr(logoResolved.remote)}" onerror="handleAssetLogoError(this, '${g.i}')"></div>`;
                 } else {
+                    if((acc.type === 'twstock' || acc.type === 'stock') && acc.symbol) queueAccountLogoCache(acc);
                     iconHtml = `<div class="item-icon ${g.s}"><i class="fas ${g.i}"></i></div>`;
                 }
                 const symForDiv = (acc.symbol || '').toString().trim();
@@ -12053,6 +12784,10 @@
         const root = document.documentElement;
         const currentTheme = settings.theme || 'dark';
         root.setAttribute('data-theme', currentTheme);
+        try {
+            const bg = getComputedStyle(root).getPropertyValue('--bg-color').trim();
+            if (bg) root.style.backgroundColor = bg;
+        } catch (e) {}
         const meta = document.querySelector('meta[name="theme-color"]');
         if (meta) meta.setAttribute('content', getAccentColor());
         syncTypeColorsFromTheme();
@@ -12153,6 +12888,8 @@
         chartLevel = 'root';
         currentPage = 0;
         renderAssets();
+        // 背景把已有 logo 寫入本機快取（data URL + Cache API）
+        setTimeout(() => { try { warmAllAccountLogoCaches(); } catch (e) {} }, 400);
 
         // 每日自動備份（雲端）：一天只一次，覆蓋 auto；合計最多保留 5（auto + 手動）
         try {
