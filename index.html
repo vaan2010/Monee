@@ -717,7 +717,7 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: transparent !important;
+            background: var(--card-bg) !important;
             backdrop-filter: none !important;
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -736,7 +736,7 @@
         }
         .currency-toggle-btn:hover {
             transform: scale(1.02);
-            background: rgba(58, 58, 60, 0.3) !important;
+            background: var(--active-bg) !important;
             backdrop-filter: none !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
         }
@@ -805,7 +805,7 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: rgba(58, 58, 60, 0.5);
+            background: var(--active-bg);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-size: 14px;
@@ -814,10 +814,10 @@
             justify-content: center;
             cursor: pointer;
             z-index: 91;
-            transition: all 0.2s ease;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
             padding: 0;
         }
-        .chart-mode-toggle-btn:hover { background: rgba(58, 58, 60, 0.8); color: var(--text-primary); }
+        .chart-mode-toggle-btn:hover { background: var(--border-color); color: var(--text-primary); }
         
         /* Line Chart Range Selector */
         .line-chart-range-selector {
@@ -837,7 +837,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .line-chart-range-selector .range-btn:hover { background: rgba(58, 58, 60, 0.3); }
+        .line-chart-range-selector .range-btn:hover { background: var(--active-bg); }
         .line-chart-range-selector .range-btn.active {
             background: #0a84ff;
             color: #fff;
@@ -1509,7 +1509,7 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: transparent !important;
+            background: var(--card-bg) !important;
             backdrop-filter: none !important;
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -1518,9 +1518,9 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            transition: transform 0.3s, background 0.2s, color 0.2s, border-color 0.2s;
         }
-        .journal-fab-main:hover { background: rgba(58, 58, 60, 0.3) !important; }
+        .journal-fab-main:hover { background: var(--active-bg) !important; }
         .journal-fab-main i { font-size: 20px; transition: transform 0.3s; }
         .journal-fab-wrapper.expanded .journal-fab-main i { transform: rotate(180deg); }
         .journal-fab-options {
