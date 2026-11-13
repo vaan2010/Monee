@@ -848,6 +848,44 @@
         #lineChartGrowthRate .growth-value.positive { color: var(--color-up); }
         #lineChartGrowthRate .growth-value.negative { color: var(--color-down); }
         
+        /* 折線圖最高／最低：圖外摘要列（避免窄螢幕與曲線重疊） */
+        #lineChartExtremaBar {
+            display: none;
+            justify-content: center;
+            align-items: stretch;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 4px 12px 10px;
+            box-sizing: border-box;
+        }
+        #lineChartExtremaBar .extrema-item {
+            flex: 1 1 140px;
+            max-width: 220px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.35;
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+        #lineChartExtremaBar .extrema-item.max { color: var(--color-up); }
+        #lineChartExtremaBar .extrema-item.min { color: var(--color-down); }
+        #lineChartExtremaBar .extrema-item .extrema-date {
+            display: block;
+            margin-top: 2px;
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.85;
+            color: var(--text-secondary);
+        }
+        @media (max-width: 420px) {
+            #lineChartExtremaBar { gap: 6px; padding: 2px 8px 8px; }
+            #lineChartExtremaBar .extrema-item { flex: 1 1 calc(50% - 6px); max-width: none; font-size: 11px; padding: 5px 6px; }
+        }
+        
         /* Line Chart Wrapper - 實際大小=顯示大小，不裁切 */
         #lineChartWrapper {
             flex: 0 0 auto;
@@ -1948,6 +1986,8 @@
                         <div id="customTooltip"><div class="tt-header">類別</div><div class="tt-body"><span class="tt-dot"></span>資產: 0</div></div>
                         <div id="assetChart" style="width:100%; height:100%;"></div>
                     </div>
+
+                    <div id="lineChartExtremaBar" aria-live="polite"></div>
                     
                     <!-- Line Chart Container -->
                     <div id="lineChartWrapper" style="display:none; width:100%; padding: 0 10px; box-sizing:border-box; position:relative;">
@@ -6621,6 +6661,8 @@
             rangeSelector.style.display = 'flex';
             const growthEl = document.getElementById('lineChartGrowthRate');
             if(growthEl) growthEl.style.display = 'block';
+            const extremaEl = document.getElementById('lineChartExtremaBar');
+            if(extremaEl) extremaEl.style.display = 'flex';
             // 同步時間範圍按鈕的 active 狀態
             document.querySelectorAll('#lineChartRangeSelector .range-btn').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.getAttribute('data-range')) === currentLineChartRange);
@@ -6639,6 +6681,8 @@
             rangeSelector.style.display = 'none';
             const growthEl = document.getElementById('lineChartGrowthRate');
             if(growthEl) growthEl.style.display = 'none';
+            const extremaEl = document.getElementById('lineChartExtremaBar');
+            if(extremaEl) { extremaEl.style.display = 'none'; extremaEl.innerHTML = ''; }
             hideLineChartPointTooltip();
             toggleBtn.classList.remove('active');
             toggleIcon.className = 'fas fa-chart-line';
@@ -6723,6 +6767,8 @@
             setTimeout(() => {
                 hideLineChartLoading();
                 if(dates.length === 0) {
+                    const extremaEl = document.getElementById('lineChartExtremaBar');
+                    if(extremaEl) { extremaEl.style.display = 'none'; extremaEl.innerHTML = ''; }
                     const container = document.getElementById('assetLineChart');
                     if(container) {
                         container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">尚無歷史資料<br><span style="font-size:12px;opacity:0.7;">資料會在每次更新價格時自動記錄</span></div>';
@@ -6735,6 +6781,8 @@
         }
         
         if(dates.length === 0) {
+            const extremaEl = document.getElementById('lineChartExtremaBar');
+            if(extremaEl) { extremaEl.style.display = 'none'; extremaEl.innerHTML = ''; }
             const container = document.getElementById('assetLineChart');
             if(container) {
                 container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;text-align:center;padding:20px;">尚無歷史資料<br><span style="font-size:12px;opacity:0.7;">資料會在每次更新價格時自動記錄</span></div>';
@@ -6791,27 +6839,17 @@
             filteredDates = dates.length > 0 ? dates.slice(-1) : [todayStr];
         }
         
-        // 點距優化：90天/1年等資料過多時，採樣至約35點，保持與30天相近的視覺密度
-        const TARGET_POINTS = 35;
+        // 每天一個點（不採樣；90天／1年／全部也完整顯示）
         let chartDates = filteredDates;
-        if(filteredDates.length > TARGET_POINTS) {
-            chartDates = [];
-            const step = (filteredDates.length - 1) / (TARGET_POINTS - 1);
-            for(let i = 0; i < TARGET_POINTS; i++) {
-                const idx = Math.min(Math.round(i * step), filteredDates.length - 1);
-                chartDates.push(filteredDates[idx]);
-            }
-            chartDates[chartDates.length - 1] = filteredDates[filteredDates.length - 1]; // 確保最後一天
-        }
         
         // 準備各系列資料
         // 為了讓折線從0垂直上升：使用 [0,0] 與 [0,value] 同 x 形成垂直線（非斜線）
         const allSeriesConfig = [
-            { key: 'total', name: '總資產', color: '#ffffff', dashStyle: 'Solid', lineWidth: 2.5, zIndex: 5 },
-            { key: 'bank', name: '錢包', color: TYPE_COLORS.bank, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 4 },
-            { key: 'stock', name: '美股', color: TYPE_COLORS.stock, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 3 },
-            { key: 'twstock', name: '台股', color: TYPE_COLORS.twstock, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 2 },
-            { key: 'crypto', name: '加密貨幣', color: TYPE_COLORS.crypto, dashStyle: 'Solid', lineWidth: 1.5, zIndex: 1 }
+            { key: 'total', name: '總資產', color: '#ffffff', dashStyle: 'Solid', lineWidth: 2, zIndex: 5 },
+            { key: 'bank', name: '錢包', color: TYPE_COLORS.bank, dashStyle: 'Solid', lineWidth: 2, zIndex: 4 },
+            { key: 'stock', name: '美股', color: TYPE_COLORS.stock, dashStyle: 'Solid', lineWidth: 2, zIndex: 3 },
+            { key: 'twstock', name: '台股', color: TYPE_COLORS.twstock, dashStyle: 'Solid', lineWidth: 2, zIndex: 2 },
+            { key: 'crypto', name: '加密貨幣', color: TYPE_COLORS.crypto, dashStyle: 'Solid', lineWidth: 2, zIndex: 1 }
         ];
         
         // 根據當前分頁篩選要顯示的系列
@@ -6823,8 +6861,6 @@
             // 其他分頁：只顯示該分類
             const currentType = PAGE_TYPES[currentPage];
             seriesConfig = allSeriesConfig.filter(cfg => cfg.key === currentType);
-            // 加粗單一分類的線條
-            seriesConfig = seriesConfig.map(cfg => ({ ...cfg, lineWidth: 2.5 }));
         }
         
         // 幣別轉換：assetHistory 存 TWD，USD 時需除以匯率
@@ -6852,7 +6888,7 @@
             growthEl.innerHTML = '<span class="growth-label">' + growthLabel + '</span><span class="growth-value ' + cls + '">' + sign + growthRate.toFixed(2) + '%</span>';
         }
         
-        // 為每個系列準備數據：每天一個點，使用 Highcharts step 繪製階梯效果（起始日不再畫垂直線）
+        // 為每個系列準備數據：每天一個點，一般折線 + 淡色面積
         const series = seriesConfig.map(cfg => {
             const dataPoints = [];
             
@@ -6866,6 +6902,13 @@
                 }
             }
             
+            const fillTop = (typeof Highcharts !== 'undefined' && Highcharts.color)
+                ? Highcharts.color(cfg.color).setOpacity(0.28).get('rgba')
+                : cfg.color;
+            const fillBottom = (typeof Highcharts !== 'undefined' && Highcharts.color)
+                ? Highcharts.color(cfg.color).setOpacity(0.02).get('rgba')
+                : 'transparent';
+            
             return {
                 name: cfg.name,
                 data: dataPoints,
@@ -6873,13 +6916,21 @@
                 dashStyle: cfg.dashStyle,
                 lineWidth: cfg.lineWidth,
                 zIndex: cfg.zIndex,
-                marker: { 
-                    enabled: true, // 始終顯示標記點
-                    radius: chartDates.length <= 14 ? 5 : 3,
+                threshold: null,
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [[0, fillTop], [1, fillBottom]]
+                },
+                marker: {
+                    enabled: chartDates.length <= 14,
+                    radius: chartDates.length <= 14 ? 4 : 3,
+                    lineWidth: 0,
                     states: {
                         hover: {
                             enabled: true,
-                            radius: chartDates.length <= 14 ? 7 : 5
+                            radius: 5,
+                            lineWidth: 2,
+                            lineColor: '#ffffff'
                         }
                     }
                 },
@@ -6890,9 +6941,9 @@
                             const point = this;
                             const value = point.y;
                             let dateStr = '開始';
-                            if(point.y !== 0 && chartDates.length > 0) {
+                            if(chartDates.length > 0) {
                                 const idx = Math.round(point.x);
-                                const d = chartDates[Math.min(idx, chartDates.length - 1)];
+                                const d = chartDates[Math.min(Math.max(idx, 0), chartDates.length - 1)];
                                 if(d) {
                                     const [y, m, day] = d.split('-');
                                     dateStr = `${y}/${parseInt(m)}/${parseInt(day)}`;
@@ -6934,24 +6985,102 @@
             };
         });
         
-        // 自動計算 Y 軸顯示區間：根據資料範圍按比例留白
+        // 標註最高／最低：圖上只留色點；文字放到圖外摘要列，避免手機窄螢幕重疊
+        const formatLineExtremaAmount = (value) => {
+            if(currentDisplayCurrency === 'USD') {
+                return '$' + Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+            const v = Math.round(Number(value) || 0);
+            if(Math.abs(v) >= 1000000) return 'NT$' + (v / 1000000).toFixed(2).replace(/\.?0+$/, '') + 'M';
+            if(Math.abs(v) >= 10000) {
+                const wan = v / 10000;
+                return 'NT$' + (Math.abs(wan) >= 100 ? wan.toFixed(0) : wan.toFixed(1).replace(/\.0$/, '')) + '萬';
+            }
+            return 'NT$' + v.toLocaleString('zh-TW');
+        };
+        const formatLineExtremaDate = (idx) => {
+            if(!chartDates[idx]) return '';
+            const p = chartDates[idx].split('-');
+            return `${parseInt(p[1], 10)}/${parseInt(p[2], 10)}`;
+        };
+        const updateLineExtremaBar = (maxVal, maxIdx, minVal, minIdx, same) => {
+            const el = document.getElementById('lineChartExtremaBar');
+            if(!el) return;
+            if(currentChartMode !== 'line') {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            const maxDate = formatLineExtremaDate(maxIdx);
+            const minDate = formatLineExtremaDate(minIdx);
+            if(same) {
+                el.innerHTML = '<div class="extrema-item max">最高／最低 ' + formatLineExtremaAmount(maxVal)
+                    + (maxDate ? '<span class="extrema-date">' + maxDate + '</span>' : '') + '</div>';
+            } else {
+                el.innerHTML =
+                    '<div class="extrema-item max">最高 ' + formatLineExtremaAmount(maxVal)
+                    + (maxDate ? '<span class="extrema-date">' + maxDate + '</span>' : '') + '</div>'
+                    + '<div class="extrema-item min">最低 ' + formatLineExtremaAmount(minVal)
+                    + (minDate ? '<span class="extrema-date">' + minDate + '</span>' : '') + '</div>';
+            }
+            el.style.display = 'flex';
+        };
+        const markLineExtrema = (seriesItem) => {
+            const data = seriesItem && seriesItem.data;
+            const extremaEl = document.getElementById('lineChartExtremaBar');
+            if(!data || data.length === 0) {
+                if(extremaEl) { extremaEl.style.display = 'none'; extremaEl.innerHTML = ''; }
+                return;
+            }
+            let maxIdx = 0, minIdx = 0;
+            let maxVal = Array.isArray(data[0]) ? data[0][1] : data[0].y;
+            let minVal = maxVal;
+            for(let i = 1; i < data.length; i++) {
+                const y = Array.isArray(data[i]) ? data[i][1] : data[i].y;
+                if(typeof y !== 'number') continue;
+                if(y > maxVal) { maxVal = y; maxIdx = i; }
+                if(y < minVal) { minVal = y; minIdx = i; }
+            }
+            const makePoint = (idx, y, kind) => {
+                const isMax = kind === 'max';
+                const hexColor = isMax ? '#30d158' : '#ff453a';
+                return {
+                    x: idx,
+                    y: y,
+                    marker: {
+                        enabled: true,
+                        radius: 5,
+                        fillColor: hexColor,
+                        lineWidth: 2,
+                        lineColor: '#ffffff',
+                        symbol: 'circle',
+                        states: { hover: { enabled: true, radius: 6 } }
+                    },
+                    dataLabels: { enabled: false }
+                };
+            };
+            const same = maxVal === minVal;
+            data[maxIdx] = makePoint(maxIdx, maxVal, 'max');
+            if(!same) data[minIdx] = makePoint(minIdx, minVal, 'min');
+            updateLineExtremaBar(maxVal, maxIdx, minVal, minIdx, same);
+        };
+        if(series[0]) markLineExtrema(series[0]);
+        
+        // 自動計算 Y 軸：依資料縮放（不強制從 0），上下留邊距讓波動更清楚
         let allValues = [];
         series.forEach(s => { 
             s.data.forEach(point => { 
-                // 數據點格式為 [x, y]，提取y值
-                const yValue = Array.isArray(point) ? point[1] : point;
+                const yValue = Array.isArray(point) ? point[1] : (point && point.y);
                 if(typeof yValue === 'number') allValues.push(yValue); 
             }); 
         });
         let dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
         let dataMax = allValues.length > 0 ? Math.max(...allValues) : 0;
         let dataRange = dataMax - dataMin;
-        // 如果只有一個值或所有值相同，用該值的 20% 作為範圍
-        if(dataRange === 0) dataRange = Math.max(dataMax * 0.2, 1000);
-        // 上方留 20% 空間，下方留 10% 空間，但最小值至少為0（確保從0開始）
-        let yAxisMax = dataMax + dataRange * 0.2;
-        let yAxisMin = 0; // 強制從0開始
-        // 選擇合適的刻度對齊單位（依落差自動計算，支援大金額範圍）
+        if(dataRange === 0) dataRange = Math.max(Math.abs(dataMax) * 0.2, 1000);
+        let yAxisMax = dataMax + dataRange * 0.15;
+        let yAxisMin = dataMin - dataRange * 0.12;
+        if(dataMin >= 0 && yAxisMin < 0) yAxisMin = 0;
         const rawRange = yAxisMax - yAxisMin;
         let tickSize;
         if(rawRange >= 1000000000) tickSize = 200000000;
@@ -6967,8 +7096,9 @@
         else if(rawRange >= 20000) tickSize = 5000;
         else if(rawRange >= 5000) tickSize = 1000;
         else tickSize = 500;
-        yAxisMin = 0; // 強制保持為0，確保從0開始顯示
+        yAxisMin = Math.floor(yAxisMin / tickSize) * tickSize;
         yAxisMax = Math.ceil(yAxisMax / tickSize) * tickSize;
+        if(dataMin >= 0 && yAxisMin < 0) yAxisMin = 0;
         
         // 設定文字顏色
         const chartTextColor = getChartTextColor();
@@ -7033,7 +7163,7 @@
         
         assetHistoryLineChart = Highcharts.chart('assetLineChart', {
             chart: {
-                type: 'line',
+                type: 'area',
                 backgroundColor: 'transparent',
                 width: chartW,
                 height: chartH,
@@ -7076,8 +7206,9 @@
                 lineColor: 'rgba(255,255,255,0.1)',
                 tickColor: 'rgba(255,255,255,0.1)',
                 crosshair: {
-                    color: 'rgba(255,255,255,0.15)',
-                    width: 1
+                    color: 'rgba(255,255,255,0.2)',
+                    width: 1,
+                    dashStyle: 'Dot'
                 },
                 plotLines: todayPlotLine ? [todayPlotLine] : []
             },
@@ -7099,7 +7230,7 @@
                         return v.toLocaleString();
                     }
                 },
-                gridLineColor: 'rgba(255,255,255,0.05)',
+                gridLineColor: 'rgba(255,255,255,0.06)',
                 gridLineDashStyle: 'Dot',
                 lineColor: 'rgba(255,255,255,0.1)',
                 tickColor: 'rgba(255,255,255,0.1)'
@@ -7107,22 +7238,38 @@
             tooltip: {
                 shared: true,
                 backgroundColor: 'rgba(30,30,30,0.95)',
-                borderColor: 'rgba(255,255,255,0.1)',
+                borderColor: 'rgba(255,255,255,0.12)',
                 borderRadius: 8,
                 style: { color: '#fff', fontSize: '12px' },
                 formatter: function() {
-                    let s = '<b>' + this.x + '</b><br/>';
+                    const idx = Math.round(this.x);
+                    let dateLabel = '';
+                    if(idx >= 0 && idx < chartDates.length && chartDates[idx]) {
+                        const parts = chartDates[idx].split('-');
+                        dateLabel = `${parts[0]}/${parseInt(parts[1])}/${parseInt(parts[2])}`;
+                    } else {
+                        dateLabel = String(this.x);
+                    }
+                    let s = '<b>' + dateLabel + '</b><br/>';
                     this.points.forEach(p => {
-                        s += '<span style="color:' + p.series.color + '">●</span> ' + p.series.name + ': <b>' + p.y.toLocaleString() + '</b><br/>';
+                        const amt = currentDisplayCurrency === 'USD'
+                            ? '$' + p.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                            : 'NT$' + Math.round(p.y).toLocaleString('zh-TW');
+                        s += '<span style="color:' + p.series.color + '">●</span> ' + p.series.name + ': <b>' + amt + '</b><br/>';
                     });
                     return s;
                 }
             },
             plotOptions: {
-                line: {
-                    animation: { duration: 500 },
+                area: {
+                    animation: { duration: 450 },
                     connectNulls: true,
-                    step: 'left'  // 階梯式折線：每天一個點，水平後垂直
+                    threshold: null,
+                    lineWidth: 2,
+                    dataLabels: { enabled: false },
+                    states: {
+                        hover: { lineWidthPlus: 0.5 }
+                    }
                 }
             },
             series: series
