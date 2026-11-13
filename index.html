@@ -190,7 +190,7 @@
         /* Sidebar */
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 998; opacity: 0; visibility: hidden; transition: opacity 0.15s, visibility 0.15s; backdrop-filter: blur(2px); }
         .sidebar-overlay.active { opacity: 1; visibility: visible; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.12s; box-shadow: none; padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); z-index: 999; transition: left 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.12s; box-shadow: none; padding-top: max(20px, env(safe-area-inset-top)); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); overflow: visible; }
         .sidebar.active { left: 0; box-shadow: 2px 0 15px rgba(0,0,0,0.28); }
         @media (min-width: 768px) {
             .sidebar-overlay { display: block !important; }
@@ -347,8 +347,42 @@
             .sidebar.collapsed ~ .main-content .sidebar-toggle-btn-navbar { display: block !important; position: absolute; top: 50%; transform: translateY(-50%); left: 20px; z-index: 1001; }
             .navbar .btn-group { margin-left: 50px; }
         }
-        .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; }
-        .sidebar-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); flex: 1; }
+        .sidebar-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); transition: opacity 0.15s; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .sidebar-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 0; }
+        /* 右側中線凸出把手：僅功能表開啟時顯示，連著右緣 */
+        .sidebar-close-btn {
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            transform: translateY(-50%);
+            z-index: 1002;
+            width: 22px;
+            height: 56px;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 14px 14px 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-left: none;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s ease, color 0.15s ease, width 0.15s ease;
+        }
+        .sidebar.active:not(.collapsed) .sidebar-close-btn {
+            display: inline-flex;
+        }
+        .sidebar-close-btn:hover {
+            color: var(--accent);
+            background: color-mix(in srgb, var(--card-bg) 88%, var(--accent) 12%);
+            width: 26px;
+        }
+        .sidebar-close-btn:active { color: var(--accent); }
+        .sidebar-close-btn i { font-size: 13px; pointer-events: none; }
         .user-avatar-container { position: relative; cursor: pointer; }
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid var(--accent); object-fit: cover; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: var(--border-color); font-size: 24px; }
         .user-avatar-container:hover .user-avatar { transform: scale(1.1); border-color: #64d2ff; }
@@ -1409,6 +1443,25 @@
         #pageContainer > .page-item.page-active { position: relative; height: auto; visibility: visible; pointer-events: auto; }
         /* 資產列表滑動動畫中的相鄰頁面：可見，高度撐滿容器（不超過當前頁面高度） */
         #pageContainer > .page-item.page-swipe-visible { visibility: visible; pointer-events: auto; height: 100%; overflow: hidden; }
+        /* 分頁／drill-down 列表輕過渡（不影響手指滑動的 translate） */
+        #pageContainer > .page-item.page-content-enter {
+            animation: pageContentEnter 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes pageContentEnter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #chartWrapper.chart-soft-enter {
+            animation: chartSoftEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @keyframes chartSoftEnter {
+            from { opacity: 0.4; transform: scale(0.985); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #pageContainer > .page-item.page-content-enter,
+            #chartWrapper.chart-soft-enter { animation: none; }
+        }
         /* 資產上方分頁：Liquid Glass 浮動膠囊（隨螢幕流暢縮放；外框高度=實際佔位） */
         .page-indicator {
             /* 字偏大一點好讀；左右 padding／gap 收斂，避免變擠 */
@@ -2429,6 +2482,9 @@
         <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
         <div id="sidebar" class="sidebar">
             <button class="btn-icon sidebar-toggle-btn-desktop" id="sidebarToggleBtn" onclick="toggleSidebarCollapse()" title="收合/展開選單"><i class="fas fa-bars"></i></button>
+            <button type="button" class="sidebar-close-btn" onclick="toggleSidebar()" title="收合選單" aria-label="收合選單">
+                <i class="fas fa-chevron-left"></i>
+            </button>
             <div class="sidebar-header">
                 <h2>功能選單</h2>
                 <div class="user-avatar-container" onclick="openUserSelector()" title="切換使用者">
@@ -4139,7 +4195,7 @@
     // 統一的圖表動畫配置
     const CHART_ANIMATION_CONFIG = {
         animationType: 'switch',
-        duration: 400,
+        duration: 520,
         easing: 'easeOutQuart'
     };
     
@@ -5844,15 +5900,44 @@
         } 
     }
     
+    function playChartSoftEnter() {
+        const wrap = document.getElementById('chartWrapper');
+        if (!wrap) return;
+        wrap.classList.remove('chart-soft-enter');
+        // 強制重啟 CSS animation
+        void wrap.offsetWidth;
+        wrap.classList.add('chart-soft-enter');
+        const onEnd = () => {
+            wrap.classList.remove('chart-soft-enter');
+            wrap.removeEventListener('animationend', onEnd);
+        };
+        wrap.addEventListener('animationend', onEnd);
+    }
+
+    function playListContentEnter() {
+        if (typeof _isSwipeAnimating !== 'undefined' && _isSwipeAnimating) return;
+        const active = document.querySelector('#pageContainer > .page-item.page-active');
+        if (!active) return;
+        active.classList.remove('page-content-enter');
+        void active.offsetWidth;
+        active.classList.add('page-content-enter');
+        const onEnd = () => {
+            active.classList.remove('page-content-enter');
+            active.removeEventListener('animationend', onEnd);
+        };
+        active.addEventListener('animationend', onEnd);
+    }
+
     function enterDetailLevel(cat, data) { 
-        chartLevel='detail'; 
         hideCustomTooltip(); 
         
-        // 切換到對應的分頁（總覽是0，所以類別分頁要+1）
+        // 先切到對應列表分頁，但略過圖表更新，避免蓋掉 drill-down 動畫
         const pageIndex = PAGE_TYPES.indexOf(cat);
+        const wasOnPage = pageIndex > 0 && currentPage === pageIndex;
         if(pageIndex > 0) {
-            switchToPage(pageIndex);
+            switchToPage(pageIndex, { skipChart: true, keepDetail: true });
         }
+        chartLevel = 'detail';
         
         // 準備數據（使用該分類專屬的色系）
         const colorPalette = CHART_ITEM_COLOR_PALETTES[cat] || CHART_ITEM_COLORS_FALLBACK;
@@ -5861,8 +5946,12 @@
             y: item.y,
             color: item.color || colorPalette[index % colorPalette.length]
         }));
+
+        playChartSoftEnter();
+        // 本來就在該分頁時，switchToPage 不會播列表動畫，這裡補一次
+        if (wasOnPage || pageIndex <= 0) playListContentEnter();
         
-        if(chartInstance.series[0]) {
+        if(chartInstance && chartInstance.series[0]) {
             // 使用動畫引擎進行切換
             if (chartAnimationEngine) {
                 chartAnimationEngine.animate({
@@ -5872,7 +5961,7 @@
                     easing: CHART_ANIMATION_CONFIG.easing,
                     onComplete: () => {
                         const chartTextColor = getChartTextColor();
-                    chartInstance.setTitle({text:TYPE_NAMES[cat],style:{color:chartTextColor,fontSize:'14px'},align:'center',verticalAlign:'middle',y:10});
+                        chartInstance.setTitle({text:TYPE_NAMES[cat],style:{color:chartTextColor,fontSize:'14px'},align:'center',verticalAlign:'middle',y:10});
                         disableChartHover();
                     }
                 });
@@ -5884,7 +5973,7 @@
                 chartInstance.setTitle({text:TYPE_NAMES[cat],style:{color:chartTextColor,fontSize:'14px'},align:'center',verticalAlign:'middle',y:10}); 
                 disableChartHover();
             }
-        } else {
+        } else if (chartInstance) {
             // 如果沒有系列，直接添加
             const chartTextColor = getChartTextColor();
             chartInstance.addSeries({ name:TYPE_NAMES[cat]||cat, data:formattedData, type:'pie', innerSize:'55%', size:'90%', center:['50%','50%'], borderWidth:0, slicedOffset:8, animation:{duration:0}, colorByPoint:true, dataLabels:{enabled:true,distance:3,format:'{point.name}<br><span style="opacity:0.7">{point.percentage:.1f}%</span>',style:{color:chartTextColor,textOutline:'none',fontWeight:'normal',fontSize:'12px',pointerEvents:'none'},connectorColor:'#666'}, states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0},inactive:{opacity:0.3}}, point:{states:{hover:{enabled:false,halo:{size:0},opacity:1,brightness:0}},events:{click:onPointClick}} }, false);
@@ -5962,6 +6051,7 @@
         }
         
         // 使用動畫切換（動畫引擎會自動處理沒有起始數據的情況）
+        playChartSoftEnter();
         updateChartData(true);
         disableChartHover(); 
     }
@@ -10703,7 +10793,10 @@
         if (!isSorting) renderAssets();
     }
     // Page Swiper Functions
-    function switchToPage(pageIndex) {
+    // opts.skipChart：只切列表／指示器（drill-down 用，避免蓋掉圓餅動畫）
+    // opts.keepDetail：維持 chartLevel=detail
+    function switchToPage(pageIndex, opts) {
+        const options = opts || {};
         // 點分頁時取消進行中的滑動動畫，避免 310ms 後又被覆寫成滑動目標頁
         if (typeof cancelPendingSwipeAnim === 'function') cancelPendingSwipeAnim();
         if(pageIndex < 0 || pageIndex >= PAGE_TYPES.length) return;
@@ -10717,19 +10810,17 @@
                 pageIndex = 0; // 如果沒有啟用的分頁，默認顯示總覽
             }
         }
+        const pageChanged = currentPage !== pageIndex;
         currentPage = pageIndex;
 
-        // 在渲染前先將滾動位置重置到頂端，避免先顯示中間內容再滾動
-        const scrollContainer = document.querySelector('.content-grid');
-        if(scrollContainer) {
-            scrollContainer.scrollTop = 0;
-        }
+        // 左右切換時保留目前捲動位置，不強制回到最上方
 
         // 重新排列 page-item 的 DOM 順序，使其與 pageOrder 一致
         reorderPageItems();
         
         // 方案C：直接切換 active class（不再用 translateX）
         updateActivePageClass();
+        if (pageChanged) playListContentEnter();
         
         // 更新分頁指示器（使用 data-page 屬性匹配，而不是 DOM 索引）
         const pageItems = document.getElementById('pageIndicatorItems');
@@ -10797,21 +10888,28 @@
         }
         activeInactivePoints.clear();
         
-        // 更新圖表和列表 - 切換分頁時退出 detail 模式
-        chartLevel = pageIndex === 0 ? 'root' : 'page';
-        
-        // 取消當前正在進行的動畫（如果有的話）
-        if (chartAnimationEngine && chartAnimationEngine.isAnimating) {
-            chartAnimationEngine.cancel();
+        // 更新圖表和列表（drill-down 可選擇保留 detail／略過圖表）
+        if (!options.keepDetail) {
+            chartLevel = pageIndex === 0 ? 'root' : 'page';
+        } else {
+            chartLevel = 'detail';
         }
         
-        // 確保動畫引擎已初始化
-        if (chartInstance && !chartAnimationEngine) {
-            chartAnimationEngine = new ChartAnimationEngine(chartInstance);
+        if (!options.skipChart) {
+            // 取消當前正在進行的動畫（如果有的話）
+            if (chartAnimationEngine && chartAnimationEngine.isAnimating) {
+                chartAnimationEngine.cancel();
+            }
+            
+            // 確保動畫引擎已初始化
+            if (chartInstance && !chartAnimationEngine) {
+                chartAnimationEngine = new ChartAnimationEngine(chartInstance);
+            }
+            
+            if (pageChanged || options.forceChartAnim) playChartSoftEnter();
+            // 使用動畫更新圖表（動畫引擎會處理沒有起始數據的情況）
+            updateChartData(true);
         }
-        
-        // 使用動畫更新圖表（動畫引擎會處理沒有起始數據的情況）
-        updateChartData(true);
         renderAssets();
         // 如果折線圖正在顯示，切換分頁時重新渲染
         if(currentChartMode === 'line') renderAssetLineChart();
