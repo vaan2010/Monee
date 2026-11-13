@@ -99,8 +99,13 @@
             --color-bank: #007aff; --color-stock: #af52de; --color-twstock: #007aff; --color-crypto: #ff9500; --color-debt: #ff3b30;
             --color-up: #34c759; --color-down: #ff3b30; --border-color: #d1d1d6; --active-bg: #e5e5ea;
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+        input, textarea, select, [contenteditable="true"] {
+            -webkit-user-select: text !important; user-select: text !important; -webkit-touch-callout: default !important;
+        }
         body { background-color: var(--bg-color); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; overflow-x: hidden; }
+        body.sidebar-open .main-content { overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
+        body.sidebar-open { overscroll-behavior: none; }
         body::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
         body { scrollbar-width: none !important; -ms-overflow-style: none !important; }
         * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
@@ -278,7 +283,8 @@
         .user-avatar { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid #0a84ff; object-fit: cover; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: var(--border-color); font-size: 24px; }
         .user-avatar-container:hover .user-avatar { transform: scale(1.1); border-color: #64d2ff; }
         .user-avatar-container:active .user-avatar { transform: scale(0.95); }
-        .sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; transition: opacity 0.3s; }
+        .sidebar-menu { padding: 10px 0; flex: 1; overflow-y: auto; transition: opacity 0.3s; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+        .sidebar-overlay.active { touch-action: none; }
         .menu-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); cursor: pointer; transition: background 0.2s; }
         .menu-item:hover { background: var(--border-color); }
         .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: #0a84ff; font-size: 18px; }
@@ -1266,11 +1272,28 @@
 
         /* Calendar */
         .calendar-container { max-width: 600px; margin: 0 auto; background: var(--card-bg); border-radius: 12px; padding: 10px; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-header { display: flex; flex-direction: column; align-items: stretch; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
         .calendar-nav-btn { background: transparent; border: none; color: var(--text-primary); font-size: 18px; cursor: pointer; padding: 6px; }
         .calendar-nav-btn:hover { color: #0a84ff; }
-        .calendar-today-btn { background: rgba(10, 132, 255, 0.2); border: 1px solid #0a84ff; color: #0a84ff; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 12px; border-radius: 8px; margin-left: 8px; }
+        .calendar-today-btn {
+            background: rgba(10, 132, 255, 0.2);
+            border: 1px solid #0a84ff;
+            color: #0a84ff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
         .calendar-today-btn:hover { background: rgba(10, 132, 255, 0.3); }
+        .calendar-today-btn:active { transform: scale(0.95); }
         .calendar-month-year { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-primary); cursor: pointer; position: relative; }
         .calendar-month-year:hover { color: #0a84ff; }
         #calendarMonthYearDropdown { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; z-index: 1000; min-width: 220px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); padding: 12px; max-height: 280px; overflow-y: auto; }
@@ -1299,6 +1322,171 @@
         .calendar-day.selected { background: rgba(10, 132, 255, 0.2); color: #0a84ff; font-weight: 600; }
         .calendar-day.has-event { position: relative; }
         .calendar-day.has-event::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #30d158; }
+
+        /* 本月總覽 */
+        .calendar-month-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 0 0 12px;
+            padding: 0 2px;
+        }
+        .calendar-month-summary .summary-pill {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 8px;
+            text-align: center;
+            min-width: 0;
+        }
+        .calendar-month-summary .summary-pill .lbl {
+            display: block; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 500;
+        }
+        .calendar-month-summary .summary-pill .val {
+            display: block; font-size: 13px; font-weight: 700; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .calendar-month-summary .summary-pill.expense .val { color: var(--color-down); }
+        .calendar-month-summary .summary-pill.income .val { color: var(--color-up); }
+        .calendar-month-summary .summary-pill.balance .val.pos { color: var(--color-up); }
+        .calendar-month-summary .summary-pill.balance .val.neg { color: var(--color-down); }
+
+        /* 日曆捲出視窗後：頂部固定列（今日／選中日期／回頂） */
+        .calendar-sticky-bar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            z-index: 96;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            padding-left: max(12px, env(safe-area-inset-left));
+            padding-right: max(12px, env(safe-area-inset-right));
+            background: color-mix(in srgb, var(--bg-color) 88%, transparent);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+            transform: translateY(-110%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.22s ease, opacity 0.18s ease;
+        }
+        .calendar-sticky-bar.visible {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .calendar-sticky-bar .sticky-chip {
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1px;
+            min-width: 0;
+            line-height: 1.2;
+        }
+        .calendar-sticky-bar .sticky-chip .chip-lbl {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .calendar-sticky-bar .sticky-chip .chip-val {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 42vw;
+        }
+        .calendar-sticky-bar .sticky-chip.today-chip { border-color: rgba(10, 132, 255, 0.45); }
+        .calendar-sticky-bar .sticky-chip.today-chip .chip-val { color: #0a84ff; }
+        .calendar-sticky-bar .sticky-chip.selected-chip { flex: 1; }
+        .calendar-sticky-bar .sticky-top-btn {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .calendar-sticky-bar .sticky-top-btn:active,
+        .calendar-sticky-bar .sticky-chip:active {
+            transform: scale(0.96);
+            background: var(--active-bg);
+        }
+
+        /* 分段控制（Segmented control） */
+        .journal-seg-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            margin: 0 0 10px;
+            background: var(--active-bg);
+            border-radius: 12px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        .journal-seg-tabs button {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 6px;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .journal-seg-tabs button.active {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .journal-seg-tabs.compact { margin-bottom: 0; }
+        .journal-seg-tabs.compact button { font-size: 12px; padding: 7px 4px; }
+
+        /* 記帳空狀態 */
+        .journal-empty-state {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 28px 16px 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .journal-empty-state .empty-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+        .journal-empty-state .empty-desc { margin-bottom: 16px; font-size: 13px; opacity: 0.9; }
+        .journal-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .journal-empty-actions button {
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .journal-empty-actions button.primary {
+            background: rgba(10, 132, 255, 0.15);
+            border-color: rgba(10, 132, 255, 0.4);
+            color: #0a84ff;
+        }
 
         /* 記帳視圖切換 FAB：右下角向上展開 */
         /* 收合時 options 不佔空間(max-height:0)，避免覆蓋下方列表/圖表阻擋觸控 */
@@ -1379,6 +1567,48 @@
         @media (max-width: 767px) {
             .journal-fab-wrapper { bottom: 90px; right: 15px; }
         }
+
+        /* App 內對話框（取代 alert / confirm / prompt） */
+        #moneeDialogModal {
+            display: none; position: fixed; inset: 0; z-index: 5000;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.55); padding: 20px;
+            box-sizing: border-box; -webkit-overflow-scrolling: touch;
+        }
+        #moneeDialogModal.open { display: flex; }
+        .monee-dialog-card {
+            width: min(340px, calc(100vw - 40px));
+            background: var(--card-bg); color: var(--text-primary);
+            border: 1px solid var(--border-color); border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            padding: 20px 18px 14px; box-sizing: border-box;
+        }
+        .monee-dialog-title {
+            font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 8px;
+        }
+        .monee-dialog-message {
+            font-size: 14px; line-height: 1.5; color: var(--text-secondary);
+            text-align: center; white-space: pre-wrap; margin-bottom: 14px;
+        }
+        .monee-dialog-input {
+            width: 100%; box-sizing: border-box; margin: 0 0 14px;
+            padding: 12px 14px; border-radius: 10px;
+            border: 1px solid var(--border-color); background: var(--bg-color);
+            color: var(--text-primary); font-size: 15px; outline: none;
+        }
+        .monee-dialog-input:focus { border-color: #0a84ff; }
+        .monee-dialog-actions {
+            display: flex; gap: 8px; border-top: 1px solid var(--border-color);
+            margin: 0 -18px -14px; padding: 0;
+        }
+        .monee-dialog-actions button {
+            flex: 1; border: none; background: transparent; color: #0a84ff;
+            font-size: 16px; font-weight: 600; padding: 14px 8px; cursor: pointer;
+        }
+        .monee-dialog-actions button + button { border-left: 1px solid var(--border-color); }
+        .monee-dialog-actions button.danger { color: var(--color-down); }
+        .monee-dialog-actions button.primary { font-weight: 700; }
+        .monee-dialog-actions button:active { background: var(--active-bg); }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow: hidden; transition: background 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
@@ -2059,8 +2289,22 @@
             </div>
 
             <!-- Calendar Page -->
-            <div id="calendarPage" style="display: none; padding: 10px 20px 20px 20px; overflow-y: visible; height: calc(100% - 60px); margin-top: 0; background: var(--bg-color); position: fixed; top: 60px; left: 0; right: 0; bottom: 60px;">
-                <div class="calendar-container">
+            <div id="calendarPage" style="display: none; padding: 10px 20px 24px 20px; margin-top: 0; background: var(--bg-color); position: fixed; top: 60px; left: 0; right: 0; bottom: 60px; height: auto; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
+                <!-- 日曆捲出後固定顯示：今日／選中日期／回頂 -->
+                <div id="calendarStickyBar" class="calendar-sticky-bar" aria-hidden="true">
+                    <button type="button" class="sticky-chip today-chip" onclick="onCalendarStickyToday()" title="回到今天">
+                        <span class="chip-lbl">今日</span>
+                        <span class="chip-val" id="stickyTodayLabel">—</span>
+                    </button>
+                    <button type="button" class="sticky-chip selected-chip" onclick="scrollCalendarPageToTop()" title="回到日曆選中日期">
+                        <span class="chip-lbl">選中日期</span>
+                        <span class="chip-val" id="stickySelectedLabel">—</span>
+                    </button>
+                    <button type="button" class="sticky-top-btn" onclick="scrollCalendarPageToTop()" title="回到日曆頂部" aria-label="回到日曆頂部">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="calendar-container" id="calendarMainBlock">
                     <div class="calendar-header">
                         <!-- 日曆/圓餅圖模式：日期導航 -->
                         <div id="calendarHeaderDate" class="calendar-header-inner" style="display: flex; width: 100%; justify-content: space-between; align-items: center;">
@@ -2074,7 +2318,7 @@
                                 </div>
                             </div>
                             <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                            <button type="button" class="calendar-today-btn" onclick="goToCalendarToday()" title="回到今天">今天</button>
+                            <button type="button" class="calendar-today-btn" onclick="goToCalendarToday()" title="跳回今天" aria-label="跳回今天"><i class="fas fa-calendar-day" aria-hidden="true"></i></button>
                         </div>
                         <!-- 收支趨勢圖模式：左支出 右收入，各占一半，可下拉勾選細項 -->
                         <div id="calendarHeaderLinechart" class="calendar-header-inner" style="display: none; width: 100%; flex-direction: column; gap: 8px;">
@@ -2100,6 +2344,12 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <!-- 本月總覽：支出／收入／結餘 -->
+                    <div id="calendarMonthSummary" class="calendar-month-summary" aria-live="polite">
+                        <div class="summary-pill expense"><span class="lbl">本月支出</span><span class="val" id="monthSummaryExpense">$0</span></div>
+                        <div class="summary-pill income"><span class="lbl">本月收入</span><span class="val" id="monthSummaryIncome">$0</span></div>
+                        <div class="summary-pill balance"><span class="lbl">本月結餘</span><span class="val" id="monthSummaryBalance">$0</span></div>
                     </div>
                     <!-- 右下角向上展開的視圖切換 FAB（主按鈕在下，選項向上展開） -->
                     <div id="journalFabWrapper" class="journal-fab-wrapper" style="display: none;">
@@ -2139,18 +2389,12 @@
                         <div class="page-container" id="monthlyChartPageContainer" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); width: 200%;">
                             <!-- 支出圓餅圖 -->
                             <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyExpenseChartPage">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
                                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">支出</div>
-                                    <div id="expenseChartDropdown" class="chart-view-dropdown">
-                                        <div class="dropdown-trigger" onclick="toggleExpenseChartDropdown(event)">
-                                            <span id="expenseChartToggleText">總支出</span>
-                                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                                        </div>
-                                        <div class="dropdown-menu" onclick="event.stopPropagation()">
-                                            <div class="dropdown-item active" data-view="total" onclick="selectExpenseChartView('total', event)">總支出</div>
-                                            <div class="dropdown-item" data-view="normal" onclick="selectExpenseChartView('normal', event)">原始支出</div>
-                                            <div class="dropdown-item" data-view="advance" onclick="selectExpenseChartView('advance', event)">代墊</div>
-                                        </div>
+                                    <div class="journal-seg-tabs compact" id="expenseChartSegTabs" role="tablist">
+                                        <button type="button" class="active" data-view="total" onclick="selectExpenseChartView('total', event)">總支出</button>
+                                        <button type="button" data-view="normal" onclick="selectExpenseChartView('normal', event)">原始</button>
+                                        <button type="button" data-view="advance" onclick="selectExpenseChartView('advance', event)">代墊</button>
                                     </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
@@ -2179,18 +2423,12 @@
                             </div>
                             <!-- 收入圓餅圖 -->
                             <div class="page-item" style="width: 50%; flex-shrink: 0; min-width: 0; padding: 20px; background: var(--card-bg); border-radius: 12px; overflow: hidden; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px; position: relative;" id="monthlyIncomeChartPage">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
                                     <div style="font-size: 18px; font-weight: 600; color: var(--text-primary);">收入</div>
-                                    <div id="incomeChartDropdown" class="chart-view-dropdown">
-                                        <div class="dropdown-trigger" onclick="toggleIncomeChartDropdown(event)">
-                                            <span id="incomeChartToggleText">總收入</span>
-                                            <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
-                                        </div>
-                                        <div class="dropdown-menu" onclick="event.stopPropagation()">
-                                            <div class="dropdown-item active" data-view="total" onclick="selectIncomeChartView('total', event)">總收入</div>
-                                            <div class="dropdown-item" data-view="normal" onclick="selectIncomeChartView('normal', event)">原始收入</div>
-                                            <div class="dropdown-item" data-view="advance" onclick="selectIncomeChartView('advance', event)">代墊</div>
-                                        </div>
+                                    <div class="journal-seg-tabs compact" id="incomeChartSegTabs" role="tablist">
+                                        <button type="button" class="active" data-view="total" onclick="selectIncomeChartView('total', event)">總收入</button>
+                                        <button type="button" data-view="normal" onclick="selectIncomeChartView('normal', event)">原始</button>
+                                        <button type="button" data-view="advance" onclick="selectIncomeChartView('advance', event)">代墊</button>
                                     </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 20px; flex: 1;">
@@ -2229,6 +2467,11 @@
                     <div id="journalMonthlyLineChart" style="width: 100%; height: 280px; box-sizing: border-box; overflow: visible;"></div>
                 </div>
                 <div id="calendarTransferDetails" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; display: none; width: 100%; box-sizing: border-box; overflow: visible;">
+                    <div class="journal-seg-tabs" id="journalDetailSegTabs" role="tablist" aria-label="記帳類型">
+                        <button type="button" class="active" data-journal-tab="0" onclick="switchJournalPage(0)">支出</button>
+                        <button type="button" data-journal-tab="1" onclick="switchJournalPage(1)">收入</button>
+                        <button type="button" data-journal-tab="2" onclick="switchJournalPage(2)">轉帳</button>
+                    </div>
                     <div class="list-section page-swiper" id="journalSwiper" style="position: relative; width: 100%; overflow: hidden; touch-action: pan-x pan-y;">
                         <div class="page-container" id="journalPageContainer" style="display: flex; transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); width: 300%;">
                             <!-- 支出分頁 -->
@@ -2312,6 +2555,19 @@
             </div>
         </div>
         <div class="detail-list" id="detailTxList"></div>
+        </div>
+    </div>
+
+    <!-- App 內對話框（取代系統 alert / confirm / prompt） -->
+    <div id="moneeDialogModal" aria-modal="true" role="dialog" onclick="if(event.target.id==='moneeDialogModal')moneeDialogCancel()">
+        <div class="monee-dialog-card" onclick="event.stopPropagation()">
+            <div class="monee-dialog-title" id="moneeDialogTitle">提示</div>
+            <div class="monee-dialog-message" id="moneeDialogMessage"></div>
+            <input type="text" class="monee-dialog-input" id="moneeDialogInput" style="display:none;" autocomplete="off">
+            <div class="monee-dialog-actions">
+                <button type="button" id="moneeDialogCancelBtn" onclick="moneeDialogCancel()">取消</button>
+                <button type="button" id="moneeDialogOkBtn" class="primary" onclick="moneeDialogOk()">確定</button>
+            </div>
         </div>
     </div>
 
@@ -5381,7 +5637,67 @@
     }
 
     // --- UI ---
-    function toggleSidebar() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(s.classList.contains('active')){s.classList.remove('active');o.classList.remove('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('collapsed');} setTimeout(function(){initMenuSections();},0);}else{s.classList.add('active');o.classList.add('active');if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('collapsed');}} }
+    function setSidebarBackgroundScrollLock(locked) {
+        const mc = document.querySelector('.main-content');
+        if(locked) {
+            if(mc && mc.dataset.sidebarScrollLock == null) {
+                mc.dataset.sidebarScrollLock = String(mc.scrollTop || 0);
+            }
+            document.body.classList.add('sidebar-open');
+            if(mc) mc.style.overflow = 'hidden';
+        } else {
+            document.body.classList.remove('sidebar-open');
+            if(mc) {
+                const y = parseInt(mc.dataset.sidebarScrollLock || '0', 10) || 0;
+                mc.style.overflow = '';
+                delete mc.dataset.sidebarScrollLock;
+                mc.scrollTop = y;
+            }
+        }
+    }
+    function initSelectionAndSidebarGuards() {
+        // 封鎖長按選取／複製（輸入框除外）
+        document.addEventListener('contextmenu', function(e) {
+            if(e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+            e.preventDefault();
+        }, { capture: true });
+        document.addEventListener('selectstart', function(e) {
+            if(e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+            e.preventDefault();
+        }, { capture: true });
+        // 側邊選單開啟時：遮罩與背景不可把捲動傳出去
+        const overlay = document.getElementById('sidebarOverlay');
+        if(overlay) {
+            overlay.addEventListener('touchmove', function(e) {
+                if(document.body.classList.contains('sidebar-open')) e.preventDefault();
+            }, { passive: false });
+        }
+        const main = document.querySelector('.main-content');
+        if(main) {
+            main.addEventListener('touchmove', function(e) {
+                if(!document.body.classList.contains('sidebar-open')) return;
+                // 允許在側邊選單內捲動
+                if(e.target && e.target.closest && e.target.closest('.sidebar-menu, .sidebar')) return;
+                e.preventDefault();
+            }, { passive: false });
+        }
+    }
+    function toggleSidebar() {
+        const s = document.getElementById('sidebar');
+        const o = document.getElementById('sidebarOverlay');
+        if(s.classList.contains('active')) {
+            s.classList.remove('active');
+            o.classList.remove('active');
+            if(window.matchMedia('(min-width: 768px)').matches) { s.classList.add('collapsed'); }
+            setSidebarBackgroundScrollLock(false);
+            setTimeout(function(){ initMenuSections(); }, 0);
+        } else {
+            s.classList.add('active');
+            o.classList.add('active');
+            if(window.matchMedia('(min-width: 768px)').matches) { s.classList.remove('collapsed'); }
+            setSidebarBackgroundScrollLock(true);
+        }
+    }
     
     // 使用教學：圈選畫面上的區塊（資產 / 記帳分開）
     const ASSET_TUTORIAL_STEPS = [
@@ -5592,7 +5908,28 @@
             tooltip.style.top = tooltipTop + 'px';
         }
     }
-    function toggleSidebarCollapse() { const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); const isCollapsed=s.classList.contains('collapsed'); if(isCollapsed){s.classList.remove('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.add('active'); o.classList.add('active');} localStorage.setItem('sidebarCollapsed','false');}else{s.classList.add('collapsed'); if(window.matchMedia('(min-width: 768px)').matches){s.classList.remove('active'); o.classList.remove('active');} localStorage.setItem('sidebarCollapsed','true');} }
+    function toggleSidebarCollapse() {
+        const s = document.getElementById('sidebar');
+        const o = document.getElementById('sidebarOverlay');
+        const isCollapsed = s.classList.contains('collapsed');
+        if(isCollapsed) {
+            s.classList.remove('collapsed');
+            if(window.matchMedia('(min-width: 768px)').matches) {
+                s.classList.add('active');
+                o.classList.add('active');
+                setSidebarBackgroundScrollLock(true);
+            }
+            localStorage.setItem('sidebarCollapsed', 'false');
+        } else {
+            s.classList.add('collapsed');
+            if(window.matchMedia('(min-width: 768px)').matches) {
+                s.classList.remove('active');
+                o.classList.remove('active');
+                setSidebarBackgroundScrollLock(false);
+            }
+            localStorage.setItem('sidebarCollapsed', 'true');
+        }
+    }
     function initSidebarState() { if(window.matchMedia('(min-width: 768px)').matches){ const collapsed=localStorage.getItem('sidebarCollapsed')==='true'; const s=document.getElementById('sidebar'); const o=document.getElementById('sidebarOverlay'); if(collapsed){s.classList.add('collapsed'); s.classList.remove('active'); o.classList.remove('active');}else{s.classList.remove('collapsed'); s.classList.add('active'); o.classList.add('active');} } }
     function toggleEditMode() { isEditMode=!isEditMode; document.getElementById('sortBtn').classList.toggle('active', isEditMode); document.getElementById('addBtn').style.display=isEditMode?'none':'block'; renderAssets(); }
     function toggleNumbers() {
@@ -6483,12 +6820,12 @@
     }
     function saveAccount() { const t=document.getElementById('inpType').value; let s=document.getElementById('inpSymbol').value.trim().toUpperCase(); let n=document.getElementById('inpName').value.trim(); let c=document.getElementById('inpCurrency').value; const balanceInput = document.getElementById('inpBalance').value.trim(); const b = balanceInput === '' ? 0 : (parseFloat(balanceInput) || 0); const costInput = document.getElementById('inpCost').value.trim(); let cost = costInput === '' ? 0 : (parseFloat(costInput) || 0); const auto=(t==='stock'||t==='twstock'||t==='crypto'); const bankTag = t === 'bank' ? (document.getElementById('inpBankTag') ? document.getElementById('inpBankTag').value : '現金') : null; const bankName = t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') ? (window.getSelectedBankName ? window.getSelectedBankName() : (document.getElementById('inpBankName') ? document.getElementById('inpBankName').value : '')) : null; let logoUrl = null; if(t==='stock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); else n=cleanCompanyName(n); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } else if(t==='twstock'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入股數"); if(!cost)return alert("請輸入平均成本"); if(!n) n=s; c='TWD'; } else if(t==='crypto'){ if(!s)return alert("請輸入代碼"); if(!b)return alert("請輸入數量"); cost=0; if(!s.includes(':'))s=`COINBASE:${s}-USD`; if(!n) n=s.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT',''); logoUrl = document.getElementById('inpSymbol').getAttribute('data-logo') || null; c='USD'; } if(!auto && !n)return alert("請輸入名稱"); if(t === 'bank' && (bankTag === '銀行' || bankTag === '信用卡' || bankTag === '簽帳金融卡') && !bankName)return alert("請選擇銀行"); const existingAcc = editingId ? accounts.find(x=>x.id===editingId) : null; let newA; if(!editingId && (t==='stock'||t==='twstock')){ const existingSame=accounts.find(x=>x.type===t&&String(x.symbol||'').trim().toUpperCase()===s); if(existingSame){ const oldBal=parseFloat(existingSame.balance)||0; const oldCost=parseFloat(existingSame.cost)||0; const newBal=oldBal+b; const mergedCost=newBal>0?(oldBal*oldCost+b*cost)/newBal:cost; const mergedTx=(existingSame.transactions||[]).concat(window.tempTransactions||[]); existingSame.balance=newBal; existingSame.cost=mergedCost; existingSame.transactions=mergedTx; if(logoUrl)existingSame.logo=logoUrl; newA=existingSame; } } if(!newA){ newA={ id:editingId||Date.now(), type:t, name:n, symbol:s, currency:c, balance:b, cost:cost, isAuto:auto, logo: logoUrl || (existingAcc && existingAcc.logo) || null, currentPrice:existingAcc?(existingAcc.currentPrice||0):0, dayChange:existingAcc?(existingAcc.dayChange||0):0, dayChangePercent:existingAcc?(existingAcc.dayChangePercent||0):0, order:existingAcc?(existingAcc.order||0):9999, transactions: window.tempTransactions||[], bankTag: bankTag || (existingAcc && existingAcc.bankTag) || null, bankName: bankName || (existingAcc && existingAcc.bankName) || null }; if(editingId)accounts[accounts.findIndex(x=>x.id===editingId)]=newA; else accounts.push(newA); } saveData(); recordDailyAssetSnapshot(); if(currentChartMode === 'line') renderAssetLineChart(); const wasEditingFromDetail = editingFromDetail; const detailAccId = currentDetailAcc ? currentDetailAcc.id : null; if(pendingJournalModalType === 'batchExpense' || pendingJournalModalType === 'batchIncome') window.pendingNewAccountForBatch = newA;
         closeModal(); if(wasEditingFromDetail && detailAccId && newA.id === detailAccId && newA.isAuto) { openDetailView(newA.id); } else if(wasEditingFromDetail && detailAccId && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } else if(currentDetailAcc && currentDetailAcc.id === newA.id && newA.isAuto) { openDetailView(newA.id); } else if(currentDetailAcc && !newA.isAuto) { closeDetailView(); currentDetailAcc = null; } if(auto)refreshAllData(); else { renderAssets(); updateChartData(); } }
-    function deleteAccount() { 
+    async function deleteAccount() { 
         const acc = accounts.find(x => x.id === editingId);
         if (!acc) return;
         const name = acc.name || '此資產';
-        if (!confirm(`確定要刪除「${name}」嗎？`)) return;
-        if (!confirm(`再次確認：確定要刪除「${name}」嗎？\n此操作無法復原！`)) return;
+        if (!await moneeConfirm(`確定要刪除「${name}」嗎？`, { title: '刪除資產', okText: '刪除', danger: true })) return;
+        if (!await moneeConfirm(`再次確認：確定要刪除「${name}」嗎？\n此操作無法復原！`, { title: '再次確認', okText: '確定刪除', danger: true })) return;
         accounts = accounts.filter(x => x.id !== editingId);
         saveData();
         recordDailyAssetSnapshot();
@@ -6545,31 +6882,40 @@
     // 折線圖記錄：重置（清空）與復原（依使用者分開儲存）
     let _assetHistoryRestorePoint = {};
     
-    function resetAssetHistory() {
-        if (!confirm('確定要重置折線圖記錄嗎？\n所有歷史資料將被清空，此操作可透過「復原」還原。')) return;
+    async function resetAssetHistory() {
         const history = loadAssetHistory();
         const count = Object.keys(history).length;
         if (count === 0) {
-            alert('目前沒有折線圖記錄可重置');
+            await moneeAlert('目前沒有折線圖記錄可重置', '折線圖');
             return;
         }
+        const ok = await moneeConfirm('確定要重置折線圖記錄嗎？\n所有歷史資料將被清空，此操作可透過「復原」還原。', {
+            title: '重置折線圖',
+            okText: '重置',
+            danger: true
+        });
+        if (!ok) return;
         _assetHistoryRestorePoint[currentUserId] = JSON.parse(JSON.stringify(history));
         saveAssetHistory({});
         if (currentChartMode === 'line') renderAssetLineChart();
-        alert('已重置折線圖記錄');
+        await moneeAlert('已重置折線圖記錄', '折線圖');
     }
     
-    function restoreAssetHistory() {
+    async function restoreAssetHistory() {
         const backup = _assetHistoryRestorePoint[currentUserId];
         if (!backup) {
-            alert('沒有可復原的折線圖記錄');
+            await moneeAlert('沒有可復原的折線圖記錄', '折線圖');
             return;
         }
-        if (!confirm('確定要復原折線圖記錄嗎？\n將還原至上一次重置前的狀態。')) return;
+        const ok = await moneeConfirm('確定要復原折線圖記錄嗎？\n將還原至上一次重置前的狀態。', {
+            title: '復原折線圖',
+            okText: '復原'
+        });
+        if (!ok) return;
         saveAssetHistory(backup);
         delete _assetHistoryRestorePoint[currentUserId];
         if (currentChartMode === 'line') renderAssetLineChart();
-        alert('已復原折線圖記錄');
+        await moneeAlert('已復原折線圖記錄', '折線圖');
     }
     
     function loadTwstockDailyBalances() {
@@ -6842,10 +7188,14 @@
         // 每天一個點（不採樣；90天／1年／全部也完整顯示）
         let chartDates = filteredDates;
         
-        // 準備各系列資料
-        // 為了讓折線從0垂直上升：使用 [0,0] 與 [0,value] 同 x 形成垂直線（非斜線）
+        // 準備各系列資料（總資產線依主題變色，避免淺色主題白線看不清）
+        const isLightTheme = (settings.theme || 'dark') === 'light';
+        const totalLineColor = isLightTheme ? '#1c1c1e' : '#ffffff';
+        const axisMuted = isLightTheme ? 'rgba(0,0,0,0.14)' : 'rgba(255,255,255,0.1)';
+        const gridMuted = isLightTheme ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+        const crosshairColor = isLightTheme ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)';
         const allSeriesConfig = [
-            { key: 'total', name: '總資產', color: '#ffffff', dashStyle: 'Solid', lineWidth: 2, zIndex: 5 },
+            { key: 'total', name: '總資產', color: totalLineColor, dashStyle: 'Solid', lineWidth: 2, zIndex: 5 },
             { key: 'bank', name: '錢包', color: TYPE_COLORS.bank, dashStyle: 'Solid', lineWidth: 2, zIndex: 4 },
             { key: 'stock', name: '美股', color: TYPE_COLORS.stock, dashStyle: 'Solid', lineWidth: 2, zIndex: 3 },
             { key: 'twstock', name: '台股', color: TYPE_COLORS.twstock, dashStyle: 'Solid', lineWidth: 2, zIndex: 2 },
@@ -7203,10 +7553,10 @@
                     }
                 },
                 tickPositions: chartDates.map((d, idx) => idx),
-                lineColor: 'rgba(255,255,255,0.1)',
-                tickColor: 'rgba(255,255,255,0.1)',
+                lineColor: axisMuted,
+                tickColor: axisMuted,
                 crosshair: {
-                    color: 'rgba(255,255,255,0.2)',
+                    color: crosshairColor,
                     width: 1,
                     dashStyle: 'Dot'
                 },
@@ -7230,17 +7580,17 @@
                         return v.toLocaleString();
                     }
                 },
-                gridLineColor: 'rgba(255,255,255,0.06)',
+                gridLineColor: gridMuted,
                 gridLineDashStyle: 'Dot',
-                lineColor: 'rgba(255,255,255,0.1)',
-                tickColor: 'rgba(255,255,255,0.1)'
+                lineColor: axisMuted,
+                tickColor: axisMuted
             },
             tooltip: {
                 shared: true,
-                backgroundColor: 'rgba(30,30,30,0.95)',
-                borderColor: 'rgba(255,255,255,0.12)',
+                backgroundColor: isLightTheme ? 'rgba(255,255,255,0.96)' : 'rgba(30,30,30,0.95)',
+                borderColor: isLightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)',
                 borderRadius: 8,
-                style: { color: '#fff', fontSize: '12px' },
+                style: { color: chartTextColor, fontSize: '12px' },
                 formatter: function() {
                     const idx = Math.round(this.x);
                     let dateLabel = '';
@@ -7332,9 +7682,140 @@
     }
     
     function updateOrder(type,container){ let ids=Array.from(container.children).map(c=>parseInt(c.getAttribute('data-id'))); ids.forEach((id,idx)=>{ let a=accounts.find(x=>x.id===id); if(a)a.order=idx; }); saveData(); }
-    function setApiKey(t) { if(t==='finnhub'){const k=prompt("Finnhub Key:", settings.apiKey);if(k)settings.apiKey=k.trim();} else if(t==='fugle'){const k=prompt("Fugle Key:", settings.fugleKey);if(k)settings.fugleKey=k.trim();} else {const k=prompt("Gemini Key:", settings.geminiKey);if(k)settings.geminiKey=k.trim();} saveSettings(); refreshAllData(); }
-    function setFeeRate() { const k=prompt("手續費率 (%):", settings.feeRate); if(k)settings.feeRate=parseFloat(k); saveSettings(); }
-    function updateFeeDisplay() { const s=document.getElementById('brokerSelect'); if(s.value==='custom'){ const r=prompt("自訂費率 (%):", settings.feeRate||0.1); if(r)settings.feeRate=parseFloat(r); saveSettings(); } }
+    let _moneeDialogResolver = null;
+    function moneeDialogClose(result) {
+        const modal = document.getElementById('moneeDialogModal');
+        if(modal) modal.classList.remove('open');
+        const resolve = _moneeDialogResolver;
+        _moneeDialogResolver = null;
+        if(typeof resolve === 'function') resolve(result);
+    }
+    function moneeDialogOk() {
+        const input = document.getElementById('moneeDialogInput');
+        const mode = input && input.style.display !== 'none' ? 'prompt' : 'confirm';
+        if(mode === 'prompt') {
+            moneeDialogClose(input ? input.value : '');
+        } else {
+            moneeDialogClose(true);
+        }
+    }
+    function moneeDialogCancel() {
+        const input = document.getElementById('moneeDialogInput');
+        const mode = input && input.style.display !== 'none' ? 'prompt' : 'confirm';
+        moneeDialogClose(mode === 'prompt' ? null : false);
+    }
+    function moneeShowDialog({ title, message, mode, defaultValue, okText, cancelText, danger, placeholder }) {
+        return new Promise((resolve) => {
+            if(_moneeDialogResolver) moneeDialogClose(mode === 'prompt' ? null : false);
+            _moneeDialogResolver = resolve;
+            const modal = document.getElementById('moneeDialogModal');
+            const titleEl = document.getElementById('moneeDialogTitle');
+            const msgEl = document.getElementById('moneeDialogMessage');
+            const input = document.getElementById('moneeDialogInput');
+            const okBtn = document.getElementById('moneeDialogOkBtn');
+            const cancelBtn = document.getElementById('moneeDialogCancelBtn');
+            if(!modal || !titleEl || !msgEl || !input || !okBtn || !cancelBtn) {
+                resolve(mode === 'prompt' ? null : false);
+                return;
+            }
+            titleEl.textContent = title || '提示';
+            msgEl.textContent = message || '';
+            msgEl.style.display = message ? 'block' : 'none';
+            okBtn.textContent = okText || '確定';
+            cancelBtn.textContent = cancelText || '取消';
+            okBtn.classList.toggle('danger', !!danger);
+            okBtn.classList.add('primary');
+            if(mode === 'alert') {
+                cancelBtn.style.display = 'none';
+                input.style.display = 'none';
+            } else if(mode === 'prompt') {
+                cancelBtn.style.display = '';
+                input.style.display = 'block';
+                input.value = defaultValue != null ? String(defaultValue) : '';
+                input.placeholder = placeholder || '';
+                input.type = 'text';
+            } else {
+                cancelBtn.style.display = '';
+                input.style.display = 'none';
+            }
+            modal.classList.add('open');
+            const onKey = (e) => {
+                if(e.key === 'Escape') { document.removeEventListener('keydown', onKey); moneeDialogCancel(); }
+                else if(e.key === 'Enter' && mode !== 'confirm') { document.removeEventListener('keydown', onKey); moneeDialogOk(); }
+            };
+            document.addEventListener('keydown', onKey);
+            const prevResolve = _moneeDialogResolver;
+            _moneeDialogResolver = (result) => {
+                document.removeEventListener('keydown', onKey);
+                prevResolve(result);
+            };
+            if(mode === 'prompt') {
+                setTimeout(() => { try { input.focus(); input.select(); } catch(e) {} }, 50);
+            }
+        });
+    }
+    function moneeAlert(message, title) {
+        return moneeShowDialog({ title: title || '提示', message, mode: 'alert', okText: '知道了' }).then(() => undefined);
+    }
+    function moneeConfirm(message, opts) {
+        opts = opts || {};
+        return moneeShowDialog({
+            title: opts.title || '確認',
+            message,
+            mode: 'confirm',
+            okText: opts.okText || '確定',
+            cancelText: opts.cancelText || '取消',
+            danger: !!opts.danger
+        });
+    }
+    function moneePrompt(message, defaultValue, opts) {
+        opts = opts || {};
+        return moneeShowDialog({
+            title: opts.title || '輸入',
+            message,
+            mode: 'prompt',
+            defaultValue: defaultValue,
+            placeholder: opts.placeholder || '',
+            okText: opts.okText || '儲存',
+            cancelText: opts.cancelText || '取消'
+        });
+    }
+    // 其餘程式碼若仍呼叫系統 alert，一律改走 App 內 modal
+    window.alert = function(message) {
+        void moneeAlert(message == null ? '' : String(message));
+    };
+
+    async function setApiKey(t) {
+        if(t === 'finnhub') {
+            const k = await moneePrompt('請輸入 Finnhub API Key（美股／加密貨幣報價）', settings.apiKey || '', { title: 'Finnhub Key' });
+            if(k != null) settings.apiKey = k.trim();
+        } else if(t === 'fugle') {
+            const k = await moneePrompt('請輸入 Fugle API Key（台股報價）', settings.fugleKey || '', { title: 'Fugle Key' });
+            if(k != null) settings.fugleKey = k.trim();
+        } else {
+            const k = await moneePrompt('請輸入 Gemini API Key（截圖 AI 辨識）', settings.geminiKey || '', { title: 'Gemini Key' });
+            if(k != null) settings.geminiKey = k.trim();
+        }
+        saveSettings();
+        refreshAllData();
+    }
+    async function setFeeRate() {
+        const k = await moneePrompt('手續費率 (%)', settings.feeRate, { title: '手續費率' });
+        if(k != null && k !== '') {
+            const n = parseFloat(k);
+            if(!isNaN(n)) { settings.feeRate = n; saveSettings(); }
+        }
+    }
+    async function updateFeeDisplay() {
+        const s = document.getElementById('brokerSelect');
+        if(s && s.value === 'custom') {
+            const r = await moneePrompt('自訂費率 (%)', settings.feeRate || 0.1, { title: '自訂手續費' });
+            if(r != null && r !== '') {
+                const n = parseFloat(r);
+                if(!isNaN(n)) { settings.feeRate = n; saveSettings(); }
+            }
+        }
+    }
     /** 與匯出 JSON／雲端 moneeAppBackup 相同結構（供即時同步上傳） */
     /** @param {{ forRtdbSync?: boolean }} [opts] forRtdbSync：不含 exportDate，避免兩端互寫唯一造成重載循環 */
     function buildMoneeBackupExportObject(opts) {
@@ -7668,7 +8149,7 @@
                     const id = btn.getAttribute('data-id');
                     const selected = backups.find((b) => b.id === id);
                     if (!selected) return;
-                    if (!confirm(`確定要還原這份雲端備份嗎？\n${selected.filename}\n${moneeFormatBackupTime(selected.createdAt)}`)) return;
+                    if (!await moneeConfirm(`確定要還原這份雲端備份嗎？\n${selected.filename}\n${moneeFormatBackupTime(selected.createdAt)}`, { title: '還原雲端備份', okText: '還原', danger: true })) return;
                     modal.remove();
                     await restoreFromBackupJsonString(selected.content);
                 };
@@ -8039,9 +8520,9 @@
         });
     }
 
-    function createNewUser() {
-        const userName = prompt('輸入使用者名稱:', `使用者 ${users.length + 1}`);
-        if (!userName) return;
+    async function createNewUser() {
+        const userName = await moneePrompt('輸入使用者名稱', `使用者 ${users.length + 1}`, { title: '新增使用者', okText: '建立' });
+        if (userName == null) return;
         
         const newUser = {
             id: Date.now().toString(),
@@ -8150,22 +8631,22 @@
         }, 500);
     }
 
-    function deleteUser(userId) {
+    async function deleteUser(userId) {
         if (users.length <= 1) {
-            alert('至少需要保留一個使用者');
+            await moneeAlert('至少需要保留一個使用者', '無法刪除');
             return;
         }
         
         // 檢查是否嘗試刪除當前使用者
         if (userId === currentUserId) {
-            alert('無法刪除當前正在使用的使用者，請先切換到其他使用者');
+            await moneeAlert('無法刪除當前正在使用的使用者，請先切換到其他使用者', '無法刪除');
             return;
         }
         
         const user = users.find(u => u.id === userId);
         if (!user) return;
         
-        if (!confirm(`確定要刪除使用者「${user.name}」嗎？\n此操作無法復原，該使用者的所有資料將被永久刪除。`)) {
+        if (!await moneeConfirm(`確定要刪除使用者「${user.name}」嗎？\n此操作無法復原，該使用者的所有資料將被永久刪除。`, { title: '刪除使用者', okText: '刪除', danger: true })) {
             return;
         }
         
@@ -8293,16 +8774,16 @@
         }, 50);
     }
 
-    function editUserName(userId) {
+    async function editUserName(userId) {
         const user = users.find(u => u.id === userId);
         if (!user) return;
         
-        const newName = prompt('輸入新的使用者名稱:', user.name);
+        const newName = await moneePrompt('輸入新的使用者名稱', user.name, { title: '重新命名', okText: '儲存' });
         if (newName === null) return; // 用戶取消
         
         const trimmedName = newName.trim();
         if (!trimmedName) {
-            alert('名稱不能為空');
+            await moneeAlert('名稱不能為空');
             return;
         }
         
@@ -8979,14 +9460,14 @@
     }
     
     // 刪除股票交易明細並重新計算成本與股數
-    function deleteStockTransaction(index) {
+    async function deleteStockTransaction(index) {
         if (!currentDetailAcc || !currentDetailAcc.transactions || index < 0 || index >= currentDetailAcc.transactions.length) {
             return;
         }
         
         const tx = currentDetailAcc.transactions[index];
         const confirmMsg = `確定要刪除此筆交易嗎？\n日期: ${tx.date}\n股數: ${tx.shares}\n成交價: $${tx.price.toFixed(2)}`;
-        if (!confirm(confirmMsg)) {
+        if (!await moneeConfirm(confirmMsg, { title: '刪除交易', okText: '刪除', danger: true })) {
             return;
         }
         
@@ -9041,14 +9522,14 @@
     }
     
     // 在編輯模式中刪除股票交易明細並重新計算成本與股數
-    function deleteStockTransactionInEdit(index) {
+    async function deleteStockTransactionInEdit(index) {
         if (!window.tempTransactions || index < 0 || index >= window.tempTransactions.length) {
             return;
         }
         
         const tx = window.tempTransactions[index];
         const confirmMsg = `確定要刪除此筆交易嗎？\n日期: ${tx.date}\n股數: ${tx.shares}\n成交價: $${tx.price}`;
-        if (!confirm(confirmMsg)) {
+        if (!await moneeConfirm(confirmMsg, { title: '刪除交易', okText: '刪除', danger: true })) {
             return;
         }
         
@@ -9419,12 +9900,12 @@
         } 
     }
     
-    function deleteCurrentAsset() {
+    async function deleteCurrentAsset() {
         if (!currentDetailAcc) return;
         
         const name = currentDetailAcc.name || '此資產';
-        if (!confirm(`確定要刪除「${name}」嗎？`)) return;
-        if (!confirm(`再次確認：確定要刪除「${name}」嗎？\n此操作無法復原！`)) return;
+        if (!await moneeConfirm(`確定要刪除「${name}」嗎？`, { title: '刪除資產', okText: '刪除', danger: true })) return;
+        if (!await moneeConfirm(`再次確認：確定要刪除「${name}」嗎？\n此操作無法復原！`, { title: '再次確認', okText: '確定刪除', danger: true })) return;
         
         // 從 accounts 中刪除
         accounts = accounts.filter(x => x.id !== currentDetailAcc.id);
@@ -9440,7 +9921,13 @@
     }
 
     // AI
-    function triggerImageUpload() { if(!settings.geminiKey)return alert("請先設定 Gemini Key"); document.getElementById('imgUpload').click(); }
+    async function triggerImageUpload() {
+        if(!settings.geminiKey) {
+            await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
+            return;
+        }
+        document.getElementById('imgUpload').click();
+    }
     async function handleImageUpload(input) {
         if(!input.files || input.files.length === 0) return;
         const status = document.getElementById('aiStatus'); 
@@ -9750,7 +10237,66 @@
             alert(`已重新整理 ${updated}/${total} 個股票資訊`);
         }, 500);
     }
-    async function fetchPrices() { const autos=accounts.filter(a=>a.isAuto&&a.symbol); for(let acc of autos){ try{ if(acc.type==='twstock'){ if(!settings.fugleKey)continue; await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`,{headers:{'X-API-KEY':settings.fugleKey}}); const j=await res.json(); if(j){ const price=j.lastPrice||(j.trade&&j.trade.price)||(j.trades&&j.trades[0]&&j.trades[0].price)||0; const changePercent=j.changePercent||(j.trade&&j.trade.changePercent)||0; const prevClose=j.previousClose||(price&&changePercent?price/(1+changePercent/100):price)||price; acc.currentPrice=price; acc.dayChangePercent=changePercent||0; acc.dayChange=(price-prevClose)||0; } } else { if(!settings.apiKey)continue; let sym=acc.symbol; if(acc.type==='crypto'){ if(acc.symbol==='USDT'||acc.symbol==='USDC'){acc.currentPrice=1;acc.dayChange=0;acc.dayChangePercent=0;continue;} if(!sym.includes(':'))sym=`COINBASE:${sym}-USD`; } await new Promise(r=>setTimeout(r,150)); const res=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`); const j=await res.json(); if(j.c){ acc.currentPrice=j.c; acc.dayChange=j.d||0; acc.dayChangePercent=j.dp||0; } } }catch(e){} } saveData(); recordDailyAssetSnapshot(); if(!isSorting){ renderAssets(); } }
+    async function fetchPrices() {
+        const autos = accounts.filter(a => a.isAuto && a.symbol);
+        let anyUpdated = false;
+        for (let acc of autos) {
+            try {
+                if (acc.type === 'twstock') {
+                    if (!settings.fugleKey) continue;
+                    await new Promise(r => setTimeout(r, 150));
+                    const res = await fetch(`https://api.fugle.tw/marketdata/v1.0/stock/intraday/quote/${acc.symbol}`, {
+                        headers: { 'X-API-KEY': settings.fugleKey }
+                    });
+                    const j = await res.json();
+                    if (!j) continue;
+                    const last =
+                        Number(j.lastPrice) ||
+                        Number(j.trade && j.trade.price) ||
+                        Number(j.trades && j.trades[0] && j.trades[0].price) ||
+                        0;
+                    const prevClose = Number(j.previousClose) || 0;
+                    // 盤前／無成交時常沒有 lastPrice：優先用昨收，再保留既有現價，絕不寫入 0
+                    const price = last > 0 ? last : (prevClose > 0 ? prevClose : (Number(acc.currentPrice) || 0));
+                    if (!(price > 0)) continue;
+                    const changePercent = Number(j.changePercent) || Number(j.trade && j.trade.changePercent) || 0;
+                    const baseClose = prevClose > 0 ? prevClose : (last > 0 && changePercent ? last / (1 + changePercent / 100) : price);
+                    acc.currentPrice = price;
+                    acc.dayChangePercent = last > 0 ? (changePercent || 0) : 0;
+                    acc.dayChange = last > 0 ? ((price - baseClose) || 0) : 0;
+                    anyUpdated = true;
+                } else {
+                    if (!settings.apiKey) continue;
+                    let sym = acc.symbol;
+                    if (acc.type === 'crypto') {
+                        if (acc.symbol === 'USDT' || acc.symbol === 'USDC') {
+                            acc.currentPrice = 1;
+                            acc.dayChange = 0;
+                            acc.dayChangePercent = 0;
+                            anyUpdated = true;
+                            continue;
+                        }
+                        if (!sym.includes(':')) sym = `COINBASE:${sym}-USD`;
+                    }
+                    await new Promise(r => setTimeout(r, 150));
+                    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${settings.apiKey}`);
+                    const j = await res.json();
+                    // 與台股相同：無效報價不覆蓋既有現價
+                    if (j && Number(j.c) > 0) {
+                        acc.currentPrice = j.c;
+                        acc.dayChange = j.d || 0;
+                        acc.dayChangePercent = j.dp || 0;
+                        anyUpdated = true;
+                    }
+                }
+            } catch (e) {}
+        }
+        if (anyUpdated) {
+            saveData();
+            recordDailyAssetSnapshot();
+        }
+        if (!isSorting) renderAssets();
+    }
     // Page Swiper Functions
     function switchToPage(pageIndex) {
         if(pageIndex < 0 || pageIndex >= PAGE_TYPES.length) return;
@@ -10755,6 +11301,10 @@
         applyTheme();
         updateThemeButton();
         updateChartTextColor();
+        // 折線圖需重繪：線色／Y 軸文字／格線都會隨主題變
+        if(currentChartMode === 'line') {
+            requestAnimationFrame(() => renderAssetLineChart());
+        }
     }
     
     function applyTheme() {
@@ -10849,6 +11399,7 @@
         initNumbersState();
         initSwiper();
         initJournalSwipe(); // 初始化記帳詳情的滑動手勢
+        initSelectionAndSidebarGuards();
         applyTheme();
         updateThemeButton();
         updateCurrencyButton();
@@ -11179,9 +11730,11 @@
         const pageIndicator = document.querySelector('.page-indicator');
         const navbarTitle = document.querySelector('.navbar h1');
         if(showCalendar) {
-            // 恢復記帳頁面狀態（日期、頁面位置和視圖模式）
+            // 恢復記帳頁面狀態（日期、支出／收入分頁等）
             restoreJournalPageState();
-            // 不再強制設置為日曆模式，使用恢復的狀態
+            // 從資產切回記帳時，一律預設回到日曆頁
+            journalViewMode = 'calendar';
+            saveJournalPageState();
             calendarPage.style.display = 'block';
             if(contentGrid) contentGrid.style.display = 'none';
             assetListTab?.classList.remove('active');
@@ -11299,15 +11852,18 @@
                     // 如果有選中日期，顯示該日期的詳情
                     showFixedTransferDetailsForDate(selectedDate);
                 }
+                requestAnimationFrame(() => initCalendarStickyBar());
             } else {
                 // 圖表模式下隱藏詳情
                 const calendarTransferDetails = document.getElementById('calendarTransferDetails');
                 if(calendarTransferDetails) {
                     calendarTransferDetails.style.display = 'none';
                 }
+                setCalendarStickyBarVisible(false);
             }
         } else {
             calendarPage.style.display = 'none';
+            setCalendarStickyBarVisible(false);
             if(contentGrid) contentGrid.style.display = '';
             assetListTab?.classList.add('active');
             calendarTabBtn?.classList.remove('active');
@@ -11419,6 +11975,99 @@
             buildJournalLinechartCheckboxes();
             renderJournalMonthlyLineChart();
         }
+        updateCalendarStickyBar();
+    }
+
+    function formatCalendarStickyDate(d) {
+        if (!d || isNaN(d.getTime())) return '—';
+        const week = ['日', '一', '二', '三', '四', '五', '六'];
+        return `週${week[d.getDay()]} ${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    function updateCalendarStickyBar() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayEl = document.getElementById('stickyTodayLabel');
+        const selEl = document.getElementById('stickySelectedLabel');
+        if (todayEl) todayEl.textContent = formatCalendarStickyDate(today);
+        const sel = selectedDate ? new Date(selectedDate) : today;
+        sel.setHours(0, 0, 0, 0);
+        if (selEl) {
+            const sameDay = sel.getTime() === today.getTime();
+            selEl.textContent = sameDay ? `${formatCalendarStickyDate(sel)}（今天）` : formatCalendarStickyDate(sel);
+        }
+    }
+
+    function setCalendarStickyBarVisible(show) {
+        const bar = document.getElementById('calendarStickyBar');
+        if (!bar) return;
+        const shouldShow = !!(show && journalViewMode === 'calendar');
+        bar.classList.toggle('visible', shouldShow);
+        bar.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+    }
+
+    let calendarStickyObserver = null;
+    function initCalendarStickyBar() {
+        const page = document.getElementById('calendarPage');
+        const anchor = document.getElementById('calendarMainBlock') || document.getElementById('calendarGrid');
+        const bar = document.getElementById('calendarStickyBar');
+        if (!page || !anchor || !bar) return;
+
+        updateCalendarStickyBar();
+
+        if (calendarStickyObserver) {
+            try { calendarStickyObserver.disconnect(); } catch (e) {}
+            calendarStickyObserver = null;
+        }
+
+        if (typeof IntersectionObserver === 'undefined') {
+            // 後備：用 scroll 判斷日曆是否離開頂部
+            const onScroll = () => {
+                if (journalViewMode !== 'calendar' || page.style.display === 'none') {
+                    setCalendarStickyBarVisible(false);
+                    return;
+                }
+                setCalendarStickyBarVisible(page.scrollTop > Math.max(80, anchor.offsetHeight * 0.45));
+            };
+            page.removeEventListener('scroll', page._calendarStickyScrollHandler);
+            page._calendarStickyScrollHandler = onScroll;
+            page.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+            return;
+        }
+
+        calendarStickyObserver = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (!entry) return;
+            if (journalViewMode !== 'calendar' || page.style.display === 'none') {
+                setCalendarStickyBarVisible(false);
+                return;
+            }
+            // 日曆主區塊離開 calendarPage 可視範圍時顯示固定列
+            setCalendarStickyBarVisible(!entry.isIntersecting);
+        }, {
+            root: page,
+            threshold: 0,
+            rootMargin: '-4px 0px 0px 0px'
+        });
+        calendarStickyObserver.observe(anchor);
+        // 初始狀態
+        setCalendarStickyBarVisible(false);
+    }
+
+    function scrollCalendarPageToTop() {
+        const page = document.getElementById('calendarPage');
+        if (!page) return;
+        try {
+            page.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {
+            page.scrollTop = 0;
+        }
+    }
+
+    function onCalendarStickyToday() {
+        goToCalendarToday();
+        scrollCalendarPageToTop();
     }
     
     function toggleCalendarMonthYearDropdown(e) {
@@ -11722,6 +12371,42 @@
         }
     }
     
+    function formatJournalMoney(n) {
+        const v = Math.round(Number(n) || 0);
+        const abs = Math.abs(v).toLocaleString('zh-TW');
+        if (v < 0) return '-$' + abs;
+        return '$' + abs;
+    }
+    function updateCalendarMonthSummary() {
+        const expenseEl = document.getElementById('monthSummaryExpense');
+        const incomeEl = document.getElementById('monthSummaryIncome');
+        const balanceEl = document.getElementById('monthSummaryBalance');
+        const wrap = document.getElementById('calendarMonthSummary');
+        if (!expenseEl || !incomeEl || !balanceEl) return;
+        const year = currentCalendarDate.getFullYear();
+        const month = currentCalendarDate.getMonth();
+        let expense = 0, income = 0;
+        try {
+            const records = typeof loadJournalRecords === 'function' ? loadJournalRecords() : [];
+            (records || []).forEach(r => {
+                if (!r || !r.date) return;
+                const d = new Date(r.date);
+                if (isNaN(d.getTime()) || d.getFullYear() !== year || d.getMonth() !== month) return;
+                const amt = parseFloat(r.amount) || 0;
+                if (r.type === 'expense') expense += amt;
+                else if (r.type === 'income') income += amt;
+            });
+        } catch (e) {}
+        const balance = income - expense;
+        expenseEl.textContent = formatJournalMoney(expense);
+        incomeEl.textContent = formatJournalMoney(income);
+        balanceEl.textContent = formatJournalMoney(balance);
+        balanceEl.classList.toggle('pos', balance >= 0);
+        balanceEl.classList.toggle('neg', balance < 0);
+        if (wrap) {
+            wrap.style.display = (journalViewMode === 'linechart') ? 'none' : 'grid';
+        }
+    }
     function renderCalendar() {
         const grid = document.getElementById('calendarGrid');
         const monthYear = document.getElementById('calendarMonthYear');
@@ -11729,6 +12414,7 @@
         const year = currentCalendarDate.getFullYear();
         const month = currentCalendarDate.getMonth();
         monthYear.textContent = `${year}年${month + 1}月`;
+        updateCalendarMonthSummary();
         grid.innerHTML = '';
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
@@ -11845,6 +12531,7 @@
         selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0); // 確保時間部分為 00:00:00
         renderCalendar();
+        updateCalendarStickyBar();
         console.log('Selected date:', selectedDate.toLocaleDateString('zh-TW'));
         // 下一幀再更新詳情區，讓日曆先完成繪製，操作更順暢
         requestAnimationFrame(() => { showFixedTransferDetailsForDate(date); });
@@ -11899,6 +12586,7 @@
         const headerDate = document.getElementById('calendarHeaderDate');
         const headerLinechart = document.getElementById('calendarHeaderLinechart');
         
+        const monthSummary = document.getElementById('calendarMonthSummary');
         if(mode === 'calendar') {
             if(calendarGrid) calendarGrid.style.display = 'grid';
             if(calendarWeekdays) calendarWeekdays.style.display = 'grid';
@@ -11907,6 +12595,7 @@
             if(calendarTransferDetails) calendarTransferDetails.style.display = 'block';
             if(headerDate) headerDate.style.display = 'flex';
             if(headerLinechart) headerLinechart.style.display = 'none';
+            if(monthSummary) monthSummary.style.display = 'grid';
             resetPieChartHighlight('monthlyExpenseTotalChart');
             resetPieChartHighlight('monthlyExpenseChart');
             resetPieChartHighlight('monthlyExpenseAdvanceChart');
@@ -11923,6 +12612,7 @@
                 renderCalendar();
                 showFixedTransferDetailsForDate(today);
             }
+            requestAnimationFrame(() => initCalendarStickyBar());
         } else if(mode === 'chart') {
             if(calendarGrid) calendarGrid.style.display = 'none';
             if(calendarWeekdays) calendarWeekdays.style.display = 'none';
@@ -11935,6 +12625,9 @@
             if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
             if(headerDate) headerDate.style.display = 'flex';
             if(headerLinechart) headerLinechart.style.display = 'none';
+            if(monthSummary) monthSummary.style.display = 'grid';
+            updateCalendarMonthSummary();
+            setCalendarStickyBarVisible(false);
         } else if(mode === 'linechart') {
             if(calendarGrid) calendarGrid.style.display = 'none';
             if(calendarWeekdays) calendarWeekdays.style.display = 'none';
@@ -11951,6 +12644,8 @@
             if(calendarTransferDetails) calendarTransferDetails.style.display = 'none';
             if(headerDate) headerDate.style.display = 'none';
             if(headerLinechart) headerLinechart.style.display = 'flex';
+            if(monthSummary) monthSummary.style.display = 'none';
+            setCalendarStickyBarVisible(false);
         }
     }
     
@@ -12437,11 +13132,18 @@
                 monthlyIncomeAdvanceChartAnimationEngine = null;
             }
             
-            // 清除容器並顯示提示文字
+            // 清除容器並顯示引導空狀態
             chartContainer.innerHTML = '';
             const emptyDiv = document.createElement('div');
-            emptyDiv.style.cssText = 'text-align: center; padding: 50px; color: var(--text-secondary);';
-            emptyDiv.textContent = '該月份沒有' + (type === 'expense' ? '支出' : '收入') + '記錄';
+            emptyDiv.className = 'journal-empty-state';
+            const kind = type === 'expense' ? '支出' : '收入';
+            emptyDiv.innerHTML =
+                '<div class="empty-title">本月尚無' + kind + '資料</div>' +
+                '<div class="empty-desc">新增一筆後這裡會顯示占比分析</div>' +
+                '<div class="journal-empty-actions">' +
+                '<button type="button" class="primary" onclick="openNewExpenseFromCalendar()">新增第一筆</button>' +
+                '<button type="button" onclick="startJournalAiImportFromEmpty(\'' + type + '\')">AI 匯入</button>' +
+                '</div>';
             chartContainer.appendChild(emptyDiv);
             // 清空對應的詳細列表
             renderMonthlyChartList(type, [], chartId);
@@ -12680,52 +13382,70 @@
         document.querySelectorAll('.chart-view-dropdown.open').forEach(el => el.classList.remove('open'));
     });
     
-    // 選擇支出圖表視圖（總支出、原始支出、代墊）
+    function reflowMonthlyPieIfVisible(chartId) {
+        const el = document.getElementById(chartId);
+        if (!el || !el.chartInstance) return;
+        try {
+            requestAnimationFrame(() => {
+                try { el.chartInstance.reflow(); } catch (err) {}
+            });
+        } catch (e) {}
+    }
+
+    // 選擇支出圖表視圖（總支出、原始支出、代墊）— 頁內 Tab
     function selectExpenseChartView(view, e) {
-        if(e) e.stopPropagation();
-        const viewNames = { total: '總支出', normal: '原始支出', advance: '代墊' };
+        if(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         currentExpenseChartView = view;
         
-        document.getElementById('expenseTotalView').style.display = view === 'total' ? 'block' : 'none';
-        document.getElementById('expenseNormalView').style.display = view === 'normal' ? 'block' : 'none';
-        document.getElementById('expenseAdvanceView').style.display = view === 'advance' ? 'block' : 'none';
+        const totalView = document.getElementById('expenseTotalView');
+        const normalView = document.getElementById('expenseNormalView');
+        const advanceView = document.getElementById('expenseAdvanceView');
+        if(totalView) totalView.style.display = view === 'total' ? 'block' : 'none';
+        if(normalView) normalView.style.display = view === 'normal' ? 'block' : 'none';
+        if(advanceView) advanceView.style.display = view === 'advance' ? 'block' : 'none';
         
-        const toggleText = document.getElementById('expenseChartToggleText');
-        if(toggleText) toggleText.textContent = viewNames[view];
-        
-        const dd = document.getElementById('expenseChartDropdown');
-        if(dd) {
-            dd.querySelectorAll('.dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
-            dd.classList.remove('open');
+        const tabs = document.getElementById('expenseChartSegTabs');
+        if(tabs) {
+            tabs.querySelectorAll('button[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
         }
         
         resetPieChartHighlight('monthlyExpenseTotalChart');
         resetPieChartHighlight('monthlyExpenseChart');
         resetPieChartHighlight('monthlyExpenseAdvanceChart');
+        if (view === 'total') reflowMonthlyPieIfVisible('monthlyExpenseTotalChart');
+        else if (view === 'normal') reflowMonthlyPieIfVisible('monthlyExpenseChart');
+        else reflowMonthlyPieIfVisible('monthlyExpenseAdvanceChart');
     }
     
-    // 選擇收入圖表視圖（總收入、原始收入、代墊）
+    // 選擇收入圖表視圖（總收入、原始收入、代墊）— 頁內 Tab
     function selectIncomeChartView(view, e) {
-        if(e) e.stopPropagation();
-        const viewNames = { total: '總收入', normal: '原始收入', advance: '代墊' };
+        if(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         currentIncomeChartView = view;
         
-        document.getElementById('incomeTotalView').style.display = view === 'total' ? 'block' : 'none';
-        document.getElementById('incomeNormalView').style.display = view === 'normal' ? 'block' : 'none';
-        document.getElementById('incomeAdvanceView').style.display = view === 'advance' ? 'block' : 'none';
+        const totalView = document.getElementById('incomeTotalView');
+        const normalView = document.getElementById('incomeNormalView');
+        const advanceView = document.getElementById('incomeAdvanceView');
+        if(totalView) totalView.style.display = view === 'total' ? 'block' : 'none';
+        if(normalView) normalView.style.display = view === 'normal' ? 'block' : 'none';
+        if(advanceView) advanceView.style.display = view === 'advance' ? 'block' : 'none';
         
-        const toggleText = document.getElementById('incomeChartToggleText');
-        if(toggleText) toggleText.textContent = viewNames[view];
-        
-        const dd = document.getElementById('incomeChartDropdown');
-        if(dd) {
-            dd.querySelectorAll('.dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
-            dd.classList.remove('open');
+        const tabs = document.getElementById('incomeChartSegTabs');
+        if(tabs) {
+            tabs.querySelectorAll('button[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
         }
         
         resetPieChartHighlight('monthlyIncomeTotalChart');
         resetPieChartHighlight('monthlyIncomeChart');
         resetPieChartHighlight('monthlyIncomeAdvanceChart');
+        if (view === 'total') reflowMonthlyPieIfVisible('monthlyIncomeTotalChart');
+        else if (view === 'normal') reflowMonthlyPieIfVisible('monthlyIncomeChart');
+        else reflowMonthlyPieIfVisible('monthlyIncomeAdvanceChart');
     }
     
     // 渲染圓餅圖下方的詳細列表
@@ -12992,6 +13712,14 @@
     }
     
     function handleMonthlyChartTouchStart(e) {
+        // Tab／按鈕點擊不進入左右滑手勢，避免吃掉 click
+        if (e.target && e.target.closest && e.target.closest('.journal-seg-tabs, button, a, input, select, textarea, label')) {
+            monthlyChartTouchStartX = null;
+            monthlyChartTouchStartY = null;
+            monthlyChartTouchTarget = null;
+            monthlyChartIsSwiping = false;
+            return;
+        }
         monthlyChartTouchStartX = e.touches[0].clientX;
         monthlyChartTouchStartY = e.touches[0].clientY;
         monthlyChartTouchTarget = e.target;
@@ -13048,11 +13776,16 @@
             return;
         }
         if(!monthlyChartIsSwiping) {
-            // 剛才是內層細項捲動：短暫放開內層觸控，讓下一次滑動可被外層接收
-            const scrollable = monthlyChartTouchTarget && monthlyChartTouchTarget.closest && monthlyChartTouchTarget.closest('#monthlyChartSwiper .page-item, #monthlyChartSwiper .chart-detail-list');
+            const target = monthlyChartTouchTarget;
             monthlyChartTouchStartX = null;
             monthlyChartTouchStartY = null;
             monthlyChartTouchTarget = null;
+            // Tab／按鈕點擊：不可關閉 pointer-events，否則會吞掉後續 click
+            if (target && target.closest && target.closest('.journal-seg-tabs, button, a, input, select, textarea, label')) {
+                return;
+            }
+            // 剛才是內層細項捲動：短暫放開內層觸控，讓下一次滑動可被外層接收
+            const scrollable = target && target.closest && target.closest('#monthlyChartSwiper .page-item, #monthlyChartSwiper .chart-detail-list');
             if(scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
                 scrollable.style.pointerEvents = 'none';
                 setTimeout(function() { scrollable.style.pointerEvents = ''; }, 80);
@@ -13219,24 +13952,23 @@
         // 獲取日曆容器的實際高度（包括 padding）
         const calendarRect = calendarContainer.getBoundingClientRect();
         const calendarHeight = calendarRect.height;
-        // 獲取 calendarPage 的 padding（上下各 20px）
+        // calendarPage：top/bottom 各約 60px + padding
         const pagePadding = 40;
-        // 獲取詳情區域的 margin-top
         const detailsMarginTop = 20;
-        // 計算可用高度
-        const availableHeight = windowHeight - 60 - pagePadding - calendarHeight - detailsMarginTop;
-        // 設置最小高度和最大高度（至少 200px，最多不超過可用空間）
-        const minHeight = 200;
-        const maxHeight = Math.max(minHeight, availableHeight - 20); // 減去一些緩衝
+        const availableHeight = windowHeight - 60 - 60 - pagePadding - calendarHeight - detailsMarginTop;
         
-        // 為每個分頁設置最大高度
         const expensePage = document.getElementById('journalExpensePage');
         const incomePage = document.getElementById('journalIncomePage');
         const transferPage = document.getElementById('journalTransferPage');
         
         [expensePage, incomePage, transferPage].forEach(page => {
-            if(page) {
-                page.style.maxHeight = `${maxHeight}px`;
+            if(!page) return;
+            // 短螢幕：不鎖死高度，改由 calendarPage 整頁垂直捲動
+            if (availableHeight < 240) {
+                page.style.maxHeight = '';
+                page.style.height = '';
+            } else {
+                page.style.maxHeight = `${availableHeight - 20}px`;
             }
         });
     }
@@ -13601,11 +14333,20 @@
             });
         }
         
-        // 如果沒有任何內容，顯示提示
+        // 如果沒有任何內容，顯示引導空狀態
         if(records.length === 0 && fixedTransfers.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.style.cssText = 'text-align: center; color: var(--text-secondary); padding: 20px; font-size: 14px;';
-            emptyMsg.textContent = '尚無記錄';
+            emptyMsg.className = 'journal-empty-state';
+            const typeLabel = type === 'expense' ? '支出' : (type === 'income' ? '收入' : '轉帳');
+            emptyMsg.innerHTML =
+                '<div class="empty-title">這天還沒有' + typeLabel + '</div>' +
+                '<div class="empty-desc">記一筆或用截圖 AI 快速匯入</div>' +
+                '<div class="journal-empty-actions">' +
+                '<button type="button" class="primary" onclick="openNewExpenseFromCalendar()">新增第一筆</button>' +
+                (type === 'transfer'
+                    ? ''
+                    : '<button type="button" onclick="startJournalAiImportFromEmpty(\'' + type + '\')">AI 匯入</button>') +
+                '</div>';
             list.appendChild(emptyMsg);
         }
         
@@ -13624,6 +14365,13 @@
             container.style.transform = `translateX(${transformValue}%)`;
             // 更新當前 transform 值
             journalCurrentTransform = transformValue;
+        }
+        // 同步分段控制高亮
+        const tabs = document.getElementById('journalDetailSegTabs');
+        if (tabs) {
+            tabs.querySelectorAll('button[data-journal-tab]').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.getAttribute('data-journal-tab'), 10) === currentJournalPageIndex);
+            });
         }
         
         // 切換記帳頁面時，重置所有圓餅圖高亮
@@ -13800,6 +14548,7 @@
                 window.syncJournalToFirestore(records);
             }
             scheduleMoneeRtdbBackupPush();
+            if (typeof updateCalendarMonthSummary === 'function') updateCalendarMonthSummary();
         } catch(e) { console.error(e); }
     }
     
@@ -13995,8 +14744,8 @@
     }
     
     // 刪除記帳記錄
-    function deleteJournalRecord(recordId) {
-        if(!confirm('確定要刪除這筆記錄嗎？')) return;
+    async function deleteJournalRecord(recordId) {
+        if(!await moneeConfirm('確定要刪除這筆記錄嗎？', { title: '刪除記錄', okText: '刪除', danger: true })) return;
         
         const records = loadJournalRecords();
         const record = records.find(r => r.id === recordId);
@@ -14410,8 +15159,8 @@
     }
     
     // 損益歸零：保存當前損益值並將顯示值設為0
-    function resetPnL() {
-        if(!confirm('確定要將當日損益和總損益歸零嗎？此操作可以恢復。')) return;
+    async function resetPnL() {
+        if(!await moneeConfirm('確定要將當日損益和總損益歸零嗎？此操作可以恢復。', { title: '損益歸零', okText: '歸零', danger: true })) return;
         
         const dailyPnL = calculateJournalDailyPnL();
         const totalPnL = calculateJournalTotalPnL();
@@ -14430,7 +15179,7 @@
         
         // 重新渲染以更新顯示
         updateChartData();
-        alert('損益已歸零');
+        await moneeAlert('損益已歸零', '完成');
         // 自動重新整理頁面
         setTimeout(() => {
             location.reload();
@@ -14438,14 +15187,14 @@
     }
     
     // 恢復損益：恢復到歸零前的值
-    function restorePnL() {
+    async function restorePnL() {
         const backup = localStorage.getItem(`pnl_backup_${currentUserId}`);
         if(!backup) {
-            alert('沒有可恢復的損益記錄');
+            await moneeAlert('沒有可恢復的損益記錄');
             return;
         }
         
-        if(!confirm('確定要恢復損益嗎？')) return;
+        if(!await moneeConfirm('確定要恢復損益嗎？', { title: '恢復損益', okText: '恢復' })) return;
         
         // 清除偏移值
         localStorage.removeItem(`pnl_daily_offset_${currentUserId}`);
@@ -14454,7 +15203,7 @@
         
         // 重新渲染以更新顯示
         updateChartData();
-        alert('損益已恢復');
+        await moneeAlert('損益已恢復', '完成');
         // 自動重新整理頁面
         setTimeout(() => {
             location.reload();
@@ -14627,6 +15376,22 @@
         // 打開四個分頁的模態框
         openJournalTypeSelector();
     }
+    /** 空狀態「AI 匯入」：先打開對應表單再觸發截圖選擇 */
+    async function startJournalAiImportFromEmpty(type) {
+        if(!selectedDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            selectedDate = new Date(today);
+            renderCalendar();
+        }
+        if(type === 'income') {
+            openIncomeModal();
+            setTimeout(() => { triggerIncomeImageUpload(); }, 280);
+        } else {
+            openExpenseModal();
+            setTimeout(() => { triggerExpenseImageUpload(); }, 280);
+        }
+    }
     
     function closeCalendarJournalModal() {
         const modal = document.getElementById('calendarJournalModal');
@@ -14767,9 +15532,9 @@
     }
 
     // 支出 AI 匯入截圖
-    function triggerExpenseImageUpload() {
+    async function triggerExpenseImageUpload() {
         if(!settings.geminiKey) {
-            alert('請先在設定中設定 Gemini API Key');
+            await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
             return;
         }
         document.getElementById('expenseImgUpload').click();
@@ -14947,9 +15712,9 @@
     }
     
     // 收入 AI 批量匯入
-    function triggerIncomeImageUpload() {
+    async function triggerIncomeImageUpload() {
         if(!settings.geminiKey) {
-            alert('請先在設定中設定 Gemini API Key');
+            await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
             return;
         }
         document.getElementById('incomeImgUpload').click();
@@ -15475,8 +16240,8 @@
             container.appendChild(row);
         });
     }
-    function deleteFixedExpenseItem(id) {
-        if(!confirm('確定要刪除此固定支出？')) return;
+    async function deleteFixedExpenseItem(id) {
+        if(!await moneeConfirm('確定要刪除此固定支出？', { title: '刪除固定支出', okText: '刪除', danger: true })) return;
         const items = loadFixedExpenses().filter(x => x.id !== id);
         saveFixedExpenses(items);
         renderFixedExpenseList();
@@ -15681,8 +16446,8 @@
             container.appendChild(row);
         });
     }
-    function deleteFixedIncomeItem(id) {
-        if(!confirm('確定要刪除此固定收入？')) return;
+    async function deleteFixedIncomeItem(id) {
+        if(!await moneeConfirm('確定要刪除此固定收入？', { title: '刪除固定收入', okText: '刪除', danger: true })) return;
         const items = loadFixedIncomes().filter(x => x.id !== id);
         saveFixedIncomes(items);
         renderFixedIncomeList();
@@ -16503,8 +17268,8 @@
         });
     }
     
-    function deleteFixedTransfer(id) {
-        if(!confirm('確定要刪除這個固定轉帳嗎？')) return;
+    async function deleteFixedTransfer(id) {
+        if(!await moneeConfirm('確定要刪除這個固定轉帳嗎？', { title: '刪除固定轉帳', okText: '刪除', danger: true })) return;
         
         const transfers = loadFixedTransfers();
         const transfer = transfers.find(t => t.id === id);
@@ -17074,7 +17839,7 @@
         }
     }
     
-    function saveFixedTransfer() {
+    async function saveFixedTransfer() {
         // 驗證必填欄位
         const title = document.getElementById('fixedTransferTitle').value.trim();
         const amount = parseFloat(document.getElementById('fixedTransferAmount').value);
@@ -17166,7 +17931,7 @@
             const existing = transfers.find(t => t.title === title);
             if(existing) {
                 // 如果已存在，切換到編輯模式
-                if(confirm(`已存在標題為「${title}」的固定轉帳，是否要編輯它？`)) {
+                if(await moneeConfirm(`已存在標題為「${title}」的固定轉帳，是否要編輯它？`, { title: '固定轉帳已存在', okText: '編輯' })) {
                     editingFixedTransferId = existing.id;
                     closeFixedTransferModal();
                     setTimeout(() => {
