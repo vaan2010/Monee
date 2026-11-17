@@ -2405,8 +2405,12 @@
         .sidebar-footer {
             margin-top: auto;
             flex-shrink: 0;
-            padding: 8px 0 max(12px, env(safe-area-inset-bottom));
+            padding: 0 0 max(12px, env(safe-area-inset-bottom));
             border-top: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0;
         }
         .release-notes-overlay {
             position: fixed;
@@ -2501,39 +2505,59 @@
         body.release-notes-open .currency-toggle-btn {
             display: none !important;
         }
-        /* Footer 的登出項目要和上方 menu-item 完全對齊 */
+        /* Footer：登出靠左、版本靠右，同一列且字級／對齊一致 */
         .sidebar-footer .menu-item {
             margin: 0;
             border-radius: 0;
-            padding: 12px 25px;
+            padding: 12px 12px 12px 25px;
             display: flex;
             align-items: center;
+            flex: 1;
+            min-width: 0;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 24px;
+            color: var(--text-primary);
+            box-sizing: border-box;
         }
         .sidebar-footer .menu-item i {
             margin-right: 15px;
             width: 24px;
             text-align: center;
             font-size: 18px;
+            line-height: 24px;
+            flex-shrink: 0;
+        }
+        .sidebar-footer .menu-item .menu-text {
+            flex: 0 1 auto;
+            line-height: 24px;
         }
         .sidebar-version {
-            display: block;
-            width: 100%;
-            box-sizing: border-box;
+            flex-shrink: 0;
+            align-self: stretch;
             margin: 0;
-            padding: 4px 25px 2px;
+            padding: 12px 25px 12px 12px;
             border: none;
             background: transparent;
-            color: var(--text-secondary);
-            font-size: 12px;
-            font-weight: 600;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 400;
+            line-height: 24px;
+            letter-spacing: normal;
             text-align: right;
             cursor: pointer;
-            opacity: 0.85;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
         }
         .sidebar-version:hover,
         .sidebar-version:active {
-            color: var(--text-primary);
-            opacity: 1;
+            background: var(--border-color);
         }
     </style>
 </head>
