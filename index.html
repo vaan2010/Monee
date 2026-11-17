@@ -235,7 +235,7 @@
         
         /* Layout */
         .app-container { display: flex; height: 100vh; overflow: hidden; }
-        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; padding-top: calc(60px + var(--page-indicator-space, 72px)); padding-bottom: 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; width: 100%; padding-top: calc(var(--navbar-height, 60px) + var(--page-indicator-space, 72px)); padding-bottom: 0; }
         .main-content::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
         .main-content::-webkit-scrollbar-track { display: none !important; background: transparent !important; }
         .main-content::-webkit-scrollbar-thumb { display: none !important; background: transparent !important; }
@@ -311,7 +311,7 @@
             .hamburger-btn { display: none !important; }
             .sidebar-toggle-btn-desktop { display: block !important; }
             .sidebar.collapsed .sidebar-header, .sidebar.collapsed .sidebar-menu { opacity: 0; pointer-events: none; }
-            .main-content { display: grid; grid-template-rows: auto 1fr; overflow: hidden; width: 100%; padding-top: calc(60px + var(--page-indicator-space, 72px)); }
+            .main-content { display: grid; grid-template-rows: auto 1fr; overflow: hidden; width: 100%; padding-top: calc(var(--navbar-height, 60px) + var(--page-indicator-space, 72px)); }
             .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; height: 100%; scrollbar-width: none; -ms-overflow-style: none; align-items: start; }
             .content-grid::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; background: transparent !important; }
             .content-grid::-webkit-scrollbar-track { display: none !important; background: transparent !important; }
@@ -384,7 +384,8 @@
             #calculatorModal .modal-content-wrapper > div:last-child > div:last-child { gap: 6px !important; }
         }
 
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: var(--bg-color); position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 60px; width: 100%; }
+        :root { --navbar-height: calc(60px + env(safe-area-inset-top, 0px)); --keyboard-inset: 0px; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: max(15px, env(safe-area-inset-top, 0px)) 20px 15px; background-color: var(--bg-color); position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: var(--navbar-height); width: 100%; box-sizing: border-box; }
         .navbar h1 { font-size: 20px; margin: 0; font-weight: 700; position: absolute; left: calc(50% - 15px); transform: translateX(-50%); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
         .navbar h1 .title-logo { width: 40px; height: 40px; object-fit: contain; }
         .btn-group { display: flex; gap: 15px; }
@@ -1153,6 +1154,103 @@
             border: 1px solid var(--accent-border) !important;
             box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent) !important;
         }
+
+        /* 固定支出／收入／轉帳表單：跟主題 */
+        #fixedExpenseModal .modal-content-wrapper,
+        #fixedIncomeModal .modal-content-wrapper,
+        #fixedTransferModal .modal-content-wrapper {
+            background: var(--bg-color) !important;
+        }
+        #fixedExpenseModal .modal-header,
+        #fixedIncomeModal .modal-header,
+        #fixedTransferModal .modal-header {
+            background: var(--bg-color) !important;
+        }
+        #fixedExpenseModal .form-row,
+        #fixedIncomeModal .form-row,
+        #fixedTransferModal .form-row {
+            background: var(--card-bg) !important;
+        }
+        #fixedExpenseModal h1,
+        #fixedIncomeModal h1,
+        #fixedTransferModal h1,
+        #fixedExpenseModal .form-label,
+        #fixedIncomeModal .form-label,
+        #fixedTransferModal .form-label,
+        #fixedExpenseModal .form-input,
+        #fixedIncomeModal .form-input,
+        #fixedTransferModal .form-input {
+            color: var(--text-primary) !important;
+        }
+        #fixedExpenseModal .form-row span,
+        #fixedIncomeModal .form-row span,
+        #fixedTransferModal .form-row span,
+        #fixedExpenseModal .form-row i,
+        #fixedIncomeModal .form-row i,
+        #fixedTransferModal .form-row i {
+            color: var(--text-secondary);
+        }
+        #fixedExpenseModal .form-label,
+        #fixedIncomeModal .form-label,
+        #fixedTransferModal .form-label {
+            color: var(--text-primary) !important;
+        }
+        #fixedExpenseModal .modal-header .btn-icon,
+        #fixedIncomeModal .modal-header .btn-icon,
+        #fixedTransferModal .modal-header .btn-icon {
+            color: var(--text-secondary);
+        }
+        #fixedExpenseModal .modal-header .btn-icon[onclick="saveFixedExpense()"] { color: var(--color-down) !important; }
+        #fixedIncomeModal .modal-header .btn-icon[onclick="saveFixedIncome()"] { color: var(--color-up) !important; }
+        #fixedTransferModal .modal-header .btn-icon[onclick="saveFixedTransfer()"] { color: var(--accent) !important; }
+        #fixedExpenseListModal button[onclick="openFixedExpenseModal()"],
+        #fixedIncomeListModal button[onclick="openFixedIncomeModal()"],
+        #fixedTransferListModal button[onclick="addNewFixedTransfer()"] {
+            background: var(--accent) !important;
+            color: var(--accent-contrast) !important;
+            border: 1px solid var(--accent-border) !important;
+            box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent) !important;
+        }
+
+        /* 類別選擇器／資產詳情／AI 教學：淺色主題對比 */
+        #categorySelectorTitle { color: var(--text-primary) !important; }
+        #detailView .detail-header [style*="color: #8e8e93"],
+        #detailView #dDividendBlock [style*="color: #8e8e93"] {
+            color: var(--text-secondary) !important;
+        }
+        #detailView #dDividendBlock {
+            background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+            border-color: color-mix(in srgb, var(--accent) 50%, transparent) !important;
+        }
+        #detailView #dDividendBlock [style*="color: #ffd60a"] {
+            color: var(--accent) !important;
+        }
+        #detailView .btn-icon[onclick="deleteCurrentAsset()"] {
+            color: var(--color-down) !important;
+        }
+        .expense-ai-carousel {
+            background: var(--bg-color) !important;
+        }
+        .expense-ai-carousel-slide img {
+            background: var(--card-bg) !important;
+        }
+        .expense-ai-carousel-arrow {
+            background: color-mix(in srgb, var(--card-bg) 92%, var(--text-primary)) !important;
+            color: var(--text-primary) !important;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 12%, transparent) !important;
+        }
+
+        /* 記帳全高 modal：鍵盤彈出時底部留白 */
+        #expenseModal .modal-content-wrapper,
+        #incomeModal .modal-content-wrapper,
+        #transferModal .modal-content-wrapper,
+        #fixedExpenseModal .modal-content-wrapper,
+        #fixedIncomeModal .modal-content-wrapper,
+        #fixedTransferModal .modal-content-wrapper {
+            padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--keyboard-inset, 0px)) !important;
+            box-sizing: border-box;
+        }
         
         /* 隱藏對齊用 spacer */
         .list-item:has(.item-name-row) .item-amount-name-row { display: none !important; }
@@ -1895,7 +1993,7 @@
             /* 上下留白收斂，避免漸層外框比玻璃膠囊看起來「多佔一塊」 */
             padding: clamp(8px, 2vw, 12px) var(--page-bar-inset) clamp(8px, 2vw, 12px);
             position: fixed;
-            top: 60px;
+            top: var(--navbar-height, 60px);
             left: 0;
             right: 0;
             z-index: 95;
@@ -2172,7 +2270,7 @@
         /* 日曆捲出視窗後：頂部固定列（今日／選中日期／回頂） */
         .calendar-sticky-bar {
             position: fixed;
-            top: 60px;
+            top: var(--navbar-height, 60px);
             left: 0;
             right: 0;
             z-index: 96;
@@ -2771,14 +2869,14 @@
         #expenseAiTutorialModal { background: var(--card-bg); border-radius: 16px; max-width: 400px; width: 100%; max-height: 90vh; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
         #expenseAiTutorialModal .tutorial-title { font-size: 18px; font-weight: 700; color: var(--text-primary); padding: 16px 20px 8px; text-align: center; }
         #expenseAiTutorialModal .tutorial-sub { font-size: 13px; color: var(--text-secondary); padding: 0 20px 12px; text-align: center; }
-        .expense-ai-carousel { position: relative; background: #0c0c0e; }
-        .expense-ai-carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); color: #333; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-        .expense-ai-carousel-arrow:hover { background: #fff; }
+        .expense-ai-carousel { position: relative; background: var(--bg-color); }
+        .expense-ai-carousel-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); background: color-mix(in srgb, var(--card-bg) 92%, var(--text-primary)); color: var(--text-primary); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px color-mix(in srgb, var(--text-primary) 12%, transparent); }
+        .expense-ai-carousel-arrow:hover { background: var(--card-bg); }
         .expense-ai-carousel-arrow.prev { left: 8px; }
         .expense-ai-carousel-arrow.next { right: 8px; }
         .expense-ai-carousel-inner { display: flex; transition: transform 0.35s ease; }
         .expense-ai-carousel-slide { min-width: 100%; padding: 12px 20px; box-sizing: border-box; }
-        .expense-ai-carousel-slide img { width: 100%; height: auto; border-radius: 12px; display: block; vertical-align: top; max-height: 50vh; object-fit: contain; background: #1c1c1e; }
+        .expense-ai-carousel-slide img { width: 100%; height: auto; border-radius: 12px; display: block; vertical-align: top; max-height: 50vh; object-fit: contain; background: var(--card-bg); }
         .expense-ai-carousel-slide .slide-label { font-size: 14px; font-weight: 600; color: var(--accent); text-align: center; margin-top: 10px; }
         .expense-ai-carousel-dots { display: flex; justify-content: center; gap: 8px; padding: 12px; }
         .expense-ai-carousel-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-color); cursor: pointer; transition: background 0.2s; }
@@ -3360,7 +3458,7 @@
             </div>
 
             <!-- Calendar Page -->
-            <div id="calendarPage" style="display: none; padding: 10px 20px 24px 20px; margin-top: 0; background: var(--bg-color); position: fixed; top: 60px; left: 0; right: 0; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); height: auto; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
+            <div id="calendarPage" style="display: none; padding: 10px 20px 24px 20px; margin-top: 0; background: var(--bg-color); position: fixed; top: var(--navbar-height, 60px); left: 0; right: 0; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); height: auto; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; touch-action: pan-y;">
                 <!-- 日曆捲出後固定顯示：今日／選中日期／回頂 -->
                 <div id="calendarStickyBar" class="calendar-sticky-bar" aria-hidden="true">
                     <button type="button" class="sticky-chip today-chip" onclick="onCalendarStickyToday()" title="回到今天">
@@ -3603,7 +3701,7 @@
             <button class="btn-icon" onclick="closeDetailView()"><i class="fas fa-arrow-left"></i></button>
             <h1 id="detailTitleName">資產詳情</h1>
             <div style="display: flex; gap: 10px;">
-                <button class="btn-icon" onclick="deleteCurrentAsset()" style="color: #ff453a;" title="刪除"><i class="fas fa-trash"></i></button>
+                <button class="btn-icon" onclick="deleteCurrentAsset()" style="color: var(--color-down);" title="刪除"><i class="fas fa-trash"></i></button>
             <button class="btn-icon" onclick="editCurrentAsset()"><i class="fas fa-edit"></i></button>
             </div>
         </div>
@@ -3623,12 +3721,12 @@
                 <div id="dCostPnl">
                     <div style="font-size: 18px; font-weight: 600;">持股成本損益</div>
                     <span id="dCostPnlVal" style="font-size: 24px; font-weight: 700;">+0 (0%)</span>
-                <div style="font-size: 12px; color: #8e8e93; margin-top: 5px;">參考損益 (含手續費)</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">參考損益 (含手續費)</div>
                 </div>
-                <div id="dDividendBlock" style="display: none; margin-top: 16px; padding: 16px; background: rgba(255, 214, 10, 0.15); border-radius: 12px; border: 1px solid rgba(255, 214, 10, 0.5);">
-                    <div style="font-size: 14px; color: #8e8e93; margin-bottom: 6px;">除權除息</div>
-                    <div style="font-size: 20px; font-weight: 700; color: #ffd60a;"><span id="dDividendAmount">0</span></div>
-                    <div style="font-size: 14px; color: #ffd60a; margin-top: 4px;">除息日：<span id="dDividendDate">-</span></div>
+                <div id="dDividendBlock" style="display: none; margin-top: 16px; padding: 16px; background: color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 12px; border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);">
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 6px;">除權除息</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--accent);"><span id="dDividendAmount">0</span></div>
+                    <div style="font-size: 14px; color: var(--accent); margin-top: 4px;">除息日：<span id="dDividendDate">-</span></div>
                 </div>
             </div>
         </div>
@@ -3664,7 +3762,7 @@
             <div id="contentBasic" class="tab-content active">
                 <div class="ai-btn-area" id="aiArea" style="display:none;">
                     <div style="margin-bottom: 10px; padding: 0 5px;">
-                        <span style="font-size: 12px; color: #8e8e93;">選擇券商 (手續費率)</span>
+                        <span style="font-size: 12px; color: var(--text-secondary);">選擇券商 (手續費率)</span>
                         <select id="brokerSelect" class="form-input" style="background: var(--border-color); border-radius: 8px; padding: 5px; margin-top: 5px;" onchange="updateFeeDisplay()">
                             <option value="cathay">國泰證券 (1.425%)</option>
                             <option value="cathay_fixed">國泰證券 (定期定額 固定1元)</option>
@@ -4365,7 +4463,7 @@
     <div id="categorySelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'categorySelectorModal' && closeCategorySelector()">
         <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
-                <div style="font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
+                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
                 <div id="categorySelectorList" style="max-height: 60vh; overflow-y: auto;">
                     <!-- 類別列表將在這裡動態生成 -->
                 </div>
@@ -4375,67 +4473,67 @@
 
     <!-- Fixed Transfer Modal -->
     <div id="fixedTransferModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedTransferModal' && closeFixedTransferModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單已移除 -->
-            <div class="modal-header" style="position: sticky; top: 0; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeFixedTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
+            <div class="modal-header" style="position: sticky; top: 0; z-index: 10; background: var(--bg-color); border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedTransferModal()" style="color: var(--text-secondary); font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
-                <button class="btn-icon" style="font-weight:bold; color: #ffd60a;" onclick="saveFixedTransfer()">儲存</button>
+                <button class="btn-icon" style="font-weight:bold; color: var(--accent);" onclick="saveFixedTransfer()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                  <!-- 大標題區域 -->
                  <div style="margin-bottom: 20px; padding-top: 10px;">
-                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定轉帳</h1>
+                    <h1 style="font-size: 34px; font-weight: bold; color: var(--text-primary); margin: 0 0 5px 0;">固定轉帳</h1>
                 </div>
 
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
-                        <input type="text" id="fixedTransferTitle" class="form-input" placeholder="例:交通卡充值" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedTransferTitle" class="form-input" placeholder="例:交通卡充值" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">使用帳戶全部金額</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="fixedTransferUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <span id="fixedTransferUseAccountBalanceLabel" style="color: var(--text-secondary); font-size: 14px;">關閉</span>
                             <label class="switch">
                                 <input type="checkbox" id="fixedTransferUseAccountBalance" onchange="updateFixedTransferAmountMode()">
                                 <span class="slider"></span>
                             </label>
                         </div>
                     </div>
-                    <div class="form-row" id="fixedTransferAccountBalanceSourceRow" style="display: none; cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; align-items: center; justify-content: space-between;" onclick="toggleFixedTransferAccountBalanceSource()">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶</span>
+                    <div class="form-row" id="fixedTransferAccountBalanceSourceRow" style="display: none; cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; align-items: center; justify-content: space-between;" onclick="toggleFixedTransferAccountBalanceSource()">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">使用帳戶</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="fixedTransferAccountBalanceSource" style="color: #8e8e93; font-size: 17px;">匯出方（從帳戶）</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="fixedTransferAccountBalanceSource" style="color: var(--text-secondary); font-size: 17px;">匯出方（從帳戶）</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row" id="fixedTransferAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
-                        <input type="number" id="fixedTransferAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" id="fixedTransferAmountRow" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedTransferAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('from')">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">從帳戶</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('from')">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">從帳戶</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="fixedTransferFromAccount" style="color: #8e8e93; font-size: 17px;">從帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="fixedTransferFromAccount" style="color: var(--text-secondary); font-size: 17px;">從帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('to')">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">到帳戶</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('to')">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">到帳戶</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="fixedTransferToAccount" style="color: #8e8e93; font-size: 17px;">到帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="fixedTransferToAccount" style="color: var(--text-secondary); font-size: 17px;">到帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTagColorSelector()">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTagColorSelector()">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標籤</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-tag" id="fixedTransferTagIcon" style="color: #8e8e93;"></i>
-                                <span id="fixedTransferTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
+                                <i class="fas fa-tag" id="fixedTransferTagIcon" style="color: var(--text-secondary);"></i>
+                                <span id="fixedTransferTagColor" style="color: var(--text-secondary); font-size: 17px;">選擇顏色</span>
                             </div>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
                 </div>
@@ -4457,44 +4555,44 @@
 
     <!-- 固定支出 Modal（同固定轉帳，僅一個帳戶） -->
     <div id="fixedExpenseModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedExpenseModal' && closeFixedExpenseModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="background: #000000; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeFixedExpenseModal()" style="color: #98989d;">取消</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: var(--bg-color); display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedExpenseModal()" style="color: var(--text-secondary);">取消</button>
                 <button class="btn-icon" style="font-weight:bold; color: var(--color-down);" onclick="saveFixedExpense()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                 <div style="margin-bottom: 20px; padding-top: 10px;">
-                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定支出</h1>
+                    <h1 style="font-size: 34px; font-weight: bold; color: var(--text-primary); margin: 0 0 5px 0;">固定支出</h1>
                 </div>
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
-                        <input type="text" id="fixedExpenseTitle" class="form-input" placeholder="例:房租" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedExpenseTitle" class="form-input" placeholder="例:房租" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">使用帳戶全部金額</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="fixedExpenseUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <span id="fixedExpenseUseAccountBalanceLabel" style="color: var(--text-secondary); font-size: 14px;">關閉</span>
                             <label class="switch"><input type="checkbox" id="fixedExpenseUseAccountBalance" onchange="updateFixedExpenseAmountMode()"><span class="slider"></span></label>
                         </div>
                     </div>
-                    <div class="form-row" id="fixedExpenseAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
-                        <input type="number" id="fixedExpenseAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" id="fixedExpenseAmountRow" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedExpenseAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedExpenseAccount')">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">帳戶</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedExpenseAccount')">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">帳戶</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="fixedExpenseAccount" style="color: #8e8e93; font-size: 17px;">選擇帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="fixedExpenseAccount" style="color: var(--text-secondary); font-size: 17px;">選擇帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='expense'; openTagColorSelector()">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='expense'; openTagColorSelector()">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標籤</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-tag" id="fixedExpenseTagIcon" style="color: #8e8e93;"></i>
-                            <span id="fixedExpenseTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <i class="fas fa-tag" id="fixedExpenseTagIcon" style="color: var(--text-secondary);"></i>
+                            <span id="fixedExpenseTagColor" style="color: var(--text-secondary); font-size: 17px;">選擇顏色</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
                 </div>
@@ -4516,44 +4614,44 @@
 
     <!-- 固定收入 Modal（同固定轉帳，僅一個帳戶） -->
     <div id="fixedIncomeModal" class="modal" style="z-index: 2004;" onclick="event.target.id === 'fixedIncomeModal' && closeFixedIncomeModal()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
-            <div class="modal-header" style="background: #000000; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeFixedIncomeModal()" style="color: #98989d;">取消</button>
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto; position: fixed; top: 0; right: 0; left: auto; transition: transform 0.3s;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: var(--bg-color); display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeFixedIncomeModal()" style="color: var(--text-secondary);">取消</button>
                 <button class="btn-icon" style="font-weight:bold; color: var(--color-up);" onclick="saveFixedIncome()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                 <div style="margin-bottom: 20px; padding-top: 10px;">
-                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">固定收入</h1>
+                    <h1 style="font-size: 34px; font-weight: bold; color: var(--text-primary); margin: 0 0 5px 0;">固定收入</h1>
                 </div>
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
-                        <input type="text" id="fixedIncomeTitle" class="form-input" placeholder="例:薪資" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
+                        <input type="text" id="fixedIncomeTitle" class="form-input" placeholder="例:薪資" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">使用帳戶全部金額</span>
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">使用帳戶全部金額</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span id="fixedIncomeUseAccountBalanceLabel" style="color: #8e8e93; font-size: 14px;">關閉</span>
+                            <span id="fixedIncomeUseAccountBalanceLabel" style="color: var(--text-secondary); font-size: 14px;">關閉</span>
                             <label class="switch"><input type="checkbox" id="fixedIncomeUseAccountBalance" onchange="updateFixedIncomeAmountMode()"><span class="slider"></span></label>
                         </div>
                     </div>
-                    <div class="form-row" id="fixedIncomeAmountRow" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
-                        <input type="number" id="fixedIncomeAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                    <div class="form-row" id="fixedIncomeAmountRow" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
+                        <input type="number" id="fixedIncomeAmount" class="form-input" placeholder="金額" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedIncomeAccount')">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">帳戶</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openAccountSelector('fixedIncomeAccount')">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">帳戶</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="fixedIncomeAccount" style="color: #8e8e93; font-size: 17px;">選擇帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="fixedIncomeAccount" style="color: var(--text-secondary); font-size: 17px;">選擇帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='income'; openTagColorSelector()">
-                        <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標籤</span>
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="currentFixedFormContext='income'; openTagColorSelector()">
+                        <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標籤</span>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-tag" id="fixedIncomeTagIcon" style="color: #8e8e93;"></i>
-                            <span id="fixedIncomeTagColor" style="color: #8e8e93; font-size: 17px;">選擇顏色</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <i class="fas fa-tag" id="fixedIncomeTagIcon" style="color: var(--text-secondary);"></i>
+                            <span id="fixedIncomeTagColor" style="color: var(--text-secondary); font-size: 17px;">選擇顏色</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
                 </div>
@@ -5249,6 +5347,7 @@
                         pnlEl.textContent = '';
                         pnlEl.style.display = 'none';
                     }
+                    if (acc.isAuto) moneePatchAutoAssetPriceRows(row, acc);
                 });
             }
             let sum = 0;
@@ -5298,6 +5397,80 @@
                 if (gt) setAmountWithAnim(gt, totalDebt);
             }
         }
+    }
+
+    /** 更新單一資產列的「當日／成本」文字（報價輪詢用，不重建整表） */
+    function moneePatchAutoAssetPriceRows(row, acc) {
+        if (!row || !acc || !acc.isAuto) return;
+        if (!(acc.type === 'stock' || acc.type === 'twstock' || acc.type === 'crypto')) return;
+        const content = row.querySelector('.item-content');
+        if (!content) return;
+        let sym = String(acc.symbol || '').replace('COINBASE:', '').replace('OKEX:', '').replace('-USD', '').replace('-USDT', '');
+        if (sym === 'USDT' || sym === 'USDC') return;
+        let price = 'N/A';
+        if (acc.currentPrice) {
+            price = (sym === 'USDT' || sym === 'USDC') && acc.currentPrice === 1
+                ? '1.00'
+                : String(acc.currentPrice.toLocaleString());
+        }
+        let chgHtml = '';
+        if (acc.dayChangePercent !== undefined && acc.dayChangePercent !== null) {
+            const s = acc.dayChangePercent > 0 ? '+' : '';
+            const c = acc.dayChangePercent > 0 ? 'sub-green' : 'sub-red';
+            chgHtml = `<span class="${c}">${s}${acc.dayChangePercent.toFixed(2)}%</span>`;
+        } else if (acc.currentPrice) {
+            chgHtml = '<span>N/A</span>';
+        }
+        const dailyPnL = calculateDailyPnL(acc);
+        const costPnL = calculateCostPnL(acc);
+        const dailyPnLHtml = Math.abs(dailyPnL) > 0.01 ? `<span style="margin-left: auto;">${formatPnL(dailyPnL)}</span>` : '';
+        let costPnLHtml = '';
+        if (acc.cost && acc.cost > 0 && acc.currentPrice && acc.currentPrice > 0 && Math.abs(costPnL) > 0.01) {
+            costPnLHtml = `<span style="margin-left: auto;">${formatPnL(costPnL)}</span>`;
+        }
+        const lines = content.querySelectorAll('.item-row-compact');
+        if (lines[0] && lines[0].querySelector('.price-label') && lines[0].querySelector('.price-label').textContent === '當日') {
+            lines[0].innerHTML = chgHtml
+                ? `<span class="price-label">當日</span><span>${price}</span>${chgHtml}${dailyPnLHtml}`
+                : `<span class="price-label">當日</span><span>${price}</span>${dailyPnLHtml}`;
+        }
+        if (acc.type !== 'crypto' && lines[1] && lines[1].querySelector('.price-label') && lines[1].querySelector('.price-label').textContent === '成本') {
+            if (acc.cost && acc.cost > 0) {
+                if (acc.currentPrice && acc.currentPrice > 0) {
+                    const pnlPct = ((acc.currentPrice - acc.cost) / acc.cost) * 100;
+                    const s = pnlPct >= 0 ? '+' : '';
+                    const c = pnlPct >= 0 ? 'sub-green' : 'sub-red';
+                    lines[1].innerHTML = `<span class="price-label">成本</span><span>${acc.cost.toFixed(2)}</span><span class="${c}">${s}${pnlPct.toFixed(1)}%</span>${costPnLHtml}`;
+                } else {
+                    lines[1].innerHTML = `<span class="price-label">成本</span><span>${acc.cost.toFixed(2)}</span><span>N/A</span>${costPnLHtml}`;
+                }
+            } else {
+                lines[1].innerHTML = `<span class="price-label">成本</span><span>N/A</span>`;
+            }
+        }
+    }
+
+    /** 報價／匯率更新後：只改頂部與可見列表金額，不整表重建 */
+    function moneeRefreshVisibleAmounts(opts) {
+        const options = opts || {};
+        if (typeof isSorting !== 'undefined' && isSorting) return;
+        if (typeof moneeUpdateNetWorthHeaderOnly === 'function') moneeUpdateNetWorthHeaderOnly();
+        if (typeof moneePatchVisibleListAmountsOnly === 'function') moneePatchVisibleListAmountsOnly();
+        if (options.updateChart !== false && typeof updateChartData === 'function') {
+            try { updateChartData(false); } catch (e) {}
+        }
+    }
+
+    /** Logo 暖載成功後只換圖，不整表重建 */
+    function patchAccountLogoInDom(acc) {
+        if (!acc || acc.id == null) return;
+        const resolved = typeof resolveAssetLogoSrc === 'function' ? resolveAssetLogoSrc(acc) : null;
+        if (!resolved || !resolved.src) return;
+        document.querySelectorAll(`.list-item[data-id="${acc.id}"] .item-icon img`).forEach((img) => {
+            if (img.getAttribute('src') !== resolved.src) img.setAttribute('src', resolved.src);
+            if (resolved.key) img.setAttribute('data-logo-key', resolved.key);
+            if (resolved.remote != null) img.setAttribute('data-logo-remote', resolved.remote);
+        });
     }
 
     /**
@@ -6773,6 +6946,7 @@
     let _amountAnimStore = Object.create(null);
     let _amountsEntranceDone = false;
     let _pendingAmountAnimOpts = null;
+    let _amountAnimGen = 0;
 
     function prefersReducedMotion() {
         try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
@@ -6818,9 +6992,36 @@
         return isFinite(n) ? n : null;
     }
 
+    /** 取消進行中的列表金額 rAF；可選擇把目前畫面數字寫回 store（切頁前呼叫） */
+    function cancelInFlightAmountAnims(opts) {
+        const options = opts || {};
+        _amountAnimGen++;
+        document.querySelectorAll('[data-amount-key]').forEach((el) => {
+            el._amountAnimToken = (el._amountAnimToken || 0) + 1;
+            if (options.syncStore) {
+                const key = el.getAttribute('data-amount-key');
+                const n = parseAmountText(el.textContent);
+                if (key && n != null) _amountAnimStore[key] = n;
+            }
+        });
+        if (options.syncHero !== false) {
+            const hero = document.getElementById('totalNetWorth');
+            if (hero) {
+                const n = parseAmountText(hero.innerText);
+                if (n != null) _heroDisplayedValue = n;
+            }
+            if (_heroNetWorthAnim) {
+                cancelAnimationFrame(_heroNetWorthAnim);
+                _heroNetWorthAnim = null;
+            }
+            _heroAnimToken++;
+        }
+    }
+
     function captureAmountStoreFromDom() {
         document.querySelectorAll('[data-amount-key]').forEach((el) => {
             const key = el.getAttribute('data-amount-key');
+            // 優先用畫面上的目前數字（含動畫中），避免切頁後用到過期目標值
             const n = parseAmountText(el.textContent);
             if (key && n != null) _amountAnimStore[key] = n;
         });
@@ -6829,12 +7030,15 @@
     function animateNumericText(el, from, to, opts) {
         const options = opts || {};
         if (!el) return;
+        const key = el.getAttribute('data-amount-key');
         if (prefersReducedMotion() || document.body.classList.contains('numbers-hidden')) {
             el.textContent = formatAmount(to);
+            if (key) _amountAnimStore[key] = to;
             return;
         }
         const token = (el._amountAnimToken || 0) + 1;
         el._amountAnimToken = token;
+        const gen = _amountAnimGen;
         const duration = options.currencySwitch ? 420 : (options.entrance ? 900 : 560);
         const start = performance.now();
         const easeOut = (t) => 1 - Math.pow(1 - t, 3);
@@ -6845,11 +7049,17 @@
             el.classList.add('hero-currency-pulse');
         }
         function frame(now) {
-            if (el._amountAnimToken !== token) return;
+            if (el._amountAnimToken !== token || gen !== _amountAnimGen) return;
             const t = Math.min(1, (now - start) / duration);
-            el.textContent = formatAmount(from + (to - from) * easeOut(t));
+            const v = from + (to - from) * easeOut(t);
+            el.textContent = formatAmount(v);
+            // 動畫途中同步 store，快速切頁時才不會把「上一頁中途數字」錯接到別的 key
+            if (key) _amountAnimStore[key] = v;
             if (t < 1) requestAnimationFrame(frame);
-            else el.textContent = formatAmount(to);
+            else {
+                el.textContent = formatAmount(to);
+                if (key) _amountAnimStore[key] = to;
+            }
         }
         requestAnimationFrame(frame);
     }
@@ -6865,6 +7075,7 @@
             : (parsed != null ? parsed : (_amountAnimStore[key] != null ? _amountAnimStore[key] : targetValue));
         if (key) _amountAnimStore[key] = targetValue;
         if (Math.abs(from - targetValue) < 0.005 && !options.currencySwitch && !options.entrance) {
+            el._amountAnimToken = (el._amountAnimToken || 0) + 1;
             el.textContent = formatAmount(targetValue);
             return;
         }
@@ -6875,12 +7086,21 @@
         const options = opts || {};
         const entrance = !!options.entrance && !_amountsEntranceDone;
         const currencySwitch = !!options.currencySwitch;
+        const gen = ++_amountAnimGen;
+        const activePage = document.querySelector('#pageContainer > .page-item.page-active');
         const nodes = Array.from(document.querySelectorAll('[data-amount-key][data-amount-value]'));
-        // 先同步設成起點，避免重建 DOM 後先閃最終值
+        // 先同步設成起點；非作用中分頁直接定格目標值，避免快速切頁殘留上頁動畫
         nodes.forEach((el) => {
             const key = el.getAttribute('data-amount-key');
             const target = parseFloat(el.getAttribute('data-amount-value'));
             if (!key || !isFinite(target)) return;
+            const inActive = !activePage || activePage.contains(el);
+            if (!inActive) {
+                el._amountAnimToken = (el._amountAnimToken || 0) + 1;
+                el.textContent = formatAmount(target);
+                _amountAnimStore[key] = target;
+                return;
+            }
             let from;
             if (entrance) from = 0;
             else if (_amountAnimStore[key] != null) from = _amountAnimStore[key];
@@ -6890,8 +7110,11 @@
             }
         });
         requestAnimationFrame(() => {
+            if (gen !== _amountAnimGen) return;
+            const activeNow = document.querySelector('#pageContainer > .page-item.page-active');
             nodes.forEach((el) => {
                 if (!el.isConnected) return;
+                if (activeNow && !activeNow.contains(el)) return;
                 const key = el.getAttribute('data-amount-key');
                 const target = parseFloat(el.getAttribute('data-amount-value'));
                 if (!key || !isFinite(target)) return;
@@ -6917,6 +7140,12 @@
     function setHeroNetWorthInstant(targetValue) {
         const el = document.getElementById('totalNetWorth');
         if (!el) return;
+        if (_heroNetWorthAnim) {
+            cancelAnimationFrame(_heroNetWorthAnim);
+            _heroNetWorthAnim = null;
+        }
+        // 使任何進行中的 hero rAF 失效
+        _heroAnimToken++;
         el.innerText = formatAmount(targetValue);
         _heroDisplayedValue = targetValue;
         _heroHasPlayedEntrance = true;
@@ -6928,9 +7157,11 @@
         if (!el) return;
         const hidden = document.body.classList.contains('numbers-hidden');
         const reduced = prefersReducedMotion();
+        // 中斷動畫時必須用畫面上的數字當起點，不能用上次完成值（否則切頁會殘留上頁金額）
+        const displayed = parseAmountText(el.innerText);
         const from = (options.from != null)
             ? options.from
-            : (_heroDisplayedValue != null ? _heroDisplayedValue : 0);
+            : (displayed != null ? displayed : (_heroDisplayedValue != null ? _heroDisplayedValue : 0));
         const isEntrance = !_heroHasPlayedEntrance;
         const isCurrencySwitch = !!options.currencySwitch;
 
@@ -6950,6 +7181,8 @@
         const duration = isCurrencySwitch ? 420 : (isEntrance ? 920 : 620);
         const start = performance.now();
         const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+        _heroDisplayedValue = from;
+        el.innerText = formatAmount(from);
 
         if (isCurrencySwitch) {
             el.classList.remove('hero-currency-pulse');
@@ -6961,6 +7194,7 @@
             if (token !== _heroAnimToken) return;
             const t = Math.min(1, (now - start) / duration);
             const v = from + (targetValue - from) * easeOut(t);
+            _heroDisplayedValue = v;
             el.innerText = formatAmount(v);
             if (t < 1) {
                 _heroNetWorthAnim = requestAnimationFrame(frame);
@@ -8476,7 +8710,7 @@
                 .then((ok) => {
                     if (ok) {
                         try { saveData(); } catch (e) {}
-                        if (!isSorting) renderAssets();
+                        if (!isSorting) patchAccountLogoInDom(acc);
                     }
                 })
                 .catch(() => {});
@@ -8498,7 +8732,7 @@
                     .then((ok) => {
                         if (ok) {
                             try { saveData(); } catch (e) {}
-                            if (!isSorting) renderAssets();
+                            if (!isSorting) patchAccountLogoInDom(acc);
                         }
                     })
                     .catch(() => {});
@@ -12143,7 +12377,7 @@
             }
         }, 500);
     }
-    async function updateRates() { try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');const d=await r.json();if(d.rates?.TWD)settings.usdRate=d.rates.TWD;}catch(e){} if(settings.apiKey){try{const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=COINBASE:USDT-USD&token=${settings.apiKey}`);const j=await r.json();if(j.c)settings.usdtRate=j.c;}catch(e){}} saveSettings(); document.getElementById('rateUsd').innerText=`USD ≈ ${settings.usdRate.toFixed(2)}`; document.getElementById('rateUsdt').innerText=`USDT ≈ ${settings.usdtRate.toFixed(3)} USD`; if(!isSorting) renderAssets(); }
+    async function updateRates() { try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');const d=await r.json();if(d.rates?.TWD)settings.usdRate=d.rates.TWD;}catch(e){} if(settings.apiKey){try{const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=COINBASE:USDT-USD&token=${settings.apiKey}`);const j=await r.json();if(j.c)settings.usdtRate=j.c;}catch(e){}} saveSettings(); const rateUsdEl=document.getElementById('rateUsd'); const rateUsdtEl=document.getElementById('rateUsdt'); if(rateUsdEl) rateUsdEl.innerText=`USD ≈ ${settings.usdRate.toFixed(2)}`; if(rateUsdtEl) rateUsdtEl.innerText=`USDT ≈ ${settings.usdtRate.toFixed(3)} USD`; if(!isSorting) moneeRefreshVisibleAmounts(); }
     async function fetchPrices() {
         const autos = accounts.filter(a => a.isAuto && a.symbol);
         let anyUpdated = false;
@@ -12202,7 +12436,7 @@
             saveData();
             recordDailyAssetSnapshot();
         }
-        if (!isSorting) renderAssets();
+        if (!isSorting) moneeRefreshVisibleAmounts();
     }
     // Page Swiper Functions
     // opts.skipChart：只切列表／指示器（drill-down 用，避免蓋掉圓餅動畫）
@@ -12223,6 +12457,10 @@
             }
         }
         const pageChanged = currentPage !== pageIndex;
+        // 切頁前先取消進行中金額動畫，並把畫面中途數字寫回，避免上一頁金額殘留到下一頁
+        if (pageChanged && typeof cancelInFlightAmountAnims === 'function') {
+            cancelInFlightAmountAnims({ syncStore: true, syncHero: true });
+        }
         currentPage = pageIndex;
 
         // 左右切換時保留目前捲動位置，不強制回到最上方
@@ -12594,6 +12832,8 @@
         sortables.forEach(s=>s.destroy()); 
         sortables=[]; 
         unlockScrollForSort(); // 確保切換頁面時解除滾動鎖定
+        // 先凍結目前動畫中數字再重建 DOM，避免 rAF 回寫到已替換節點或串到別頁
+        cancelInFlightAmountAnims({ syncStore: true, syncHero: true });
         captureAmountStoreFromDom();
         const currencyAnim = !!_currencyHeroAnimPending;
         const entranceAnim = !_amountsEntranceDone;
@@ -22077,7 +22317,43 @@
         if (typeof updateCalcDisplay === 'function') updateCalcDisplay();
     }
 
+    /** 虛擬鍵盤彈出時，為記帳／固定表單預留底部空間並捲到焦點欄位 */
+    function setupJournalKeyboardInset() {
+        const root = document.documentElement;
+        const apply = () => {
+            try {
+                const vv = window.visualViewport;
+                if (!vv) {
+                    root.style.setProperty('--keyboard-inset', '0px');
+                    return;
+                }
+                const inset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+                root.style.setProperty('--keyboard-inset', inset + 'px');
+            } catch (e) {
+                root.style.setProperty('--keyboard-inset', '0px');
+            }
+        };
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', apply);
+            window.visualViewport.addEventListener('scroll', apply);
+        }
+        window.addEventListener('resize', apply);
+        document.addEventListener('focusin', (e) => {
+            const t = e.target;
+            if (!t || !(t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+            const inJournal = t.closest('#expenseModal, #incomeModal, #transferModal, #fixedExpenseModal, #fixedIncomeModal, #fixedTransferModal');
+            if (!inJournal) return;
+            apply();
+            setTimeout(() => {
+                try { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (err) {}
+            }, 80);
+        });
+        document.addEventListener('focusout', () => setTimeout(apply, 120));
+        apply();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        setupJournalKeyboardInset();
         setTimeout(() => {
             // 金額輸入欄位現在使用按鈕打開計算機
         }, 100);
