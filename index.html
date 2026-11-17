@@ -446,7 +446,13 @@
         .menu-item:hover { background: var(--border-color); }
         .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: var(--accent); font-size: 18px; }
         .menu-text { flex: 1; }
-        .theme-picker { padding: 4px 16px 10px 16px; display: flex; flex-direction: column; gap: 6px; }
+        .theme-picker {
+            padding: 8px 18px 14px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px 10px;
+            justify-items: center;
+        }
         .theme-picker-label {
             padding: 4px 9px 2px;
             font-size: 12px;
@@ -457,38 +463,98 @@
         .theme-option {
             display: flex;
             align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 600;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: transparent;
             cursor: pointer;
-            text-align: left;
-            transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+            transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
         }
-        .theme-option i { width: 20px; text-align: center; color: var(--accent); font-size: 15px; }
-        .theme-option .theme-option-name { flex: 1; }
-        .theme-option .theme-option-badge {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--accent);
-            background: var(--accent-soft);
-            border-radius: 999px;
-            padding: 2px 8px;
-            white-space: nowrap;
+        .theme-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: relative;
+            flex-shrink: 0;
+            border: 1px solid rgba(127, 127, 127, 0.28);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+            overflow: hidden;
         }
-        .theme-option:not(.is-current):hover { background: var(--active-bg); border-color: var(--accent-border); }
-        .theme-option:not(.is-current):active { transform: scale(0.98); }
+        .theme-swatch::after {
+            content: '';
+            position: absolute;
+            inset: auto 0 0 auto;
+            width: 52%;
+            height: 52%;
+            border-radius: 50% 0 0 0;
+        }
+        .theme-option[data-theme="dark"] .theme-swatch { background: #000000; }
+        .theme-option[data-theme="dark"] .theme-swatch::after { background: #0a84ff; }
+        .theme-option[data-theme="light"] .theme-swatch { background: #ffffff; }
+        .theme-option[data-theme="light"] .theme-swatch::after { background: #007aff; }
+        .theme-option[data-theme="forest"] .theme-swatch { background: #e7f0e4; }
+        .theme-option[data-theme="forest"] .theme-swatch::after { background: #3d7a4a; }
+        .theme-option[data-theme="oat"] .theme-swatch { background: #F6F0E6; }
+        .theme-option[data-theme="oat"] .theme-swatch::after { background: #8B5A34; }
+        .theme-option[data-theme="coral"] .theme-swatch { background: #F4F6F7; }
+        .theme-option[data-theme="coral"] .theme-swatch::after { background: #147570; }
+        .theme-option[data-theme="lavender"] .theme-swatch { background: #F4F3FB; }
+        .theme-option[data-theme="lavender"] .theme-swatch::after { background: #5250C9; }
+        .theme-option:not(.is-current):hover { transform: scale(1.06); }
+        .theme-option:not(.is-current):active { transform: scale(0.96); }
         .theme-option.is-current {
             border-color: var(--accent);
-            background: var(--accent-muted);
+            box-shadow: 0 0 0 3px var(--accent-soft);
             cursor: default;
             pointer-events: none;
-            opacity: 0.95;
+        }
+        .theme-option.is-current .theme-swatch {
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28), 0 2px 8px rgba(0,0,0,0.18);
+        }
+        /* 主題切換：背景／玻璃色 200–300ms 過渡 */
+        html.theme-animating body,
+        html.theme-animating .sidebar,
+        html.theme-animating .navbar,
+        html.theme-animating .main-content,
+        html.theme-animating .summary-card,
+        html.theme-animating .list-container,
+        html.theme-animating .list-item,
+        html.theme-animating .group-header,
+        html.theme-animating .menu-item,
+        html.theme-animating .menu-group-label,
+        html.theme-animating .tab-bar,
+        html.theme-animating .page-indicator-bar,
+        html.theme-animating .liquid-glass,
+        html.theme-animating .currency-toggle-btn,
+        html.theme-animating .journal-fab-main,
+        html.theme-animating .journal-fab-option,
+        html.theme-animating .calendar-sticky-bar,
+        html.theme-animating .sticky-chip,
+        html.theme-animating .sticky-top-btn,
+        html.theme-animating .toast,
+        html.theme-animating .chart-back-btn,
+        html.theme-animating .chart-mode-toggle-btn,
+        html.theme-animating .rate-badge,
+        html.theme-animating .pnl-badge {
+            transition:
+                background-color 0.28s ease,
+                color 0.28s ease,
+                border-color 0.28s ease,
+                box-shadow 0.28s ease !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html.theme-animating body,
+            html.theme-animating .sidebar,
+            html.theme-animating .navbar,
+            html.theme-animating .main-content,
+            html.theme-animating .tab-bar,
+            html.theme-animating .page-indicator-bar,
+            html.theme-animating .liquid-glass {
+                transition: none !important;
+            }
         }
         .menu-label { 
             padding: 12px 25px; 
@@ -556,7 +622,56 @@
         .total-label-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
         .total-label { color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
         .total-amount-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .total-amount { font-size: 40px; font-weight: 700; margin: 5px 0 3px 0; font-family: 'Roboto', sans-serif; position: relative; display: inline-block; }
+        .total-amount { font-size: 40px; font-weight: 700; margin: 5px 0 3px 0; font-family: 'Roboto', sans-serif; position: relative; display: inline-block; letter-spacing: -0.02em; transition: text-shadow 0.35s ease, color 0.35s ease, transform 0.35s ease; }
+        .total-amount.hero-value-flash {
+            animation: heroValueFlash 0.85s ease;
+        }
+        .total-amount.hero-currency-pulse {
+            animation: heroCurrencyPulse 0.45s ease;
+        }
+        .pnl-badge.pnl-badge-flash {
+            animation: pnlBadgeFlash 0.9s ease;
+        }
+        @keyframes heroValueFlash {
+            0% { text-shadow: 0 0 0 transparent; transform: scale(1); }
+            35% { text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent); transform: scale(1.025); }
+            100% { text-shadow: 0 0 0 transparent; transform: scale(1); }
+        }
+        @keyframes heroCurrencyPulse {
+            0% { opacity: 0.55; transform: translateY(4px) scale(0.985); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pnlBadgeFlash {
+            0%, 100% { box-shadow: none; filter: brightness(1); }
+            40% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent); filter: brightness(1.18); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .total-amount.hero-value-flash,
+            .total-amount.hero-currency-pulse,
+            .pnl-badge.pnl-badge-flash { animation: none; }
+        }
+        /* 共用 Liquid Glass 語彙（對齊底部 tab／上方分頁） */
+        .liquid-glass {
+            border: 1px solid var(--glass-border);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.14),
+                0 10px 24px var(--glass-shadow),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .liquid-glass { background: color-mix(in srgb, var(--card-bg) 92%, transparent); }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            .liquid-glass {
+                background: var(--card-bg);
+                -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+            }
+        }
         .eye-toggle-btn { 
             background: none; 
             border: none; 
@@ -750,7 +865,19 @@
         .tt-header { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; font-weight: 500; }
         .tt-body { font-size: 15px; color: var(--text-primary); font-weight: 700; display: flex; align-items: center; }
         .tt-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .chart-back-btn { position: absolute; top: 10px; left: 20px; z-index: 201; background: rgba(44, 44, 46, 0.9); color: var(--accent); border: 1px solid #333; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: none; backdrop-filter: blur(10px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .chart-back-btn {
+            position: absolute; top: 10px; left: 20px; z-index: 201;
+            color: var(--accent);
+            border: 1px solid var(--glass-border);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.14),
+                0 8px 20px var(--glass-shadow);
+            padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; display: none;
+        }
 
         .group-header { padding: 15px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); background-color: var(--bg-color); display: flex; justify-content: space-between; text-transform: uppercase; min-width: 0; gap: 8px; }
         .group-header > span:first-child { flex-shrink: 0; }
@@ -784,7 +911,7 @@
         /* ===== 美股/台股/加密貨幣：純 Flex 佈局（無絕對定位）===== */
         /* 名稱行：正常 flex 流 */
         .item-name-row { display: flex; align-items: center; margin-bottom: 4px; position: relative; width: 100%; z-index: 1; }
-        .item-name-row .item-name { font-size: 19px; font-weight: 500; line-height: 1.3; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-name-row .item-name { font-size: 19px; font-weight: 500; line-height: 1.3; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; }
         .item-name-row .item-eye-wrapper { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 8px; }
         .item-name-row .item-eye-btn { margin: 0; }
         .item-name-row .item-balance-below-eye { font-size: 12px; color: var(--text-secondary); opacity: 0.7; white-space: nowrap; }
@@ -807,7 +934,225 @@
         .list-item:has(.item-name-row) .item-icon { align-self: flex-start; margin-top: 2px; }
         #group-stock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
         #group-twstock .list-item:has(.item-name-row) { padding-top: 12px; padding-bottom: 16px; min-height: auto; }
-        #group-twstock .list-item.twstock-has-dividend { border-left: 4px solid #ffd60a; }
+        /* 台股除權息：精緻徽章＋淡金漸層，取代粗黃邊線 */
+        #group-twstock .list-item.twstock-has-dividend {
+            border-left: none;
+            background:
+                linear-gradient(90deg, color-mix(in srgb, #ffd60a 14%, transparent) 0%, transparent 42%),
+                var(--card-bg);
+        }
+        #group-twstock .list-item.twstock-has-dividend:active {
+            background:
+                linear-gradient(90deg, color-mix(in srgb, #ffd60a 18%, transparent) 0%, transparent 42%),
+                var(--active-bg);
+        }
+        .tw-div-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 2px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+            color: #8a6400;
+            background: color-mix(in srgb, #ffd60a 32%, var(--card-bg));
+            border: 1px solid color-mix(in srgb, #ffd60a 58%, transparent);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+        :root[data-theme="dark"] .tw-div-badge {
+            color: #ffe08a;
+            background: color-mix(in srgb, #ffd60a 22%, #2c2c2e);
+            border-color: color-mix(in srgb, #ffd60a 45%, transparent);
+        }
+        .tw-div-badge i { font-size: 10px; opacity: 0.9; }
+        .item-name-row .item-name-text {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* 記帳完成儀式感 */
+        .journal-save-celeb {
+            position: fixed;
+            inset: 0;
+            z-index: 5200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.18);
+        }
+        .journal-save-celeb.show { display: flex; }
+        .journal-save-celeb-card {
+            min-width: 168px;
+            padding: 22px 26px 18px;
+            border-radius: 22px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 16px 40px var(--glass-shadow);
+            animation: journalCelebIn 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .journal-save-check {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            background: var(--color-up);
+            box-shadow: 0 8px 20px color-mix(in srgb, var(--color-up) 35%, transparent);
+            transform: scale(0.6);
+            animation: journalCheckPop 0.45s 0.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .journal-save-celeb.is-expense .journal-save-check { background: var(--color-down); box-shadow: 0 8px 20px color-mix(in srgb, var(--color-down) 35%, transparent); }
+        .journal-save-celeb.is-transfer .journal-save-check { background: var(--accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+        .journal-save-amount {
+            font-size: 26px;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1.15;
+        }
+        .journal-save-celeb.is-income .journal-save-amount { color: var(--color-up); }
+        .journal-save-celeb.is-expense .journal-save-amount { color: var(--color-down); }
+        .journal-save-celeb.is-transfer .journal-save-amount { color: var(--accent); }
+        .journal-save-label {
+            margin-top: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .journal-save-flyer {
+            position: fixed;
+            z-index: 5201;
+            pointer-events: none;
+            font-size: 18px;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+        .journal-save-flyer.is-income { color: var(--color-up); }
+        .journal-save-flyer.is-expense { color: var(--color-down); }
+        .journal-save-flyer.is-transfer { color: var(--accent); }
+        .calendar-day.day-receive-pulse {
+            animation: dayReceivePulse 0.7s ease;
+        }
+        @keyframes journalCelebIn {
+            from { opacity: 0; transform: scale(0.86) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes journalCheckPop {
+            0% { transform: scale(0.6); }
+            70% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        @keyframes dayReceivePulse {
+            0% { box-shadow: none; transform: scale(1); }
+            40% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 28%, transparent); transform: scale(1.08); }
+            100% { box-shadow: none; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .journal-save-celeb-card,
+            .journal-save-check,
+            .calendar-day.day-receive-pulse { animation: none; }
+        }
+
+        /* 記帳表單（支出／收入／轉帳）跟隨主題色，覆蓋硬編碼深色 */
+        #expenseModal .modal-content-wrapper,
+        #incomeModal .modal-content-wrapper,
+        #transferModal .modal-content-wrapper {
+            background: var(--bg-color) !important;
+            color: var(--text-primary);
+        }
+        #expenseModal .modal-tabs,
+        #incomeModal .modal-tabs,
+        #transferModal .modal-tabs,
+        #expenseModal .modal-header,
+        #incomeModal .modal-header,
+        #transferModal .modal-header {
+            background: var(--bg-color) !important;
+            border-color: var(--border-color) !important;
+        }
+        #expenseModal .journal-form-tab,
+        #incomeModal .journal-form-tab,
+        #transferModal .journal-form-tab {
+            background: var(--card-bg) !important;
+            color: var(--text-secondary) !important;
+        }
+        #expenseModal .journal-form-tab.active,
+        #incomeModal .journal-form-tab.active,
+        #transferModal .journal-form-tab.active {
+            color: var(--text-primary) !important;
+            background: var(--card-bg) !important;
+        }
+        #expenseModal .form-group,
+        #incomeModal .form-group {
+            background: var(--card-bg) !important;
+        }
+        #expenseModal .form-group > .form-row,
+        #incomeModal .form-group > .form-row {
+            border-bottom-color: var(--border-color) !important;
+            background: transparent !important;
+        }
+        #transferModal .form-row {
+            background: var(--card-bg) !important;
+        }
+        #expenseModal h1,
+        #incomeModal h1,
+        #transferModal h1,
+        #expenseModal .form-label,
+        #incomeModal .form-label,
+        #transferModal .form-label,
+        #expenseModal .form-input,
+        #incomeModal .form-input,
+        #transferModal .form-input {
+            color: var(--text-primary) !important;
+        }
+        #expenseModal .form-row span,
+        #incomeModal .form-row span,
+        #transferModal .form-row span,
+        #expenseModal .form-row i,
+        #incomeModal .form-row i,
+        #transferModal .form-row i,
+        #expenseModal #expenseDate,
+        #incomeModal #incomeDate,
+        #transferModal #transferDate {
+            color: var(--text-secondary);
+        }
+        #transferModal .calc-btn {
+            background: var(--active-bg) !important;
+        }
+        #expenseModal .modal-header .btn-icon,
+        #incomeModal .modal-header .btn-icon,
+        #transferModal .modal-header .btn-icon {
+            color: var(--text-secondary);
+        }
+        #expenseModal .modal-header .btn-icon[onclick="saveExpense()"] { color: var(--color-down) !important; }
+        #incomeModal .modal-header .btn-icon[onclick="saveIncome()"] { color: var(--color-up) !important; }
+        #transferModal .modal-header .btn-icon[onclick="saveTransfer()"] { color: var(--accent) !important; }
+        #expenseModal > button[onclick*="openFixedExpenseListFromJournal"],
+        #incomeModal > button[onclick*="openFixedIncomeListFromJournal"],
+        #transferModal > button[onclick*="openFixedTransferListFromJournal"] {
+            background: var(--accent) !important;
+            color: var(--accent-contrast) !important;
+            border: 1px solid var(--accent-border) !important;
+            box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent) !important;
+        }
         
         /* 隱藏對齊用 spacer */
         .list-item:has(.item-name-row) .item-amount-name-row { display: none !important; }
@@ -1068,9 +1413,8 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            background: var(--card-bg) !important;
-            backdrop-filter: none !important;
-            border: 1px solid var(--border-color);
+            background: var(--glass-fill) !important;
+            border: 1px solid var(--glass-border);
             color: var(--text-primary);
             font-size: 14px;
             font-weight: 600;
@@ -1079,7 +1423,13 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.14),
+                0 10px 24px var(--glass-shadow),
+                0 2px 8px rgba(0, 0, 0, 0.06);
             z-index: 10000;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 0;
@@ -1087,9 +1437,10 @@
         }
         .currency-toggle-btn:hover {
             transform: scale(1.02);
-            background: var(--active-bg) !important;
-            backdrop-filter: none !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+            background: color-mix(in srgb, var(--glass-fill) 70%, var(--glass-active-fill)) !important;
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 12px 28px var(--glass-shadow);
         }
         .currency-toggle-btn:active {
             transform: scale(0.95);
@@ -1156,8 +1507,8 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: var(--active-bg);
-            border: 1px solid var(--border-color);
+            background: var(--glass-fill);
+            border: 1px solid var(--glass-border);
             color: var(--text-secondary);
             font-size: 14px;
             display: flex;
@@ -1165,10 +1516,15 @@
             justify-content: center;
             cursor: pointer;
             z-index: 91;
-            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 6px 16px var(--glass-shadow);
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
             padding: 0;
         }
-        .chart-mode-toggle-btn:hover { background: var(--border-color); color: var(--text-primary); }
+        .chart-mode-toggle-btn:hover { background: var(--glass-active-fill); color: var(--text-primary); }
         
         /* Line Chart Range Selector */
         .line-chart-range-selector {
@@ -1826,11 +2182,13 @@
             padding: 8px 12px;
             padding-left: max(12px, env(safe-area-inset-left));
             padding-right: max(12px, env(safe-area-inset-right));
-            background: color-mix(in srgb, var(--bg-color) 88%, transparent);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-bottom: 1px solid var(--border-color);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 10px 24px var(--glass-shadow);
             transform: translateY(-110%);
             opacity: 0;
             pointer-events: none;
@@ -1842,10 +2200,10 @@
             pointer-events: auto;
         }
         .calendar-sticky-bar .sticky-chip {
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            background: color-mix(in srgb, var(--glass-fill) 72%, transparent);
             color: var(--text-primary);
-            border-radius: 10px;
+            border-radius: 14px;
             padding: 7px 10px;
             font-size: 12px;
             font-weight: 600;
@@ -1856,6 +2214,9 @@
             gap: 1px;
             min-width: 0;
             line-height: 1.2;
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
         }
         .calendar-sticky-bar .sticky-chip .chip-lbl {
             font-size: 10px;
@@ -1875,20 +2236,23 @@
             flex-shrink: 0;
             width: 40px;
             height: 40px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid var(--glass-border);
+            background: color-mix(in srgb, var(--glass-fill) 72%, transparent);
             color: var(--text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             font-size: 15px;
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            backdrop-filter: blur(16px) saturate(180%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight);
         }
         .calendar-sticky-bar .sticky-top-btn:active,
         .calendar-sticky-bar .sticky-chip:active {
             transform: scale(0.96);
-            background: var(--active-bg);
+            background: var(--glass-active-fill);
         }
 
         /* 分段控制（Segmented control） */
@@ -1923,13 +2287,29 @@
         .journal-seg-tabs.compact { margin-bottom: 0; }
         .journal-seg-tabs.compact button { font-size: 12px; padding: 7px 4px; }
 
-        /* 記帳空狀態 */
+        /* 記帳／資產空狀態 */
         .journal-empty-state {
             text-align: center;
             color: var(--text-secondary);
             padding: 28px 16px 20px;
             font-size: 14px;
             line-height: 1.5;
+        }
+        .journal-empty-state .empty-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 14px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 22px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            backdrop-filter: blur(18px) saturate(180%);
+            box-shadow: inset 0 1px 0 var(--glass-highlight), 0 8px 18px var(--glass-shadow);
         }
         .journal-empty-state .empty-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
         .journal-empty-state .empty-desc { margin-bottom: 16px; font-size: 13px; opacity: 0.9; }
@@ -1949,6 +2329,7 @@
             border-color: var(--accent-border);
             color: var(--accent);
         }
+        .asset-empty-state { padding: 40px 18px 32px; }
 
         /* 記帳視圖切換 FAB：右下角向上展開 */
         /* 收合時 options 不佔空間(max-height:0)，避免覆蓋下方列表/圖表阻擋觸控 */
@@ -1971,18 +2352,23 @@
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: var(--card-bg) !important;
-            backdrop-filter: none !important;
-            border: 1px solid var(--border-color);
+            background: var(--glass-fill) !important;
+            border: 1px solid var(--glass-border);
             color: var(--text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transition: transform 0.3s, background 0.2s, color 0.2s, border-color 0.2s;
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -0.5px 0 rgba(255, 255, 255, 0.14),
+                0 12px 28px var(--glass-shadow),
+                0 2px 8px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s, background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
-        .journal-fab-main:hover { background: var(--active-bg) !important; }
+        .journal-fab-main:hover { background: color-mix(in srgb, var(--glass-fill) 70%, var(--glass-active-fill)) !important; }
         .journal-fab-main i { font-size: 20px; transition: transform 0.3s; }
         .journal-fab-wrapper.expanded .journal-fab-main i { transform: rotate(180deg); }
         .journal-fab-options {
@@ -2011,18 +2397,22 @@
             padding: 10px 16px;
             min-width: 0;
             box-sizing: border-box;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+            background: var(--glass-fill);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             color: var(--text-primary);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            transition: background 0.2s, transform 0.2s;
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 10px 22px var(--glass-shadow);
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
         }
-        .journal-fab-option:hover { background: var(--active-bg); transform: scale(1.02); }
+        .journal-fab-option:hover { background: color-mix(in srgb, var(--glass-fill) 70%, var(--glass-active-fill)); transform: scale(1.02); }
         .journal-fab-option:active { transform: scale(0.98); }
         .journal-fab-option i { font-size: 18px; color: var(--accent); line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.125em; min-width: 1.125em; text-align: center; }
         .journal-fab-option span { line-height: 1.25; display: inline-flex; align-items: center; }
@@ -2226,7 +2616,41 @@
         .delete-btn-area { margin-top: 30px; padding: 0 16px; padding-bottom: 50px; }
         .btn-delete { width: 100%; background: var(--card-bg); color: var(--color-debt); border: none; padding: 15px; border-radius: 12px; font-size: 16px; font-weight: 500; }
         .hint-text { color: var(--text-secondary); font-size: 12px; margin-top: 8px; padding: 0 20px; opacity: 0.7; }
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #30d158; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: 600; font-size: 14px; z-index: 2000; display: none; }
+        .toast {
+            position: fixed;
+            top: max(20px, env(safe-area-inset-top));
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-fill);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--glass-border);
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 2000;
+            display: none;
+            -webkit-backdrop-filter: blur(26px) saturate(190%);
+            backdrop-filter: blur(26px) saturate(190%);
+            box-shadow:
+                inset 0 1px 0 var(--glass-highlight),
+                0 12px 28px var(--glass-shadow);
+            max-width: min(90vw, 360px);
+            text-align: center;
+        }
+        .toast.toast-success { color: var(--color-up); }
+        .toast.toast-info { color: var(--text-primary); }
+        .toast.is-visible {
+            display: block;
+            animation: toastIn 0.28s ease;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translate(-50%, -8px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .toast.is-visible { animation: none; }
+        }
         .ai-btn-area { margin: 15px 16px 0 16px; }
         .btn-ai { width: 100%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-contrast); border: none; padding: 12px; border-radius: 12px; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
         .btn-ai:disabled { background: var(--card-bg); color: var(--text-secondary); cursor: not-allowed; opacity: 0.6; }
@@ -2502,7 +2926,9 @@
             cursor: pointer;
         }
         .release-notes-ok:active { transform: scale(0.98); }
-        body.release-notes-open .currency-toggle-btn {
+        body.release-notes-open .currency-toggle-btn,
+        body.sidebar-open .currency-toggle-btn,
+        #sidebar.active:not(.collapsed) ~ .main-content .currency-toggle-btn {
             display: none !important;
         }
         /* Footer：登出靠左、版本靠右，同一列且字級／對齊一致 */
@@ -2656,7 +3082,16 @@
         </div>
     </div>
     
-    <div id="migrationToast" class="toast">資料已還原</div>
+    <div id="migrationToast" class="toast toast-success" role="status" aria-live="polite">資料已還原</div>
+    <div id="appToast" class="toast toast-info" role="status" aria-live="polite"></div>
+    <div id="journalSaveCelebration" class="journal-save-celeb" aria-hidden="true">
+        <div class="journal-save-celeb-card">
+            <div class="journal-save-check"><i class="fas fa-check" aria-hidden="true"></i></div>
+            <div class="journal-save-amount" id="journalSaveCelebAmount"></div>
+            <div class="journal-save-label" id="journalSaveCelebLabel"></div>
+        </div>
+    </div>
+    <div id="journalSaveFlyer" class="journal-save-flyer" aria-hidden="true"></div>
     <div id="importProgressToast" class="toast" style="background: var(--accent); display: none;">
         <div style="display: flex; align-items: center; gap: 10px;">
             <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden;">
@@ -2754,35 +3189,23 @@
                 </div>
                 <div class="menu-section collapsed" id="menuSection-theme">
                     <div class="theme-picker" id="themePicker" aria-label="主題選擇">
-                        <button type="button" class="theme-option" data-theme="dark" onclick="selectTheme('dark')">
-                            <i class="fas fa-moon" aria-hidden="true"></i>
-                            <span class="theme-option-name">深色模式</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="dark" title="深色模式" aria-label="深色模式" onclick="selectTheme('dark', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="light" onclick="selectTheme('light')">
-                            <i class="fas fa-sun" aria-hidden="true"></i>
-                            <span class="theme-option-name">淺色模式</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="light" title="淺色模式" aria-label="淺色模式" onclick="selectTheme('light', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="forest" onclick="selectTheme('forest')">
-                            <i class="fas fa-leaf" aria-hidden="true"></i>
-                            <span class="theme-option-name">森林模式</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="forest" title="森林模式" aria-label="森林模式" onclick="selectTheme('forest', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="oat" onclick="selectTheme('oat')">
-                            <i class="fas fa-mug-hot" aria-hidden="true"></i>
-                            <span class="theme-option-name">燕麥奶茶</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="oat" title="燕麥奶茶" aria-label="燕麥奶茶" onclick="selectTheme('oat', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="coral" onclick="selectTheme('coral')">
-                            <i class="fas fa-water" aria-hidden="true"></i>
-                            <span class="theme-option-name">珊瑚海灣</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="coral" title="珊瑚海灣" aria-label="珊瑚海灣" onclick="selectTheme('coral', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="lavender" onclick="selectTheme('lavender')">
-                            <i class="fas fa-spa" aria-hidden="true"></i>
-                            <span class="theme-option-name">晨霧薰衣草</span>
-                            <span class="theme-option-badge" hidden>使用中</span>
+                        <button type="button" class="theme-option" data-theme="lavender" title="晨霧薰衣草" aria-label="晨霧薰衣草" onclick="selectTheme('lavender', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
                     </div>
                 </div>
@@ -2790,7 +3213,7 @@
             </div>
             <div class="sidebar-footer">
                 <div class="menu-item" onclick="moneeCloudLogout();" title="登出並清除本機記帳資料，返回登入畫面"><i class="fas fa-sign-out-alt"></i><span class="menu-text">登出</span></div>
-                <button type="button" class="sidebar-version" id="sidebarAppVersion" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">v1.6.0</button>
+                <button type="button" class="sidebar-version" id="sidebarAppVersion" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">v1.7.0</button>
             </div>
         </div>
 
@@ -2801,7 +3224,7 @@
                     <div>
                         <div class="release-notes-kicker">Release Notes</div>
                         <h3 class="release-notes-title" id="releaseNotesTitle">本次更新</h3>
-                        <div class="release-notes-version" id="releaseNotesVersionLabel">v1.6.0</div>
+                        <div class="release-notes-version" id="releaseNotesVersionLabel">v1.7.0</div>
                     </div>
                     <button type="button" class="release-notes-close" onclick="closeReleaseNotes()" aria-label="關閉"><i class="fas fa-times"></i></button>
                 </div>
@@ -2822,7 +3245,7 @@
                 <div class="btn-group">
                     <button class="btn-icon sidebar-toggle-btn-navbar" id="sidebarToggleBtnNavbar" onclick="toggleSidebarCollapse()" title="展開選單"><i class="fas fa-bars"></i></button>
                     <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()" style="display:none"><i class="fas fa-sort-amount-down"></i></button>
-                    <button class="btn-icon" id="refreshBtn" onclick="refreshAllData()" title="立即更新"><i class="fas fa-sync-alt" id="refreshIcon"></i></button>
+                    <button class="btn-icon" id="refreshBtn" onclick="refreshAllData(true, {feedback:true})" title="立即更新"><i class="fas fa-sync-alt" id="refreshIcon"></i></button>
                     <button class="btn-icon" id="addBtn" onclick="openModal()"><i class="fas fa-plus"></i></button>
                     <button class="btn-icon" id="calendarSettingsBtn" onclick="openNewExpenseFromCalendar()" style="display: none;"><i class="fas fa-plus"></i></button>
                 </div>
@@ -3552,15 +3975,15 @@
             <i class="fas fa-piggy-bank" style="font-size: 18px;"></i>
             <span>固定收入</span>
         </button>
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
-            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
-                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-up);">收入</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: var(--bg-color); flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer; border: 2px solid var(--color-up);">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">轉帳</div>
             </div>
-            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeIncomeModal()" style="color: #98989d; font-size: 17px;">取消</button>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: var(--bg-color); border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeIncomeModal()" style="color: var(--text-secondary); font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
                 <button class="btn-icon" style="font-weight:bold; color: var(--color-up);" onclick="saveIncome()">儲存</button>
             </div>
@@ -3569,7 +3992,7 @@
                 <div style="margin-bottom: 20px; padding-top: 10px;">
                     <h1 style="font-size: 34px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">新增收入</h1>
                     <div id="incomeDate" style="font-size: 15px; color: var(--text-secondary); font-weight: 400;"></div>
-                    <button type="button" onclick="triggerIncomeImageUpload()" style="margin-top: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(48, 209, 88, 0.15); border: 1px solid rgba(48, 209, 88, 0.4); border-radius: 10px; color: #30d158; font-size: 15px; font-weight: 600; cursor: pointer;">
+                    <button type="button" onclick="triggerIncomeImageUpload()" style="margin-top: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--accent-muted); border: 1px solid var(--accent-border); border-radius: 10px; color: var(--color-up); font-size: 15px; font-weight: 600; cursor: pointer;">
                         <i class="fas fa-camera"></i>
                         <span>AI 批量匯入</span>
                     </button>
@@ -3578,10 +4001,10 @@
                 </div>
 
                 <!-- 表單群組容器 -->
-                <div class="form-group" style="background: #1c1c1e; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                <div class="form-group" style="background: var(--card-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     
                     <!-- 日期 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openIncomeDateSelector()">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openIncomeDateSelector()">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-calendar-alt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3595,7 +4018,7 @@
                     </div>
 
                     <!-- 標題 -->
-                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3606,7 +4029,7 @@
                     </div>
 
                     <!-- 金額 -->
-                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;">
                         <div style="display: flex; flex-direction: column; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3623,7 +4046,7 @@
                     </div>
 
                     <!-- 類別 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openCategorySelector('income')">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openCategorySelector('income')">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-dollar-sign" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3637,7 +4060,7 @@
                     </div>
 
                     <!-- 帳戶 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openJournalAccountSelector('income')">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openJournalAccountSelector('income')">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3675,15 +4098,15 @@
             <i class="fas fa-wallet" style="font-size: 18px;"></i>
             <span>固定支出</span>
         </button>
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
-            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
-                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--color-down);">支出</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">轉帳</div>
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: var(--bg-color); flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer; border: 2px solid var(--color-down);">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">轉帳</div>
             </div>
-            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeExpenseModal()" style="color: #98989d; font-size: 17px;">取消</button>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: var(--bg-color); border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeExpenseModal()" style="color: var(--text-secondary); font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
                 <button class="btn-icon" style="font-weight:bold; color: var(--color-down);" onclick="saveExpense()">儲存</button>
             </div>
@@ -3707,10 +4130,10 @@
                 </div>
 
                 <!-- 表單群組容器 -->
-                <div class="form-group" style="background: #1c1c1e; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                <div class="form-group" style="background: var(--card-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     
                     <!-- 日期 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openExpenseDateSelector()">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openExpenseDateSelector()">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-calendar-alt" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3724,7 +4147,7 @@
                     </div>
 
                     <!-- 標題 -->
-                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3735,7 +4158,7 @@
                     </div>
 
                     <!-- 金額 (高度較高，包含對齊優化) -->
-                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;">
+                    <div class="form-row" style="background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;">
                         <div style="display: flex; flex-direction: column; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3752,7 +4175,7 @@
                     </div>
 
                     <!-- 類別 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openCategorySelector('expense')">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openCategorySelector('expense')">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-tag" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3766,7 +4189,7 @@
                     </div>
 
                     <!-- 帳戶 -->
-                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid #2c2c2e; border-radius: 0;" onclick="openJournalAccountSelector('expense')">
+                    <div class="form-row" style="cursor: pointer; background: transparent; padding: 16px; margin: 0; border-bottom: 1px solid var(--border-color); border-radius: 0;" onclick="openJournalAccountSelector('expense')">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
@@ -3852,83 +4275,83 @@
             <i class="fas fa-sync-alt" style="font-size: 18px;"></i>
             <span>固定轉帳</span>
         </button>
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: #000000; overflow-y: auto;" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: 100%; margin: 0; border-radius: 0; background: var(--bg-color); overflow-y: auto;" onclick="event.stopPropagation()">
             <!-- 分頁選單 -->
-            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: #000000; flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">支出</div>
-                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer;">收入</div>
-                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: #1c1c1e; cursor: pointer; border: 2px solid var(--text-primary);">轉帳</div>
+            <div class="modal-tabs" style="display: flex; padding: 10px 16px; gap: 10px; background: var(--bg-color); flex-shrink: 0; position: sticky; top: 0; z-index: 11;" onclick="event.stopPropagation()">
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('expense')" id="journalFormTabExpense" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">支出</div>
+                <div class="modal-tab journal-form-tab" onclick="event.stopPropagation(); switchJournalFormTab('income')" id="journalFormTabIncome" style="flex: 1; text-align: center; padding: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer;">收入</div>
+                <div class="modal-tab journal-form-tab active" onclick="event.stopPropagation(); switchJournalFormTab('transfer')" id="journalFormTabTransfer" style="flex: 1; text-align: center; padding: 8px; color: var(--text-primary); font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--card-bg); cursor: pointer; border: 2px solid var(--text-primary);">轉帳</div>
             </div>
-            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: #000000; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
-                <button class="btn-icon" onclick="closeTransferModal()" style="color: #98989d; font-size: 17px;">取消</button>
+            <div class="modal-header" style="position: sticky; top: 56px; z-index: 10; background: var(--bg-color); border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;">
+                <button class="btn-icon" onclick="closeTransferModal()" style="color: var(--text-secondary); font-size: 17px;">取消</button>
                 <!-- 中間標題移除 -->
                 <button class="btn-icon" style="font-weight:bold; color: var(--accent);" onclick="saveTransfer()">儲存</button>
             </div>
             <div style="padding: 0 20px 20px 20px;">
                 <!-- 大標題區域 -->
                 <div style="margin-bottom: 20px;">
-                    <h1 style="font-size: 34px; font-weight: bold; color: #ffffff; margin: 0 0 5px 0;">轉帳</h1>
-                    <div id="transferDate" style="font-size: 15px; color: #8e8e93; font-weight: normal;"></div>
+                    <h1 style="font-size: 34px; font-weight: bold; color: var(--text-primary); margin: 0 0 5px 0;">轉帳</h1>
+                    <div id="transferDate" style="font-size: 15px; color: var(--text-secondary); font-weight: normal;"></div>
                 </div>
 
                 <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
                     <!-- 日期 -->
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTransferDateSelector()">
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openTransferDateSelector()">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 24px; text-align: center;"><i class="fas fa-calendar" style="color: #8e8e93; font-size: 20px;"></i></div>
-                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">日期</span>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-calendar" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                            <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">日期</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="transferDateDisplay" style="color: #8e8e93; font-size: 17px;"></span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="transferDateDisplay" style="color: var(--text-secondary); font-size: 17px;"></span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
 
                     <!-- 標題 -->
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: #8e8e93; font-size: 20px;"></i></div>
-                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">標題</span>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-heading" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                            <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">標題</span>
                         </div>
-                        <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right; background: transparent; border: none; color: #ffffff; font-size: 17px; width: 150px; padding: 0;">
+                        <input type="text" id="transferTitle" class="form-input" placeholder="輸入標題" style="text-align: right; background: transparent; border: none; color: var(--text-primary); font-size: 17px; width: 150px; padding: 0;">
                     </div>
 
                     <!-- 從帳戶 -->
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferFrom')">
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferFrom')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i></div>
-                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">從帳戶</span>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                            <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">從帳戶</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="transferFromAccount" style="color: #8e8e93; font-size: 17px;">選擇轉出帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="transferFromAccount" style="color: var(--text-secondary); font-size: 17px;">選擇轉出帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
 
                     <!-- 到帳戶 -->
-                    <div class="form-row" style="cursor: pointer; background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferTo')">
+                    <div class="form-row" style="cursor: pointer; background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0; display: flex; align-items: center; justify-content: space-between;" onclick="openJournalAccountSelector('transferTo')">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: #8e8e93; font-size: 20px;"></i></div>
-                            <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">到帳戶</span>
+                            <div style="width: 24px; text-align: center;"><i class="fas fa-university" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                            <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">到帳戶</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
-                            <span id="transferToAccount" style="color: #8e8e93; font-size: 17px;">選擇轉入帳戶</span>
-                            <i class="fas fa-chevron-right" style="color: #57575e; font-size: 14px;"></i>
+                            <span id="transferToAccount" style="color: var(--text-secondary); font-size: 17px;">選擇轉入帳戶</span>
+                            <i class="fas fa-chevron-right" style="color: var(--text-third); font-size: 14px;"></i>
                         </div>
                     </div>
 
                     <!-- 金額 -->
-                    <div class="form-row" style="background: #1c1c1e; border-radius: 12px; padding: 16px; margin-bottom: 0;">
+                    <div class="form-row" style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 0;">
                         <div style="display: flex; flex-direction: column; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: #8e8e93; font-size: 20px;"></i></div>
-                                <span class="form-label" style="color: #ffffff; font-size: 17px; margin: 0;">金額</span>
+                                <div style="width: 24px; text-align: center;"><i class="fas fa-coins" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+                                <span class="form-label" style="color: var(--text-primary); font-size: 17px; margin: 0;">金額</span>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between; padding-left: 36px;">
-                                <span style="color: #8e8e93; font-size: 24px; font-weight: 500;">$</span>
+                                <span style="color: var(--text-secondary); font-size: 24px; font-weight: 500;">$</span>
                                 <div style="display: flex; align-items: center; gap: 12px; flex: 1; justify-content: flex-end;">
-                                    <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: #ffffff; padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
-                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: #2c2c2e; border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: var(--accent); font-size: 20px;"></i></button>
+                                    <input type="text" id="transferAmount" class="form-input" placeholder="0" style="flex: 1; background: transparent; border: none; text-align: right; color: var(--text-primary); padding: 0; cursor: pointer; font-size: 40px; font-weight: 500; height: auto;" readonly>
+                                    <button class="calc-btn" onclick="event.stopPropagation(); openCalculatorModal('transferAmount')" type="button" title="計算機" style="background: var(--active-bg); border: none; border-radius: 8px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;"><i class="fas fa-calculator" style="color: var(--accent); font-size: 20px;"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -3940,7 +4363,7 @@
 
     <!-- Category Selector Modal -->
     <div id="categorySelectorModal" class="modal" style="z-index: 2010;" onclick="event.target.id === 'categorySelectorModal' && closeCategorySelector()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: #1c1c1e; position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
+        <div class="modal-content-wrapper" style="width: 100%; max-width: 100%; height: auto; max-height: 80vh; margin: auto; border-radius: 20px 20px 0 0; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
             <div style="padding: 20px;">
                 <div style="font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 20px; text-align: center;" id="categorySelectorTitle">選擇類別</div>
                 <div id="categorySelectorList" style="max-height: 60vh; overflow-y: auto;">
@@ -4403,15 +4826,15 @@
 
     // App 版本與 Release Notes（升版後只自動跳出一次）
     const APP_RELEASE = {
-        version: '1.6.0',
-        title: '介面與操作升級',
+        version: '1.7.0',
+        title: '主題、動效與記帳體驗',
         notes: [
-            '底部「資產／記帳」與上方資產分頁改為 Liquid Glass 膠囊，點選會滑動切換；拖曳時才會變透亮。',
-            '上方分頁字級與間距會隨螢幕寬度適應，窄螢幕不易被切邊。',
-            '修正記帳返回資產時，圓餅圖文字先白後黑的閃爍。',
-            '分頁切換與圓餅 drill-down 增加輕微淡入／位移過渡。',
-            '左右切換分頁時保留目前捲動位置，不再強制回到最上方。',
-            '功能表新增右側收合把手，並可於右下角版本號再次查看更新說明。'
+            '首頁改為同步圖示「立即更新」，移除功能表「重新整理」；自動更新不再讓圖示空轉。',
+            '淨值與金額數字改為流暢跳動；主題切換有過渡，色票改為純圖示、每列三個。',
+            'Liquid Glass 統一套用至 FAB、幣別、Toast、圖表控制等；資產空狀態畫面更清楚。',
+            '台股除權息改為精緻標記；記帳儲存後有勾勾確認動畫，停留時間加長。',
+            '新增支出／收入／轉帳表單會隨主題變色，不再鎖死深色介面。',
+            '功能表開啟時隱藏幣別切換；登出與版本號同一列，點版本可再看更新說明。'
         ]
     };
     const RELEASE_SEEN_KEY = 'monee_release_seen_version';
@@ -4494,7 +4917,15 @@
         if (oldS) localStorage.setItem(STORAGE_KEY_SETTINGS, oldS);
         if (found) {
             const t = document.getElementById('migrationToast');
-            t.style.display='block'; setTimeout(()=>t.style.display='none',3000);
+            if (t) {
+                t.textContent = '資料已還原';
+                t.classList.add('is-visible', 'toast-success');
+                t.style.display = 'block';
+                setTimeout(() => {
+                    t.classList.remove('is-visible');
+                    t.style.display = 'none';
+                }, 3000);
+            }
         }
     }
     
@@ -4686,7 +5117,7 @@
                 totalCostPnL = journalTotalWithOffset;
             }
         }
-        tn.innerText = formatAmount(displayAmount);
+        animateHeroNetWorth(displayAmount);
         const b = document.getElementById('totalPnLBlock');
         const bd = document.getElementById('totalPnLBadge');
         if (!b || !bd) return;
@@ -4749,7 +5180,7 @@
                 const card = document.querySelector(`[data-id="category-${type}"]`);
                 if (card) {
                     const av = card.querySelector('.amount-val');
-                    if (av) av.textContent = formatAmount(sum);
+                    if (av) setAmountWithAnim(av, sum);
                     const pnlEl = card.querySelector('.amount-pnl');
                     if (pnlEl) {
                         if (Math.abs(groupPnL) > 0.01) {
@@ -4767,7 +5198,7 @@
                 const block = ac0.querySelector('.group-header .group-total-block');
                 if (block) {
                     const gt = block.querySelector('.group-total');
-                    if (gt) gt.textContent = formatAmount(totalSum);
+                    if (gt) setAmountWithAnim(gt, totalSum);
                     let gp = block.querySelector('.group-pnl');
                     if (Math.abs(totalPnLAll) > 0.01) {
                         if (!gp) {
@@ -4802,7 +5233,7 @@
                     if (!acc) return;
                     const val = calculateValue(acc);
                     const av = row.querySelector('.amount-val');
-                    if (av) av.textContent = formatAmount(val);
+                    if (av) setAmountWithAnim(av, val);
                     const pnl = calculatePnL(acc);
                     const pnlWrap = row.querySelector('.item-amount');
                     let pnlEl = pnlWrap && pnlWrap.querySelector('.amount-pnl');
@@ -4834,7 +5265,7 @@
                 const block = ctn.querySelector('.group-header .group-total-block');
                 if (block) {
                     const gt = block.querySelector('.group-total');
-                    if (gt) gt.textContent = formatAmount(sum);
+                    if (gt) setAmountWithAnim(gt, sum);
                     let gp = block.querySelector('.group-pnl');
                     if (Math.abs(groupPnL) > 0.01) {
                         if (!gp) {
@@ -4859,12 +5290,12 @@
                 const val = calculateValue(acc);
                 totalDebt += val;
                 const av = row.querySelector('.amount-val');
-                if (av) av.textContent = formatAmount(val);
+                if (av) setAmountWithAnim(av, val);
             });
             const block = debtEl.querySelector('.group-header .group-total-block');
             if (block) {
                 const gt = block.querySelector('.group-total');
-                if (gt) gt.textContent = formatAmount(totalDebt);
+                if (gt) setAmountWithAnim(gt, totalDebt);
             }
         }
     }
@@ -6330,6 +6761,230 @@
         } else {
             return Math.round(val).toLocaleString();
         }
+    }
+
+    // --- Hero／列表金額動效／Toast／空狀態 ---
+    let _heroDisplayedValue = null;
+    let _heroHasPlayedEntrance = false;
+    let _heroNetWorthAnim = null;
+    let _heroAnimToken = 0;
+    let _appToastTimer = null;
+    let _currencyHeroAnimPending = false;
+    let _amountAnimStore = Object.create(null);
+    let _amountsEntranceDone = false;
+    let _pendingAmountAnimOpts = null;
+
+    function prefersReducedMotion() {
+        try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+    }
+
+    function showAppToast(message, opts) {
+        const options = opts || {};
+        const el = document.getElementById('appToast') || document.getElementById('migrationToast');
+        if (!el || !message) return;
+        el.textContent = message;
+        el.classList.toggle('toast-success', options.type === 'success');
+        el.classList.toggle('toast-info', options.type !== 'success');
+        el.classList.add('is-visible');
+        el.style.display = 'block';
+        if (_appToastTimer) clearTimeout(_appToastTimer);
+        _appToastTimer = setTimeout(() => {
+            el.classList.remove('is-visible');
+            el.style.display = 'none';
+        }, options.duration || 2200);
+    }
+
+    function flashHeroUpdate() {
+        const el = document.getElementById('totalNetWorth');
+        if (!el || prefersReducedMotion()) return;
+        el.classList.remove('hero-value-flash');
+        void el.offsetWidth;
+        el.classList.add('hero-value-flash');
+    }
+
+    function flashPnLBadge() {
+        const bd = document.getElementById('totalPnLBadge');
+        if (!bd || bd.style.visibility === 'hidden' || prefersReducedMotion()) return;
+        bd.classList.remove('pnl-badge-flash');
+        void bd.offsetWidth;
+        bd.classList.add('pnl-badge-flash');
+    }
+
+    function parseAmountText(text) {
+        if (text == null) return null;
+        const raw = String(text).replace(/,/g, '').replace(/[^\d.-]/g, '');
+        if (!raw || raw === '-' || raw === '.' || raw === '-.') return null;
+        const n = parseFloat(raw);
+        return isFinite(n) ? n : null;
+    }
+
+    function captureAmountStoreFromDom() {
+        document.querySelectorAll('[data-amount-key]').forEach((el) => {
+            const key = el.getAttribute('data-amount-key');
+            const n = parseAmountText(el.textContent);
+            if (key && n != null) _amountAnimStore[key] = n;
+        });
+    }
+
+    function animateNumericText(el, from, to, opts) {
+        const options = opts || {};
+        if (!el) return;
+        if (prefersReducedMotion() || document.body.classList.contains('numbers-hidden')) {
+            el.textContent = formatAmount(to);
+            return;
+        }
+        const token = (el._amountAnimToken || 0) + 1;
+        el._amountAnimToken = token;
+        const duration = options.currencySwitch ? 420 : (options.entrance ? 900 : 560);
+        const start = performance.now();
+        const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+        el.textContent = formatAmount(from);
+        if (options.currencySwitch) {
+            el.classList.remove('hero-currency-pulse');
+            void el.offsetWidth;
+            el.classList.add('hero-currency-pulse');
+        }
+        function frame(now) {
+            if (el._amountAnimToken !== token) return;
+            const t = Math.min(1, (now - start) / duration);
+            el.textContent = formatAmount(from + (to - from) * easeOut(t));
+            if (t < 1) requestAnimationFrame(frame);
+            else el.textContent = formatAmount(to);
+        }
+        requestAnimationFrame(frame);
+    }
+
+    function setAmountWithAnim(el, targetValue, opts) {
+        if (!el || !isFinite(targetValue)) return;
+        const options = opts || {};
+        const key = el.getAttribute('data-amount-key');
+        el.setAttribute('data-amount-value', String(targetValue));
+        const parsed = parseAmountText(el.textContent);
+        const from = options.from != null
+            ? options.from
+            : (parsed != null ? parsed : (_amountAnimStore[key] != null ? _amountAnimStore[key] : targetValue));
+        if (key) _amountAnimStore[key] = targetValue;
+        if (Math.abs(from - targetValue) < 0.005 && !options.currencySwitch && !options.entrance) {
+            el.textContent = formatAmount(targetValue);
+            return;
+        }
+        animateNumericText(el, from, targetValue, options);
+    }
+
+    function scheduleMarkedAmountAnims(opts) {
+        const options = opts || {};
+        const entrance = !!options.entrance && !_amountsEntranceDone;
+        const currencySwitch = !!options.currencySwitch;
+        const nodes = Array.from(document.querySelectorAll('[data-amount-key][data-amount-value]'));
+        // 先同步設成起點，避免重建 DOM 後先閃最終值
+        nodes.forEach((el) => {
+            const key = el.getAttribute('data-amount-key');
+            const target = parseFloat(el.getAttribute('data-amount-value'));
+            if (!key || !isFinite(target)) return;
+            let from;
+            if (entrance) from = 0;
+            else if (_amountAnimStore[key] != null) from = _amountAnimStore[key];
+            else from = target;
+            if (entrance || currencySwitch || Math.abs(from - target) >= 0.005) {
+                el.textContent = formatAmount(from);
+            }
+        });
+        requestAnimationFrame(() => {
+            nodes.forEach((el) => {
+                if (!el.isConnected) return;
+                const key = el.getAttribute('data-amount-key');
+                const target = parseFloat(el.getAttribute('data-amount-value'));
+                if (!key || !isFinite(target)) return;
+                let from;
+                if (entrance) from = 0;
+                else if (_amountAnimStore[key] != null) from = _amountAnimStore[key];
+                else from = target;
+                setAmountWithAnim(el, target, {
+                    from,
+                    entrance,
+                    currencySwitch
+                });
+            });
+            if (entrance) _amountsEntranceDone = true;
+        });
+    }
+
+    function amountMarkup(key, value, className) {
+        const cls = className || 'amount-val item-numbers';
+        return `<div class="${cls}" data-amount-key="${key}" data-amount-value="${value}">${formatAmount(value)}</div>`;
+    }
+
+    function setHeroNetWorthInstant(targetValue) {
+        const el = document.getElementById('totalNetWorth');
+        if (!el) return;
+        el.innerText = formatAmount(targetValue);
+        _heroDisplayedValue = targetValue;
+        _heroHasPlayedEntrance = true;
+    }
+
+    function animateHeroNetWorth(targetValue, opts) {
+        const options = opts || {};
+        const el = document.getElementById('totalNetWorth');
+        if (!el) return;
+        const hidden = document.body.classList.contains('numbers-hidden');
+        const reduced = prefersReducedMotion();
+        const from = (options.from != null)
+            ? options.from
+            : (_heroDisplayedValue != null ? _heroDisplayedValue : 0);
+        const isEntrance = !_heroHasPlayedEntrance;
+        const isCurrencySwitch = !!options.currencySwitch;
+
+        if (hidden || reduced) {
+            setHeroNetWorthInstant(targetValue);
+            if (options.highlight) { flashHeroUpdate(); flashPnLBadge(); }
+            return;
+        }
+
+        if (_heroHasPlayedEntrance && Math.abs(from - targetValue) < 0.005 && !isCurrencySwitch) {
+            setHeroNetWorthInstant(targetValue);
+            if (options.highlight) { flashHeroUpdate(); flashPnLBadge(); }
+            return;
+        }
+
+        const token = ++_heroAnimToken;
+        const duration = isCurrencySwitch ? 420 : (isEntrance ? 920 : 620);
+        const start = performance.now();
+        const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+        if (isCurrencySwitch) {
+            el.classList.remove('hero-currency-pulse');
+            void el.offsetWidth;
+            el.classList.add('hero-currency-pulse');
+        }
+
+        function frame(now) {
+            if (token !== _heroAnimToken) return;
+            const t = Math.min(1, (now - start) / duration);
+            const v = from + (targetValue - from) * easeOut(t);
+            el.innerText = formatAmount(v);
+            if (t < 1) {
+                _heroNetWorthAnim = requestAnimationFrame(frame);
+            } else {
+                setHeroNetWorthInstant(targetValue);
+                _heroNetWorthAnim = null;
+                if (options.highlight) { flashHeroUpdate(); flashPnLBadge(); }
+            }
+        }
+        if (_heroNetWorthAnim) cancelAnimationFrame(_heroNetWorthAnim);
+        _heroNetWorthAnim = requestAnimationFrame(frame);
+    }
+
+    function getAssetEmptyStateHtml(typeLabel) {
+        const label = typeLabel || '資產';
+        const icon = label === '美股' || label === '台股' ? 'fa-chart-line'
+            : (label === '加密貨幣' ? 'fa-bitcoin' : (label === '錢包' ? 'fa-university' : 'fa-wallet'));
+        return '<div class="journal-empty-state asset-empty-state">' +
+            '<div class="empty-icon"><i class="fas ' + icon + '" aria-hidden="true"></i></div>' +
+            '<div class="empty-title">尚無' + label + '</div>' +
+            '<div class="empty-desc">新增第一筆後，這裡會顯示列表與圖表</div>' +
+            '<div class="journal-empty-actions">' +
+            '<button type="button" class="primary" onclick="openModal()">新增資產</button>' +
+            '</div></div>';
     }
     function formatPnL(val) { 
         if(!val)return''; 
@@ -11469,7 +12124,25 @@
     }
 
     // Async Updates
-    async function refreshAllData(updateChart = true) { if(isSorting) return; const icon=document.getElementById('refreshIcon'); if(icon) icon.classList.add('fa-spin-fast'); await updateRates(); if(settings.apiKey||settings.fugleKey)await fetchPrices(); if(updateChart && !isSorting) updateChartData(); setTimeout(()=>{if(icon) icon.classList.remove('fa-spin-fast');},500); }
+    async function refreshAllData(updateChart = true, opts) {
+        if(isSorting) return;
+        const options = opts || {};
+        const manualFeedback = !!options.feedback;
+        const icon = document.getElementById('refreshIcon');
+        // 僅手動「立即更新」才轉 icon；自動輪詢不轉
+        if(manualFeedback && icon) icon.classList.add('fa-spin-fast');
+        await updateRates();
+        if(settings.apiKey||settings.fugleKey) await fetchPrices();
+        if(updateChart && !isSorting) updateChartData();
+        setTimeout(() => {
+            if(manualFeedback && icon) icon.classList.remove('fa-spin-fast');
+            if(manualFeedback) {
+                showAppToast('匯率／報價已更新', { type: 'success' });
+                flashHeroUpdate();
+                flashPnLBadge();
+            }
+        }, 500);
+    }
     async function updateRates() { try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');const d=await r.json();if(d.rates?.TWD)settings.usdRate=d.rates.TWD;}catch(e){} if(settings.apiKey){try{const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=COINBASE:USDT-USD&token=${settings.apiKey}`);const j=await r.json();if(j.c)settings.usdtRate=j.c;}catch(e){}} saveSettings(); document.getElementById('rateUsd').innerText=`USD ≈ ${settings.usdRate.toFixed(2)}`; document.getElementById('rateUsdt').innerText=`USDT ≈ ${settings.usdtRate.toFixed(3)} USD`; if(!isSorting) renderAssets(); }
     async function fetchPrices() {
         const autos = accounts.filter(a => a.isAuto && a.symbol);
@@ -11921,6 +12594,11 @@
         sortables.forEach(s=>s.destroy()); 
         sortables=[]; 
         unlockScrollForSort(); // 確保切換頁面時解除滾動鎖定
+        captureAmountStoreFromDom();
+        const currencyAnim = !!_currencyHeroAnimPending;
+        const entranceAnim = !_amountsEntranceDone;
+        _pendingAmountAnimOpts = { currencySwitch: currencyAnim, entrance: entranceAnim };
+        _currencyHeroAnimPending = false;
         
         // 在桌面模式下，動態計算並對齊列表標題與圓餅圖中心
         if(window.matchMedia('(min-width: 768px)').matches) {
@@ -12034,8 +12712,8 @@
         }
         // 股票頁面（第2、3、4頁）保持原有邏輯，不加入記帳盈虧
 
-        // 更新總資產顯示
-        document.getElementById('totalNetWorth').innerText = formatAmount(displayAmount);
+        // 更新總資產顯示（Hero 滾動／幣別過渡）
+        animateHeroNetWorth(displayAmount, { currencySwitch: currencyAnim });
         const b = document.getElementById('totalPnLBlock');
         const bd = document.getElementById('totalPnLBadge');
         if(Math.abs(totalDailyPnL) > 1 || Math.abs(totalCostPnL) > 1) {
@@ -12085,6 +12763,10 @@
             const c = document.getElementById('assetsContainer');
             if(c) {
                 c.innerHTML = '';
+                const hasAnyAsset = accounts.some(a => a.type !== 'debt');
+                if(!hasAnyAsset) {
+                    c.innerHTML = getAssetEmptyStateHtml('資產');
+                } else {
                 const categoryConfig = {
                     'bank': {t:'錢包', i:'fa-university', s:'icon-bank'},
                     'stock': {t:'美股', i:'fa-chart-line', s:'icon-stock'},
@@ -12138,11 +12820,12 @@
                         pnlHtml = `<div class="amount-pnl item-numbers">${formatPnL(item.pnl)}</div>`;
                     }
                     
-                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" onclick="switchToPage(${PAGE_TYPES.indexOf(item.type)})" data-id="category-${item.type}"><div class="item-icon ${item.iconClass}"><i class="fas ${item.icon}"></i></div><div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(item.sum)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers('category-${item.type}')" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
+                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" onclick="switchToPage(${PAGE_TYPES.indexOf(item.type)})" data-id="category-${item.type}"><div class="item-icon ${item.iconClass}"><i class="fas ${item.icon}"></i></div><div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper">${amountMarkup('category-' + item.type, item.sum, 'amount-val item-numbers ' + color)}<button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers('category-${item.type}')" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
                 });
                 
                 let pHtml = totalPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(totalPnL)}</span>` : '';
-                c.innerHTML = `<div class="group-header"><span>總覽<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(totalSum)}</span>${pHtml}</div></div><div class="list-container" id="group-overview">${html}</div>`;
+                c.innerHTML = `<div class="group-header"><span>總覽<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block">${amountMarkup('group-overview-total', totalSum, 'group-total numbers-content')}${pHtml}</div></div><div class="list-container" id="group-overview">${html}</div>`;
+                }
                 
                 // 總覽類別卡片：長按可拖動排序
                 let elOverview = document.getElementById('group-overview');
@@ -12205,7 +12888,7 @@
             c.innerHTML = '';
             let items = accounts.filter(a => a.type === type).sort((a,b) => (a.order||0) - (b.order||0));
             if(items.length === 0) {
-                c.innerHTML = '<div style="text-align:center; color:#666; padding:30px 0;">暫無資產</div>';
+                c.innerHTML = getAssetEmptyStateHtml(g.t);
                 return;
             }
             
@@ -12350,7 +13033,15 @@
                             // 其他類型：股數放在眼睛按鈕下方
                             balanceDisplay = `<div class="item-balance-below-eye">${acc.balance || 'N/A'}</div>`;
                         }
-                        htmlContent = `<div class="item-name-row"><div class="item-name">${displayName}</div><div class="item-eye-wrapper"><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIconTemp}"></i></button>${balanceDisplay}</div><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div></div>${symbolRow}`;
+                        let divBadgeHtml = '';
+                        if (acc.type === 'twstock') {
+                            const divInfo = twDividendMap[(sym || '').toString().trim()];
+                            if (divInfo && divInfo.cashDiv > 0) {
+                                const tip = `除息日 ${divInfo.dateStr || '-'} · 每股現金 ${divInfo.cashDiv} 元`;
+                                divBadgeHtml = `<span class="tw-div-badge" title="${tip}"><i class="fas fa-coins" aria-hidden="true"></i><span>除息</span></span>`;
+                            }
+                        }
+                        htmlContent = `<div class="item-name-row"><div class="item-name"><span class="item-name-text">${displayName}</span>${divBadgeHtml}</div><div class="item-eye-wrapper"><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIconTemp}"></i></button>${balanceDisplay}</div>${amountMarkup('acc-' + acc.id, val, 'amount-val item-numbers ' + color)}</div>${symbolRow}`;
                     } else {
                         // 其他分類保持原來的佈局
                         htmlContent = `<div class="item-name">${displayName}</div>${line1}${line2}`;
@@ -12433,12 +13124,12 @@
                      html += `<div class="list-item${divClass} ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div></div>`;
                 } else {
                     // 其他分類（錢包等）：眼睛按鈕放在金額右邊
-                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper"><div class="amount-val item-numbers ${color}">${formatAmount(val)}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
+                    html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${clk} data-id="${acc.id}">${iconHtml}<div class="item-content">${htmlContent}</div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val-wrapper">${amountMarkup('acc-' + acc.id, val, 'amount-val item-numbers ' + color)}<button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div>${pnlHtml}</div></div></div>`;
                 }
             });
             
             let pHtml = groupPnL !== 0 ? `<span class="group-pnl numbers-content">${formatPnL(groupPnL)}</span>` : '';
-            c.innerHTML = `<div class="group-header"><span>${g.t}<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(sum)}</span>${pHtml}</div></div><div class="list-container" id="group-${type}">${html}</div>`;
+            c.innerHTML = `<div class="group-header"><span>${g.t}<span class="drag-hint">長按可拖動排序</span></span><div class="group-total-block">${amountMarkup('group-' + type + '-total', sum, 'group-total numbers-content')}${pHtml}</div></div><div class="list-container" id="group-${type}">${html}</div>`;
             
             // 資產細項：長按可拖動排序
             let el = document.getElementById(`group-${type}`);
@@ -12464,6 +13155,12 @@
         
         // 更新當前頁面顯示（方案C：position 疊加）
         updateActivePageClass();
+
+        // 列表金額進場／幣別過渡動效
+        if (_pendingAmountAnimOpts) {
+            scheduleMarkedAmountAnims(_pendingAmountAnimOpts);
+            _pendingAmountAnimOpts = null;
+        }
     }
     
     function renderDebt(containerId = null) {
@@ -12498,10 +13195,10 @@
             let displayCurrency = currentDisplayCurrency;
             
             let debtClick = `onclick="openDetailView(${acc.id})"`;
-            html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${debtClick} data-id="${acc.id}"><div class="item-icon icon-debt"><i class="fas fa-hand-holding-usd"></i></div><div class="item-content"><div class="item-name">${acc.name}</div><div class="item-row">${displayCurrency}</div></div><div class="item-amount-wrapper"><div class="item-amount"><div class="amount-val item-numbers amount-red">${formatAmount(val)}</div></div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div></div>`;
+            html += `<div class="list-item ${itemHidden ? 'item-hidden' : ''}" ${debtClick} data-id="${acc.id}"><div class="item-icon icon-debt"><i class="fas fa-hand-holding-usd"></i></div><div class="item-content"><div class="item-name">${acc.name}</div><div class="item-row">${displayCurrency}</div></div><div class="item-amount-wrapper"><div class="item-amount">${amountMarkup('acc-' + acc.id, val, 'amount-val item-numbers amount-red')}</div><button class="item-eye-btn" onclick="event.stopPropagation(); toggleItemNumbers(${acc.id})" title="隱藏/顯示數字"><i class="fas ${eyeIcon}"></i></button></div></div>`;
         });
         
-        debtContainer.innerHTML = `<div class="group-header"><span>負債</span><div class="group-total-block"><span class="group-total numbers-content">${formatAmount(totalDebt)}</span></div></div><div class="list-container" id="group-debt-${containerId}">${html}</div>`;
+        debtContainer.innerHTML = `<div class="group-header"><span>負債</span><div class="group-total-block">${amountMarkup('group-debt-' + containerId + '-total', totalDebt, 'group-total numbers-content')}</div></div><div class="list-container" id="group-debt-${containerId}">${html}</div>`;
         
         // 負債不允許拖動排序，即使是在編輯模式下
         // 負債始終鎖定在最底部
@@ -12543,6 +13240,7 @@
         settings.displayCurrency = currentDisplayCurrency;
         saveSettings();
         updateCurrencyButton();
+        _currencyHeroAnimPending = true;
         renderAssets();
         // 折線圖需重新渲染以套用幣別
         if(currentChartMode === 'line') {
@@ -12620,6 +13318,16 @@
         settings.theme = theme;
         settings.chartTextColor = theme === 'dark' ? 'white' : 'black';
         saveSettings();
+
+        const root = document.documentElement;
+        if (!prefersReducedMotion()) {
+            root.classList.add('theme-animating');
+            if (window._themeAnimTimer) clearTimeout(window._themeAnimTimer);
+            window._themeAnimTimer = setTimeout(() => {
+                root.classList.remove('theme-animating');
+            }, 320);
+        }
+
         applyTheme();
         updateThemeButton();
         updateChartTextColor();
@@ -12678,11 +13386,6 @@
             btn.classList.toggle('is-current', isCurrent);
             btn.disabled = isCurrent;
             btn.setAttribute('aria-pressed', isCurrent ? 'true' : 'false');
-            const badge = btn.querySelector('.theme-option-badge');
-            if (badge) {
-                if (isCurrent) badge.removeAttribute('hidden');
-                else badge.setAttribute('hidden', '');
-            }
         });
     }
     
@@ -14328,6 +15031,7 @@
             // 檢查是否有固定轉帳在這個日期
             const transfers = loadFixedTransfers();
             const dateStr = formatLocalDate(date);
+            dayBtn.setAttribute('data-date', dateStr);
             const dateObj = new Date(date);
             dateObj.setHours(0, 0, 0, 0);
             
@@ -15020,6 +15724,7 @@
             emptyDiv.className = 'journal-empty-state';
             const kind = type === 'expense' ? '支出' : '收入';
             emptyDiv.innerHTML =
+                '<div class="empty-icon"><i class="fas ' + (type === 'expense' ? 'fa-receipt' : 'fa-coins') + '" aria-hidden="true"></i></div>' +
                 '<div class="empty-title">本月尚無' + kind + '資料</div>' +
                 '<div class="empty-desc">新增一筆後這裡會顯示占比分析</div>' +
                 '<div class="journal-empty-actions">' +
@@ -18749,6 +19454,87 @@
         closeAccountSelector();
     }
     
+    // 記帳完成儀式感：勾勾確認＋金額飛入當日
+    let _journalCelebTimer = null;
+    function isCalendarPageVisible() {
+        const page = document.getElementById('calendarPage');
+        if (!page) return false;
+        const style = window.getComputedStyle(page);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    }
+    function playJournalSaveCelebration(meta) {
+        const options = meta || {};
+        const type = options.type || 'expense';
+        const amount = Number(options.amount) || 0;
+        const dateStr = options.dateStr || '';
+        const overlay = document.getElementById('journalSaveCelebration');
+        const amountEl = document.getElementById('journalSaveCelebAmount');
+        const labelEl = document.getElementById('journalSaveCelebLabel');
+        const flyer = document.getElementById('journalSaveFlyer');
+        if (!overlay || !amountEl || !labelEl) return;
+
+        const sign = type === 'income' ? '+' : (type === 'expense' ? '-' : '');
+        const label = type === 'income' ? '已記一筆收入' : (type === 'transfer' ? '已記一筆轉帳' : '已記一筆支出');
+        const formatted = `${sign}$${Math.round(Math.abs(amount)).toLocaleString()}`;
+
+        overlay.classList.remove('is-income', 'is-expense', 'is-transfer', 'show');
+        overlay.classList.add(type === 'income' ? 'is-income' : (type === 'transfer' ? 'is-transfer' : 'is-expense'));
+        amountEl.textContent = formatted;
+        labelEl.textContent = label;
+        overlay.setAttribute('aria-hidden', 'false');
+        overlay.classList.add('show');
+
+        if (_journalCelebTimer) clearTimeout(_journalCelebTimer);
+
+        if (prefersReducedMotion()) {
+            _journalCelebTimer = setTimeout(() => {
+                overlay.classList.remove('show');
+                overlay.setAttribute('aria-hidden', 'true');
+            }, 1600);
+            return;
+        }
+
+        // 勾勾確認卡多停留一會兒，再飛入日期
+        _journalCelebTimer = setTimeout(() => {
+            const dayBtn = dateStr ? document.querySelector(`.calendar-day[data-date="${dateStr}"]`) : null;
+            const canFly = !!(flyer && dayBtn && isCalendarPageVisible());
+            if (canFly) {
+                const fromRect = amountEl.getBoundingClientRect();
+                const toRect = dayBtn.getBoundingClientRect();
+                const startX = fromRect.left + fromRect.width / 2;
+                const startY = fromRect.top + fromRect.height / 2;
+                const endX = toRect.left + toRect.width / 2;
+                const endY = toRect.top + toRect.height / 2;
+                flyer.textContent = formatted;
+                flyer.className = 'journal-save-flyer ' + (type === 'income' ? 'is-income' : (type === 'transfer' ? 'is-transfer' : 'is-expense'));
+                flyer.style.left = '0px';
+                flyer.style.top = '0px';
+                flyer.style.opacity = '1';
+                flyer.style.transform = `translate(${startX}px, ${startY}px) translate(-50%, -50%) scale(1)`;
+                flyer.style.transition = 'none';
+                void flyer.offsetWidth;
+                flyer.style.transition = 'transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.75s ease';
+                requestAnimationFrame(() => {
+                    flyer.style.transform = `translate(${endX}px, ${endY}px) translate(-50%, -50%) scale(0.55)`;
+                    flyer.style.opacity = '0';
+                });
+                dayBtn.classList.remove('day-receive-pulse');
+                void dayBtn.offsetWidth;
+                dayBtn.classList.add('day-receive-pulse');
+                setTimeout(() => dayBtn.classList.remove('day-receive-pulse'), 900);
+            }
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+            setTimeout(() => {
+                if (flyer) {
+                    flyer.style.opacity = '0';
+                    flyer.style.transition = 'none';
+                    flyer.textContent = '';
+                }
+            }, 800);
+        }, 1250);
+    }
+
     // 保存收入
     function saveIncome() {
         const amount = parseFloat(document.getElementById('incomeAmount').value);
@@ -18860,6 +19646,7 @@
         }
         
         closeIncomeModal();
+        playJournalSaveCelebration({ type: 'income', amount, dateStr });
     }
     
     // 保存支出
@@ -18975,6 +19762,7 @@
         }
         
         closeExpenseModal();
+        playJournalSaveCelebration({ type: 'expense', amount, dateStr });
     }
     
     // 保存轉帳
@@ -19094,6 +19882,7 @@
         }
         
         closeTransferModal();
+        playJournalSaveCelebration({ type: 'transfer', amount, dateStr });
     }
     
     // Calendar Settings Functions (保留用於固定轉帳)
