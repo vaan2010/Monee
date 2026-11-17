@@ -528,8 +528,7 @@
         .menu-group-label.collapsed .collapse-icon { transform: rotate(-90deg); }
         .menu-section[id="menuSection-invest"] > *,
         .menu-section[id="menuSection-data-settings"] > *,
-        .menu-section[id="menuSection-tutorial"] > *,
-        .menu-section[id="menuSection-system"] > * { padding-left: 35px; }
+        .menu-section[id="menuSection-tutorial"] > * { padding-left: 35px; }
         .menu-section .menu-section .menu-item,
         .menu-section .menu-section .page-visibility-item { padding-left: 25px; }
         .menu-section { overflow: hidden; transition: max-height 0.12s ease-out; }
@@ -2502,12 +2501,6 @@
         body.release-notes-open .currency-toggle-btn {
             display: none !important;
         }
-        .menu-item .menu-version-tag {
-            margin-left: auto;
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
         /* Footer 的登出項目要和上方 menu-item 完全對齊 */
         .sidebar-footer .menu-item {
             margin: 0;
@@ -2521,6 +2514,26 @@
             width: 24px;
             text-align: center;
             font-size: 18px;
+        }
+        .sidebar-version {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 4px 25px 2px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            text-align: right;
+            cursor: pointer;
+            opacity: 0.85;
+        }
+        .sidebar-version:hover,
+        .sidebar-version:active {
+            color: var(--text-primary);
+            opacity: 1;
         }
     </style>
 </head>
@@ -2629,16 +2642,7 @@
         </div>
     </div>
     <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="handleFileImport(event)">
-    <div id="refreshStockOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1999; display: none; backdrop-filter: blur(4px);"></div>
     <div id="importOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1999; display: none; backdrop-filter: blur(4px);"></div>
-    <div id="refreshStockProgressToast" class="toast" style="background: var(--accent); display: none; z-index: 2001;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden;">
-                <div id="refreshStockProgressBar" style="height: 100%; background: #fff; width: 0%; transition: width 0.3s;"></div>
-            </div>
-            <span id="refreshStockProgressText">重新整理中...</span>
-        </div>
-    </div>
 
     <!-- App Container -->
     <div class="app-container">
@@ -2759,28 +2763,10 @@
                     </div>
                 </div>
 
-                <div class="menu-group-label collapsed" onclick="toggleMenuSection('system')">
-                    <span>系統</span>
-                    <i class="fas fa-chevron-down collapse-icon"></i>
-                </div>
-                <div class="menu-section collapsed" id="menuSection-system">
-                    <div class="menu-label collapsed" onclick="toggleMenuSection('update')">
-                        <span>更新</span>
-                        <i class="fas fa-chevron-down collapse-icon"></i>
-                    </div>
-                    <div class="menu-section collapsed" id="menuSection-update">
-                        <div class="menu-item" onclick="refreshAllData(); toggleSidebar();"><i class="fas fa-sync-alt"></i><span class="menu-text">立即更新</span></div>
-                        <div class="menu-item" onclick="refreshStockInfo(); toggleSidebar();"><i class="fas fa-redo"></i><span class="menu-text">重新整理</span></div>
-                    </div>
-                    <div class="menu-item" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">
-                        <i class="fas fa-info-circle"></i>
-                        <span class="menu-text">版本</span>
-                        <span class="menu-version-tag" id="sidebarAppVersion">v1.6.0</span>
-                    </div>
-                </div>
             </div>
             <div class="sidebar-footer">
                 <div class="menu-item" onclick="moneeCloudLogout();" title="登出並清除本機記帳資料，返回登入畫面"><i class="fas fa-sign-out-alt"></i><span class="menu-text">登出</span></div>
+                <button type="button" class="sidebar-version" id="sidebarAppVersion" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">v1.6.0</button>
             </div>
         </div>
 
@@ -2812,6 +2798,7 @@
                 <div class="btn-group">
                     <button class="btn-icon sidebar-toggle-btn-navbar" id="sidebarToggleBtnNavbar" onclick="toggleSidebarCollapse()" title="展開選單"><i class="fas fa-bars"></i></button>
                     <button class="btn-icon" id="sortBtn" onclick="toggleEditMode()" style="display:none"><i class="fas fa-sort-amount-down"></i></button>
+                    <button class="btn-icon" id="refreshBtn" onclick="refreshAllData()" title="立即更新"><i class="fas fa-sync-alt" id="refreshIcon"></i></button>
                     <button class="btn-icon" id="addBtn" onclick="openModal()"><i class="fas fa-plus"></i></button>
                     <button class="btn-icon" id="calendarSettingsBtn" onclick="openNewExpenseFromCalendar()" style="display: none;"><i class="fas fa-plus"></i></button>
                 </div>
@@ -4400,7 +4387,7 @@
             '修正記帳返回資產時，圓餅圖文字先白後黑的閃爍。',
             '分頁切換與圓餅 drill-down 增加輕微淡入／位移過渡。',
             '左右切換分頁時保留目前捲動位置，不再強制回到最上方。',
-            '功能表新增右側收合把手，並可於「系統 → 版本」再次查看更新說明。'
+            '功能表新增右側收合把手，並可於右下角版本號再次查看更新說明。'
         ]
     };
     const RELEASE_SEEN_KEY = 'monee_release_seen_version';
@@ -5125,8 +5112,6 @@
         'data-settings': true,
         'tutorial': true,
         'theme': true,
-        'system': true,
-        'update': true,
         'data': true,
         'pnl': true,
         'linechart': true,
@@ -11462,141 +11447,6 @@
     // Async Updates
     async function refreshAllData(updateChart = true) { if(isSorting) return; const icon=document.getElementById('refreshIcon'); if(icon) icon.classList.add('fa-spin-fast'); await updateRates(); if(settings.apiKey||settings.fugleKey)await fetchPrices(); if(updateChart && !isSorting) updateChartData(); setTimeout(()=>{if(icon) icon.classList.remove('fa-spin-fast');},500); }
     async function updateRates() { try{const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');const d=await r.json();if(d.rates?.TWD)settings.usdRate=d.rates.TWD;}catch(e){} if(settings.apiKey){try{const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=COINBASE:USDT-USD&token=${settings.apiKey}`);const j=await r.json();if(j.c)settings.usdtRate=j.c;}catch(e){}} saveSettings(); document.getElementById('rateUsd').innerText=`USD ≈ ${settings.usdRate.toFixed(2)}`; document.getElementById('rateUsdt').innerText=`USDT ≈ ${settings.usdtRate.toFixed(3)} USD`; if(!isSorting) renderAssets(); }
-    async function refreshStockInfo() {
-        const stockAccounts = accounts.filter(acc => acc.type === 'stock' && acc.symbol);
-        const twstockAccounts = accounts.filter(acc => acc.type === 'twstock' && acc.symbol);
-        const cryptoAccounts = accounts.filter(acc => acc.type === 'crypto' && acc.symbol);
-        
-        if(stockAccounts.length === 0 && twstockAccounts.length === 0 && cryptoAccounts.length === 0) {
-            alert('沒有需要重新整理的股票資訊');
-            return;
-        }
-        
-        // 顯示遮罩層和進度條
-        const overlay = document.getElementById('refreshStockOverlay');
-        const progressToast = document.getElementById('refreshStockProgressToast');
-        const progressBar = document.getElementById('refreshStockProgressBar');
-        const progressText = document.getElementById('refreshStockProgressText');
-        overlay.style.display = 'block';
-        progressToast.style.display = 'block';
-        progressBar.style.width = '5%';
-        progressText.innerText = '準備中...';
-        
-        let updated = 0;
-        let total = stockAccounts.length + twstockAccounts.length + cryptoAccounts.length;
-        let current = 0;
-        
-        // 重新整理美股資訊
-        for(let acc of stockAccounts) {
-            current++;
-            progressBar.style.width = `${5 + (current / total) * 33}%`;
-            progressText.innerText = `更新美股: ${acc.symbol} (${current}/${total})`;
-            
-            try {
-                const sym = acc.symbol.replace('COINBASE:','').replace('OKEX:','').replace('-USD','').replace('-USDT','');
-                const profile = await fetchUSStockProfile(sym);
-                if(profile) {
-                    if(profile.name) acc.name = profile.name;
-                    // 僅在新 logo 可載入時才替換；失敗保留舊 URL／本機快取
-                    if(profile.logo) {
-                        const applied = await applyAccountLogo(acc, profile.logo);
-                        if(!applied && !acc.logo) {
-                            // 完全沒有舊圖時仍記下 URL，之後 warm／SW 可能補上
-                            acc.logo = profile.logo;
-                        }
-                    }
-                    updated++;
-                }
-                // 避免請求過快，添加延遲
-                await new Promise(r => setTimeout(r, 200));
-            } catch(e) {
-                console.error(`Failed to refresh stock info for ${acc.symbol}:`, e);
-            }
-        }
-        
-        // 重新整理台股資訊
-        for(let acc of twstockAccounts) {
-            current++;
-            progressBar.style.width = `${38 + ((current - stockAccounts.length) / Math.max(twstockAccounts.length, 1)) * 33}%`;
-            progressText.innerText = `更新台股: ${acc.symbol} (${current}/${total})`;
-            
-            try {
-                const sym = acc.symbol;
-                if(/^\d{4}$/.test(sym)) {
-                    const companyName = await fetchTWStockName(sym);
-                    if(companyName) {
-                        acc.name = companyName;
-                        updated++;
-                    }
-                    // 台股 logo：FMP 免 Key（2330.TW.png）；失敗保留舊圖
-                    {
-                        const logoProfile = await fetchTWStockLogoProfile(sym, acc.twMarket || null);
-                        if(logoProfile && logoProfile.logo) {
-                            if(logoProfile.market) acc.twMarket = logoProfile.market;
-                            const applied = await applyAccountLogo(acc, logoProfile.logo);
-                            if(!applied) acc.logo = logoProfile.logo;
-                            else acc.logo = logoProfile.logo;
-                            updated++;
-                        }
-                        await new Promise(r => setTimeout(r, 200));
-                    }
-                }
-                // 避免請求過快，添加延遲
-                await new Promise(r => setTimeout(r, 150));
-            } catch(e) {
-                console.error(`Failed to refresh twstock info for ${acc.symbol}:`, e);
-            }
-        }
-        
-        // 重新整理加密貨幣資訊
-        for(let acc of cryptoAccounts) {
-            current++;
-            progressBar.style.width = `${71 + ((current - stockAccounts.length - twstockAccounts.length) / Math.max(cryptoAccounts.length, 1)) * 24}%`;
-            progressText.innerText = `更新加密貨幣: ${acc.symbol} (${current}/${total})`;
-            
-            try {
-                const sym = acc.symbol;
-                const logoUrl = await fetchCryptoLogo(sym);
-                if(logoUrl) {
-                    const applied = await applyAccountLogo(acc, logoUrl);
-                    if(!applied && !acc.logo) acc.logo = logoUrl;
-                    updated++;
-                }
-                // 避免請求過快，添加延遲
-                await new Promise(r => setTimeout(r, 150));
-            } catch(e) {
-                console.error(`Failed to refresh crypto info for ${acc.symbol}:`, e);
-            }
-        }
-        
-        // 若有台股帳戶，一併更新除權除息資料
-        if(twstockAccounts.length > 0) {
-            try {
-                await loadTwDividendData();
-            } catch(e) {
-                console.error('Failed to refresh dividend data:', e);
-            }
-        }
-        
-        // 保存更新後的資料
-        progressBar.style.width = '95%';
-        progressText.innerText = '儲存資料中...';
-        saveData();
-        
-        // 重新渲染列表和圖表
-        progressBar.style.width = '100%';
-        progressText.innerText = '完成！';
-        renderAssets();
-        updateChartData();
-        
-        // 延遲後隱藏遮罩層和進度條
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            progressToast.style.display = 'none';
-            progressBar.style.width = '0%';
-            alert(`已重新整理 ${updated}/${total} 個股票資訊`);
-        }, 500);
-    }
     async function fetchPrices() {
         const autos = accounts.filter(a => a.isAuto && a.symbol);
         let anyUpdated = false;
