@@ -11,21 +11,24 @@
     <script>
     (function () {
         try {
-            var ALLOWED = { dark: 1, light: 1, forest: 1, oat: 1, coral: 1, lavender: 1 };
+            var MIGRATE = { midnight: 'rose', sky: 'rose', coral: 'rose' };
+            var ALLOWED = { dark: 1, graphite: 1, light: 1, forest: 1, oat: 1, rose: 1, lavender: 1 };
             var BG = {
                 dark: '#000000',
+                graphite: '#1A1C1E',
                 light: '#ffffff',
                 forest: '#e7f0e4',
                 oat: '#F6F0E6',
-                coral: '#F4F6F7',
+                rose: '#F7ECEF',
                 lavender: '#F4F3FB'
             };
             var ACCENT = {
                 dark: '#0a84ff',
+                graphite: '#C9A06A',
                 light: '#007aff',
                 forest: '#3d7a4a',
                 oat: '#8B5A34',
-                coral: '#147570',
+                rose: '#9C3D55',
                 lavender: '#5250C9'
             };
             var theme = 'dark';
@@ -33,7 +36,9 @@
                 if (!raw) return null;
                 try {
                     var s = JSON.parse(raw);
-                    if (s && s.theme && ALLOWED[s.theme]) return s.theme;
+                    if (!s || !s.theme) return null;
+                    var t = MIGRATE[s.theme] || s.theme;
+                    if (ALLOWED[t]) return t;
                 } catch (e) {}
                 return null;
             }
@@ -190,18 +195,6 @@
             --glass-active-fill: rgba(139, 90, 52, 0.15);
             --chart-text-color: #2E2420;
         }
-        /* 珊瑚海灣：冷灰白＋深青綠強調 */
-        :root[data-theme="coral"] {
-            --bg-color: #F4F6F7; --card-bg: #FFFFFF; --text-primary: #23282D; --text-secondary: #626C75; --text-third: #97A1AA;
-            --color-bank: #3D8A96; --color-stock: #7A6B9A; --color-twstock: #147570; --color-crypto: #C4893A; --color-debt: #D15049;
-            --color-up: #1B856E; --color-down: #D15049; --border-color: #D6DCE0; --active-bg: #E6EBEE;
-            --accent: #147570; --accent-2: #1F9D97; --accent-contrast: #ffffff;
-            --accent-soft: rgba(20, 117, 112, 0.15); --accent-muted: rgba(20, 117, 112, 0.10); --accent-border: rgba(20, 117, 112, 0.42);
-            --glass-fill: rgba(255, 255, 255, 0.56); --glass-border: rgba(255, 255, 255, 0.72);
-            --glass-highlight: rgba(255, 255, 255, 0.85); --glass-shadow: rgba(35, 40, 45, 0.12);
-            --glass-active-fill: rgba(20, 117, 112, 0.14);
-            --chart-text-color: #23282D;
-        }
         /* 晨霧薰衣草：柔紫白＋深靛紫強調 */
         :root[data-theme="lavender"] {
             --bg-color: #F4F3FB; --card-bg: #FFFFFF; --text-primary: #252645; --text-secondary: #6B6D8E; --text-third: #9A9BB8;
@@ -213,6 +206,30 @@
             --glass-highlight: rgba(255, 255, 255, 0.88); --glass-shadow: rgba(37, 38, 69, 0.14);
             --glass-active-fill: rgba(82, 80, 201, 0.14);
             --chart-text-color: #252645;
+        }
+        /* 石墨灰：中性深灰＋金銅強調（與純黑藍深色拉開） */
+        :root[data-theme="graphite"] {
+            --bg-color: #1A1C1E; --card-bg: #26292C; --text-primary: #F2F2F3; --text-secondary: #9A9EA3; --text-third: #6B7076;
+            --color-bank: #7EB6D9; --color-stock: #B39DDB; --color-twstock: #C9A06A; --color-crypto: #E0B888; --color-debt: #E57373;
+            --color-up: #4CAF7A; --color-down: #E57373; --border-color: #34383C; --active-bg: #303438;
+            --accent: #C9A06A; --accent-2: #E0B888; --accent-contrast: #1A1C1E;
+            --accent-soft: rgba(201, 160, 106, 0.20); --accent-muted: rgba(201, 160, 106, 0.12); --accent-border: rgba(201, 160, 106, 0.46);
+            --glass-fill: rgba(38, 41, 44, 0.58); --glass-border: rgba(255, 255, 255, 0.14);
+            --glass-highlight: rgba(255, 255, 255, 0.20); --glass-shadow: rgba(0, 0, 0, 0.40);
+            --glass-active-fill: rgba(201, 160, 106, 0.16);
+            --chart-text-color: #F2F2F3;
+        }
+        /* 暮色玫瑰：玫瑰灰底＋酒紅強調（與薰衣草紫、燕麥棕拉開） */
+        :root[data-theme="rose"] {
+            --bg-color: #F7ECEF; --card-bg: #FFF8FA; --text-primary: #2A1C22; --text-secondary: #7A5C66; --text-third: #A88B94;
+            --color-bank: #5B7C99; --color-stock: #8B6FA8; --color-twstock: #9C3D55; --color-crypto: #C4893A; --color-debt: #D1433A;
+            --color-up: #2A8F5C; --color-down: #D1433A; --border-color: #E5D0D6; --active-bg: #EEDDE2;
+            --accent: #9C3D55; --accent-2: #C45B72; --accent-contrast: #ffffff;
+            --accent-soft: rgba(156, 61, 85, 0.16); --accent-muted: rgba(156, 61, 85, 0.10); --accent-border: rgba(156, 61, 85, 0.42);
+            --glass-fill: rgba(255, 248, 250, 0.58); --glass-border: rgba(255, 255, 255, 0.74);
+            --glass-highlight: rgba(255, 255, 255, 0.88); --glass-shadow: rgba(42, 28, 34, 0.14);
+            --glass-active-fill: rgba(156, 61, 85, 0.14);
+            --chart-text-color: #2A1C22;
         }
         * { box-sizing: border-box; -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
         input, textarea, select, [contenteditable="true"] {
@@ -494,14 +511,16 @@
         }
         .theme-option[data-theme="dark"] .theme-swatch { background: #000000; }
         .theme-option[data-theme="dark"] .theme-swatch::after { background: #0a84ff; }
+        .theme-option[data-theme="graphite"] .theme-swatch { background: #1A1C1E; }
+        .theme-option[data-theme="graphite"] .theme-swatch::after { background: #C9A06A; }
         .theme-option[data-theme="light"] .theme-swatch { background: #ffffff; }
         .theme-option[data-theme="light"] .theme-swatch::after { background: #007aff; }
         .theme-option[data-theme="forest"] .theme-swatch { background: #e7f0e4; }
         .theme-option[data-theme="forest"] .theme-swatch::after { background: #3d7a4a; }
         .theme-option[data-theme="oat"] .theme-swatch { background: #F6F0E6; }
         .theme-option[data-theme="oat"] .theme-swatch::after { background: #8B5A34; }
-        .theme-option[data-theme="coral"] .theme-swatch { background: #F4F6F7; }
-        .theme-option[data-theme="coral"] .theme-swatch::after { background: #147570; }
+        .theme-option[data-theme="rose"] .theme-swatch { background: #F7ECEF; }
+        .theme-option[data-theme="rose"] .theme-swatch::after { background: #9C3D55; }
         .theme-option[data-theme="lavender"] .theme-swatch { background: #F4F3FB; }
         .theme-option[data-theme="lavender"] .theme-swatch::after { background: #5250C9; }
         .theme-option:not(.is-current):hover { transform: scale(1.06); }
@@ -964,10 +983,181 @@
             border: 1px solid color-mix(in srgb, #ffd60a 58%, transparent);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
         }
-        :root[data-theme="dark"] .tw-div-badge {
+        :root[data-theme="dark"] .tw-div-badge,
+        :root[data-theme="graphite"] .tw-div-badge {
             color: #ffe08a;
             background: color-mix(in srgb, #ffd60a 22%, #2c2c2e);
             border-color: color-mix(in srgb, #ffd60a 45%, transparent);
+        }
+
+        /* 日期記事 sheet */
+        .date-note-modal .date-note-sheet {
+            width: 100%;
+            max-width: 440px;
+            margin: auto;
+            border-radius: 22px 22px 0 0;
+            background: var(--card-bg);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            transform: translateY(100%);
+            transition: transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            padding: 10px 18px max(18px, env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+            box-shadow: 0 -12px 40px color-mix(in srgb, var(--text-primary) 18%, transparent);
+            max-height: min(88vh, 720px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .date-note-handle {
+            width: 40px;
+            height: 4px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+            margin: 2px auto 14px;
+        }
+        .date-note-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .date-note-kicker {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .date-note-date {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.25;
+        }
+        .date-note-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .date-note-input {
+            width: 100%;
+            min-height: 160px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            background: var(--bg-color);
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.65;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .date-note-input:focus {
+            border-color: var(--accent-border);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+        .date-note-input::placeholder {
+            color: var(--text-third);
+        }
+        .date-note-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 8px 2px 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .date-note-clear {
+            border: none;
+            background: transparent;
+            color: var(--color-down);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+        .date-note-section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 4px 2px 8px;
+        }
+        .date-note-section-label span {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .date-note-moods,
+        .date-note-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .date-note-chip {
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1.2;
+            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+        }
+        .date-note-chip:active { transform: scale(0.96); }
+        .date-note-chip.is-on {
+            background: var(--accent-soft);
+            border-color: var(--accent-border);
+            color: var(--accent);
+        }
+        .date-note-moods .date-note-chip {
+            min-width: 52px;
+            text-align: center;
+            font-size: 18px;
+            padding: 8px 10px;
+        }
+        .date-note-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .date-note-btn-primary {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent);
+            color: var(--accent-contrast);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .date-note-btn-ghost {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
         }
         .tw-div-badge i { font-size: 10px; opacity: 0.9; }
         .item-name-row .item-name-text {
@@ -3584,6 +3774,9 @@
                         <button type="button" class="theme-option" data-theme="dark" title="深色模式" aria-label="深色模式" onclick="selectTheme('dark', {closeSidebar:false})">
                             <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
+                        <button type="button" class="theme-option" data-theme="graphite" title="石墨灰" aria-label="石墨灰" onclick="selectTheme('graphite', {closeSidebar:false})">
+                            <span class="theme-swatch" aria-hidden="true"></span>
+                        </button>
                         <button type="button" class="theme-option" data-theme="light" title="淺色模式" aria-label="淺色模式" onclick="selectTheme('light', {closeSidebar:false})">
                             <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
@@ -3593,7 +3786,7 @@
                         <button type="button" class="theme-option" data-theme="oat" title="燕麥奶茶" aria-label="燕麥奶茶" onclick="selectTheme('oat', {closeSidebar:false})">
                             <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
-                        <button type="button" class="theme-option" data-theme="coral" title="珊瑚海灣" aria-label="珊瑚海灣" onclick="selectTheme('coral', {closeSidebar:false})">
+                        <button type="button" class="theme-option" data-theme="rose" title="暮色玫瑰" aria-label="暮色玫瑰" onclick="selectTheme('rose', {closeSidebar:false})">
                             <span class="theme-swatch" aria-hidden="true"></span>
                         </button>
                         <button type="button" class="theme-option" data-theme="lavender" title="晨霧薰衣草" aria-label="晨霧薰衣草" onclick="selectTheme('lavender', {closeSidebar:false})">
@@ -4393,18 +4586,28 @@
     </div>
     
     <!-- 日期記事編輯模態框 -->
-    <div id="dateNoteModal" class="modal" style="z-index: 2011;" onclick="event.target.id === 'dateNoteModal' && closeDateNoteEditor()">
-        <div class="modal-content-wrapper" style="width: 100%; max-width: 400px; margin: auto; border-radius: 20px; background: var(--card-bg); position: fixed; bottom: 0; left: 0; right: 0; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);" onclick="event.stopPropagation()">
-            <div style="padding: 20px;">
-                <div style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; text-align: center;" id="dateNoteTitle">記事</div>
-                <div style="margin-bottom: 15px;">
-                    <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 8px;" id="dateNoteDateDisplay"></div>
-                    <textarea id="dateNoteInput" style="width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-color); color: var(--text-primary); font-size: 16px; resize: vertical; box-sizing: border-box;" placeholder="輸入記事內容..."></textarea>
+    <div id="dateNoteModal" class="modal date-note-modal" style="z-index: 2011;" onclick="event.target.id === 'dateNoteModal' && closeDateNoteEditor()">
+        <div class="modal-content-wrapper date-note-sheet" onclick="event.stopPropagation()">
+            <div class="date-note-handle" aria-hidden="true"></div>
+            <div class="date-note-header">
+                <div>
+                    <div class="date-note-kicker" id="dateNoteTitle">今日記事</div>
+                    <div class="date-note-date" id="dateNoteDateDisplay"></div>
                 </div>
-                <div style="display: flex; gap: 12px;">
-                    <button onclick="saveDateNoteFromEditor()" style="flex: 1; padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">儲存</button>
-                    <button onclick="closeDateNoteEditor()" style="flex: 1; padding: 12px; background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">取消</button>
-                </div>
+                <button type="button" class="date-note-close" onclick="closeDateNoteEditor()" aria-label="關閉"><i class="fas fa-times"></i></button>
+            </div>
+            <textarea id="dateNoteInput" class="date-note-input" placeholder="寫下今天的花費心情、提醒或一句話…" rows="6" oninput="updateDateNoteMeta()"></textarea>
+            <div class="date-note-meta-row">
+                <span id="dateNoteCharCount">0 字</span>
+                <button type="button" class="date-note-clear" id="dateNoteClearBtn" onclick="clearDateNoteInput()" style="display:none;">清空</button>
+            </div>
+            <div class="date-note-section-label">心情 <span>（選填）</span></div>
+            <div class="date-note-moods" id="dateNoteMoods" role="group" aria-label="心情"></div>
+            <div class="date-note-section-label">標籤 <span>（選填）</span></div>
+            <div class="date-note-tags" id="dateNoteTags" role="group" aria-label="標籤"></div>
+            <div class="date-note-actions">
+                <button type="button" class="date-note-btn-primary" onclick="saveDateNoteFromEditor()">儲存</button>
+                <button type="button" class="date-note-btn-ghost" onclick="closeDateNoteEditor()">取消</button>
             </div>
         </div>
     </div>
@@ -6028,6 +6231,12 @@
         // 載入用戶設定
         const savedSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
         const settings = { ...defaultSettings, ...savedSettings };
+        const themeMigrate = { midnight: 'rose', sky: 'rose', coral: 'rose' };
+        const themeAllowed = { dark: 1, graphite: 1, light: 1, forest: 1, oat: 1, rose: 1, lavender: 1 };
+        let t = themeMigrate[settings.theme] || settings.theme || 'dark';
+        if (!themeAllowed[t]) t = 'rose';
+        settings.theme = t;
+        settings.chartTextColor = (t === 'dark' || t === 'graphite') ? 'white' : 'black';
         
         return { accounts, settings };
     }
@@ -14208,19 +14417,32 @@
     }
     
     
-    const THEME_ORDER = ['dark', 'light', 'forest', 'oat', 'coral', 'lavender'];
+    const THEME_ORDER = ['dark', 'graphite', 'light', 'forest', 'oat', 'rose', 'lavender'];
+    const THEME_MIGRATE = { midnight: 'rose', sky: 'rose', coral: 'rose' };
+    const DARK_LIKE_THEMES = { dark: 1, graphite: 1 };
     const THEME_CHART_TEXT = {
         dark: '#fff',
+        graphite: '#F2F2F3',
         light: '#000',
         forest: '#1a2b1c',
         oat: '#2E2420',
-        coral: '#23282D',
+        rose: '#2A1C22',
         lavender: '#252645'
     };
 
+    function normalizeThemeId(theme) {
+        const raw = theme || 'dark';
+        const mapped = THEME_MIGRATE[raw] || raw;
+        return THEME_ORDER.includes(mapped) ? mapped : 'rose';
+    }
+
+    function isDarkLikeTheme(theme) {
+        const t = normalizeThemeId(theme || (settings && settings.theme) || 'dark');
+        return !!DARK_LIKE_THEMES[t];
+    }
+
     function isLightLikeTheme(theme) {
-        const t = theme || settings.theme || 'dark';
-        return t !== 'dark';
+        return !isDarkLikeTheme(theme);
     }
 
     function getAccentColor() {
@@ -14250,12 +14472,13 @@
 
     function selectTheme(theme, opts) {
         const options = opts || {};
+        theme = normalizeThemeId(theme);
         if (!THEME_ORDER.includes(theme)) return;
-        const current = settings.theme || 'dark';
+        const current = normalizeThemeId(settings.theme || 'dark');
         if (theme === current) return; // 不能再點當前主題
 
         settings.theme = theme;
-        settings.chartTextColor = theme === 'dark' ? 'white' : 'black';
+        settings.chartTextColor = isDarkLikeTheme(theme) ? 'white' : 'black';
         saveSettings();
 
         const root = document.documentElement;
@@ -14295,7 +14518,7 @@
 
     // 相容舊呼叫
     function toggleTheme() {
-        const current = settings.theme || 'dark';
+        const current = normalizeThemeId(settings.theme || 'dark');
         const idx = THEME_ORDER.indexOf(current);
         const next = THEME_ORDER[(idx < 0 ? 0 : idx + 1) % THEME_ORDER.length];
         selectTheme(next);
@@ -14303,7 +14526,12 @@
     
     function applyTheme() {
         const root = document.documentElement;
-        const currentTheme = settings.theme || 'dark';
+        const currentTheme = normalizeThemeId(settings.theme || 'dark');
+        if (settings.theme !== currentTheme) {
+            settings.theme = currentTheme;
+            settings.chartTextColor = isDarkLikeTheme(currentTheme) ? 'white' : 'black';
+            try { if (typeof saveSettings === 'function') saveSettings(); } catch (e) {}
+        }
         root.setAttribute('data-theme', currentTheme);
         try {
             const bg = getComputedStyle(root).getPropertyValue('--bg-color').trim();
@@ -14316,7 +14544,7 @@
     }
     
     function updateThemeButton() {
-        const currentTheme = settings.theme || 'dark';
+        const currentTheme = normalizeThemeId(settings.theme || 'dark');
         const picker = document.getElementById('themePicker');
         if (!picker) return;
         picker.querySelectorAll('.theme-option').forEach(btn => {
@@ -14330,8 +14558,8 @@
     
     // 根據主題獲取圖表文字顏色
     function getChartTextColor() {
-        const currentTheme = settings.theme || 'dark';
-        return THEME_CHART_TEXT[currentTheme] || (currentTheme === 'dark' ? '#fff' : '#000');
+        const currentTheme = normalizeThemeId(settings.theme || 'dark');
+        return THEME_CHART_TEXT[currentTheme] || (isDarkLikeTheme(currentTheme) ? '#fff' : '#000');
     }
     
     function applyChartTextColorToDom(textColor) {
@@ -15648,6 +15876,15 @@
     }
     
     // ========== 日期記事功能（必須在 renderCalendar 之前定義）==========
+    const DATE_NOTE_MOODS = [
+        { id: 'great', emoji: '😄', label: '很好' },
+        { id: 'good', emoji: '🙂', label: '不錯' },
+        { id: 'ok', emoji: '😐', label: '普通' },
+        { id: 'low', emoji: '😕', label: '低落' },
+        { id: 'stress', emoji: '😣', label: '緊繃' }
+    ];
+    const DATE_NOTE_TAGS = ['消費', '薪水', '投資', '提醒', '目標'];
+
     function formatDateKey(date) {
         const d = new Date(date);
         const year = d.getFullYear();
@@ -15660,18 +15897,82 @@
         const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
         return JSON.parse(localStorage.getItem(notesKey) || '{}');
     }
+
+    function normalizeDateNoteEntry(raw) {
+        if (!raw) return { text: '', mood: '', tags: [] };
+        if (typeof raw === 'string') return { text: raw, mood: '', tags: [] };
+        return {
+            text: typeof raw.text === 'string' ? raw.text : '',
+            mood: typeof raw.mood === 'string' ? raw.mood : '',
+            tags: Array.isArray(raw.tags) ? raw.tags.filter(Boolean) : []
+        };
+    }
     
-    function getDateNote(date) {
+    function getDateNoteEntry(date) {
         const notes = loadDateNotes();
         const dateStr = formatDateKey(date);
-        return notes[dateStr] || '';
+        return normalizeDateNoteEntry(notes[dateStr]);
+    }
+
+    function getDateNote(date) {
+        return getDateNoteEntry(date).text || '';
     }
     
     function hasDateNote(date) {
-        return getDateNote(date) !== '';
+        const entry = getDateNoteEntry(date);
+        return !!(entry.text || entry.mood || (entry.tags && entry.tags.length));
     }
     
     let currentNoteDate = null;
+    let currentNoteMood = '';
+    let currentNoteTags = [];
+
+    function renderDateNoteChips() {
+        const moodWrap = document.getElementById('dateNoteMoods');
+        const tagWrap = document.getElementById('dateNoteTags');
+        if (moodWrap) {
+            moodWrap.innerHTML = DATE_NOTE_MOODS.map(m =>
+                `<button type="button" class="date-note-chip${currentNoteMood === m.id ? ' is-on' : ''}" data-mood="${m.id}" title="${m.label}" aria-label="${m.label}" aria-pressed="${currentNoteMood === m.id ? 'true' : 'false'}" onclick="toggleDateNoteMood('${m.id}')">${m.emoji}</button>`
+            ).join('');
+        }
+        if (tagWrap) {
+            tagWrap.innerHTML = DATE_NOTE_TAGS.map(tag =>
+                `<button type="button" class="date-note-chip${currentNoteTags.includes(tag) ? ' is-on' : ''}" data-tag="${tag}" aria-pressed="${currentNoteTags.includes(tag) ? 'true' : 'false'}" onclick="toggleDateNoteTag('${tag}')">${tag}</button>`
+            ).join('');
+        }
+    }
+
+    function toggleDateNoteMood(moodId) {
+        currentNoteMood = currentNoteMood === moodId ? '' : moodId;
+        renderDateNoteChips();
+    }
+
+    function toggleDateNoteTag(tag) {
+        if (currentNoteTags.includes(tag)) {
+            currentNoteTags = currentNoteTags.filter(t => t !== tag);
+        } else {
+            currentNoteTags = currentNoteTags.concat(tag);
+        }
+        renderDateNoteChips();
+    }
+
+    function updateDateNoteMeta() {
+        const noteInput = document.getElementById('dateNoteInput');
+        const countEl = document.getElementById('dateNoteCharCount');
+        const clearBtn = document.getElementById('dateNoteClearBtn');
+        const len = noteInput ? noteInput.value.length : 0;
+        if (countEl) countEl.textContent = `${len} 字`;
+        if (clearBtn) clearBtn.style.display = len ? 'inline-block' : 'none';
+    }
+
+    function clearDateNoteInput() {
+        const noteInput = document.getElementById('dateNoteInput');
+        if (noteInput) {
+            noteInput.value = '';
+            noteInput.focus();
+        }
+        updateDateNoteMeta();
+    }
     
     function openDateNoteEditor(date) {
         currentNoteDate = new Date(date);
@@ -15682,32 +15983,38 @@
         const title = document.getElementById('dateNoteTitle');
         const dateDisplay = document.getElementById('dateNoteDateDisplay');
         const noteInput = document.getElementById('dateNoteInput');
+        const entry = getDateNoteEntry(currentNoteDate);
+        currentNoteMood = entry.mood || '';
+        currentNoteTags = Array.isArray(entry.tags) ? entry.tags.slice() : [];
         
-        if(title) {
-            title.textContent = '記事';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (title) {
+            title.textContent = currentNoteDate.getTime() === today.getTime() ? '今日記事' : '日期記事';
         }
         
-        if(dateDisplay) {
+        if (dateDisplay) {
             const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            const dateStr = `${currentNoteDate.getFullYear()}年${currentNoteDate.getMonth() + 1}月${currentNoteDate.getDate()}日 ${weekdays[currentNoteDate.getDay()]}`;
-            dateDisplay.textContent = dateStr;
+            dateDisplay.textContent = `${currentNoteDate.getFullYear()}年${currentNoteDate.getMonth() + 1}月${currentNoteDate.getDate()}日 ${weekdays[currentNoteDate.getDay()]}`;
         }
         
-        if(noteInput) {
-            noteInput.value = getDateNote(currentNoteDate);
+        if (noteInput) {
+            noteInput.value = entry.text || '';
         }
+        renderDateNoteChips();
+        updateDateNoteMeta();
         
-        if(modalWrapper) {
+        if (modalWrapper) {
             modalWrapper.style.transform = 'translateY(100%)';
         }
         modal.style.display = 'block';
         modal.style.background = 'rgba(0,0,0,0.5)';
         requestAnimationFrame(() => {
             setTimeout(() => {
-                if(modalWrapper) {
+                if (modalWrapper) {
                     modalWrapper.style.transform = 'translateY(0)';
                 }
-                if(noteInput) {
+                if (noteInput) {
                     noteInput.focus();
                 }
             }, 10);
@@ -15717,7 +16024,7 @@
     function closeDateNoteEditor() {
         const modal = document.getElementById('dateNoteModal');
         const modalWrapper = modal.querySelector('.modal-content-wrapper');
-        if(modalWrapper) {
+        if (modalWrapper) {
             modalWrapper.style.transform = 'translateY(100%)';
             setTimeout(() => {
                 modal.style.display = 'none';
@@ -15727,26 +16034,38 @@
             modal.style.display = 'none';
         }
         currentNoteDate = null;
+        currentNoteMood = '';
+        currentNoteTags = [];
     }
     
     function saveDateNoteFromEditor() {
-        if(!currentNoteDate) return;
+        if (!currentNoteDate) return;
         
         const noteInput = document.getElementById('dateNoteInput');
-        const note = noteInput ? noteInput.value.trim() : '';
-        
-        saveDateNote(currentNoteDate, note);
-        renderCalendar(); // 重新渲染日曆以顯示星號
+        const text = noteInput ? noteInput.value.trim() : '';
+        saveDateNote(currentNoteDate, {
+            text,
+            mood: currentNoteMood || '',
+            tags: currentNoteTags.slice()
+        });
+        renderCalendar();
         closeDateNoteEditor();
     }
     
-    function saveDateNote(date, note) {
+    function saveDateNote(date, noteOrEntry) {
         if (isUserSwitching) return; // 鎖定攔截
         const notesKey = `${STORAGE_KEY_DATE_NOTES}_${currentUserId}`;
         const notes = loadDateNotes();
         const dateStr = formatDateKey(date);
-        if(note && note.trim()) {
-            notes[dateStr] = note.trim();
+        const entry = normalizeDateNoteEntry(
+            typeof noteOrEntry === 'string' ? noteOrEntry : noteOrEntry
+        );
+        const hasContent = !!(entry.text || entry.mood || (entry.tags && entry.tags.length));
+        if (hasContent) {
+            // 僅文字時維持字串相容；有心情／標籤時存物件
+            notes[dateStr] = (entry.mood || (entry.tags && entry.tags.length))
+                ? { text: entry.text || '', mood: entry.mood || '', tags: entry.tags || [] }
+                : (entry.text || '');
         } else {
             delete notes[dateStr];
         }
