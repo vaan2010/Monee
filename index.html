@@ -2794,10 +2794,21 @@
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
-            /* 桌面板：整欄一起捲動，勿固定上方、僅列表捲動 */
+            /* 桌面板：整欄一起捲動 */
             #detailView .detail-view-panel .navbar,
-            #detailView .detail-view-panel .detail-header {
+            #detailView .detail-view-panel .detail-header,
+            #detailView .detail-view-panel .detail-seg-wrap {
                 flex-shrink: 0;
+            }
+            #detailView .detail-view-panel .detail-body {
+                flex: 0 0 auto;
+                overflow: visible;
+                min-height: auto;
+            }
+            #detailView .detail-view-panel .detail-panel {
+                flex: none;
+                overflow: visible;
+                min-height: auto;
             }
             #detailView .detail-view-panel .detail-list {
                 flex: 0 0 auto;
@@ -2805,8 +2816,8 @@
             }
             #detailView.swiping .detail-view-panel { transition: none; }
         }
-        .detail-header { padding: 10px 20px 20px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0; }
-        #detailView .navbar { position: relative; z-index: 1; }
+        .detail-header { padding: 10px 20px 12px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); flex-shrink: 0; }
+        #detailView .navbar { position: relative; z-index: 1; flex-shrink: 0; }
         .detail-title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
         .detail-subtitle { font-size: 14px; color: var(--text-secondary); }
         .detail-stats { display: flex; justify-content: space-between; margin-top: 20px; }
@@ -2814,7 +2825,34 @@
         .stat-val { font-size: 18px; font-weight: 600; display: block; color: var(--text-primary); }
         .stat-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: block; }
         .val-green { color: var(--color-up); } .val-red { color: var(--color-down); }
-        .detail-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .detail-seg-wrap {
+            flex-shrink: 0;
+            padding: 10px 16px 0;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .detail-seg-wrap .journal-seg-tabs { margin-bottom: 10px; }
+        .detail-body {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-color);
+        }
+        .detail-panel {
+            display: none;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .detail-panel.active { display: block; }
+        .detail-list { padding: 0; overflow: visible; }
         .tx-item { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid var(--border-color); }
         .tx-header-row { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
         .tx-badge { background: #64d2ff; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
@@ -2828,6 +2866,191 @@
         .tx-val.val-green { color: var(--color-up) !important; }
         .tx-val.val-red { color: var(--color-down) !important; }
         .tx-pnl { font-weight: bold; font-size: 14px; }
+
+        /* 目標價／報酬試算（結果優先＋直向欄位，對齊現代理財試算） */
+        .target-calc {
+            display: none;
+            margin-top: 0;
+            padding: 0 0 24px;
+            text-align: left;
+        }
+        .target-calc.is-visible { display: block; }
+        .target-calc-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: none;
+        }
+        .target-calc-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .target-calc-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--card-bg) 88%, var(--text-primary));
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        .target-calc-meta strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        .target-calc-result {
+            padding: 16px;
+            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            margin-bottom: 14px;
+            box-shadow: 0 8px 24px color-mix(in srgb, var(--text-primary) 6%, transparent);
+        }
+        .target-calc-result .result-kicker {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .target-calc-result .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: end;
+        }
+        .target-calc-result .result-pct,
+        .target-calc-result .result-money {
+            font-size: clamp(22px, 5.5vw, 28px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            line-height: 1.1;
+            font-variant-numeric: tabular-nums;
+        }
+        .target-calc-result .result-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 0.02em;
+        }
+        .target-calc-result .result-sub {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+        .target-calc-result.is-up .result-pct,
+        .target-calc-result.is-up .result-money { color: var(--color-up); }
+        .target-calc-result.is-down .result-pct,
+        .target-calc-result.is-down .result-money { color: var(--color-down); }
+        .target-calc-result.is-muted .result-pct,
+        .target-calc-result.is-muted .result-money { color: var(--text-secondary); font-size: 15px; font-weight: 600; letter-spacing: 0; }
+        .target-calc-result.is-muted .result-grid { grid-template-columns: 1fr; }
+        .target-calc-fields {
+            display: grid;
+            gap: 10px;
+        }
+        .target-calc-row {
+            display: block;
+            margin: 0;
+        }
+        .target-calc-row label {
+            display: block;
+            width: auto;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            white-space: nowrap;
+        }
+        .target-calc-row .target-calc-field {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            min-height: 48px;
+            padding: 0 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .target-calc-row .target-calc-field:focus-within {
+            border-color: color-mix(in srgb, var(--accent) 65%, var(--border-color));
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+        }
+        .target-calc-row input {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 0;
+            border: none;
+            border-radius: 0;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 700;
+            text-align: left;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            -moz-appearance: textfield;
+        }
+        .target-calc-row input:focus { outline: none; }
+        .target-calc-row input::placeholder {
+            color: var(--text-third);
+            font-weight: 500;
+        }
+        .target-calc-row input::-webkit-outer-spin-button,
+        .target-calc-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .target-calc-unit {
+            width: auto;
+            min-width: 2.5em;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: right;
+            white-space: nowrap;
+            padding-left: 8px;
+        }
+        .target-calc-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .target-calc-actions button {
+            flex: 1;
+            min-height: 44px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .target-calc-actions .btn-set-target {
+            background: var(--accent);
+            color: var(--accent-contrast);
+            border-color: var(--accent-border);
+        }
+        .target-calc-actions .btn-clear-target {
+            background: var(--card-bg);
+            color: var(--text-secondary);
+        }
+        .target-calc-actions .btn-clear-target[disabled] {
+            opacity: 0.45;
+            cursor: default;
+        }
+        .item-row-compact.target-row .price-label { color: var(--accent); opacity: 1; font-weight: 700; }
+        .item-row-compact.target-row { color: var(--text-primary); }
         
         /* 圖表詳細列表樣式 - 動態高度 */
         .chart-detail-list {
@@ -3311,7 +3534,7 @@
             </div>
             <div class="sidebar-footer">
                 <div class="menu-item" onclick="moneeCloudLogout();" title="登出並清除本機記帳資料，返回登入畫面"><i class="fas fa-sign-out-alt"></i><span class="menu-text">登出</span></div>
-                <button type="button" class="sidebar-version" id="sidebarAppVersion" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">v1.7.0</button>
+                <button type="button" class="sidebar-version" id="sidebarAppVersion" onclick="openReleaseNotes(true); toggleSidebar();" title="查看更新說明">v1.8.0</button>
             </div>
         </div>
 
@@ -3322,7 +3545,7 @@
                     <div>
                         <div class="release-notes-kicker">Release Notes</div>
                         <h3 class="release-notes-title" id="releaseNotesTitle">本次更新</h3>
-                        <div class="release-notes-version" id="releaseNotesVersionLabel">v1.7.0</div>
+                        <div class="release-notes-version" id="releaseNotesVersionLabel">v1.8.0</div>
                     </div>
                     <button type="button" class="release-notes-close" onclick="closeReleaseNotes()" aria-label="關閉"><i class="fas fa-times"></i></button>
                 </div>
@@ -3730,7 +3953,67 @@
                 </div>
             </div>
         </div>
-        <div class="detail-list" id="detailTxList"></div>
+        <div class="detail-seg-wrap" id="detailSegWrap">
+            <div class="journal-seg-tabs" id="detailSegTabs" role="tablist" aria-label="詳情分頁">
+                <button type="button" class="active" data-detail-tab="holdings" onclick="switchDetailTab('holdings')">持股</button>
+                <button type="button" id="detailCalcTabBtn" data-detail-tab="calc" onclick="switchDetailTab('calc')">試算</button>
+            </div>
+        </div>
+        <div class="detail-body">
+            <div class="detail-panel active" id="detailHoldingsPanel" role="tabpanel">
+                <div class="detail-list" id="detailTxList"></div>
+            </div>
+            <div class="detail-panel" id="detailCalcPanel" role="tabpanel">
+                <div id="dTargetCalc" class="target-calc is-visible" aria-label="目標價與報酬試算">
+                    <div class="target-calc-title">目標價／報酬試算</div>
+                    <div class="target-calc-meta" id="dTargetCalcMeta">
+                        <span>成本 <strong id="dTargetCalcCost">—</strong></span>
+                        <span>持有 <strong id="dTargetCalcShares">—</strong></span>
+                    </div>
+                    <div class="target-calc-result is-muted" id="dTargetCalcResult">
+                        <div class="result-kicker">預估結果</div>
+                        <div class="result-grid">
+                            <div>
+                                <span class="result-label">報酬率</span>
+                                <div class="result-pct" id="dTargetCalcPct">—</div>
+                            </div>
+                            <div>
+                                <span class="result-label">獲利</span>
+                                <div class="result-money" id="dTargetCalcMoney">—</div>
+                            </div>
+                        </div>
+                        <div class="result-sub" id="dTargetCalcSub">輸入下方任一欄，三者會即時互算</div>
+                    </div>
+                    <div class="target-calc-fields">
+                        <div class="target-calc-row">
+                            <label for="dTargetPrice">目標價</label>
+                            <div class="target-calc-field">
+                                <input type="number" id="dTargetPrice" inputmode="decimal" step="any" placeholder="0" oninput="onTargetPriceInput()">
+                                <span class="target-calc-unit" id="dTargetPriceUnit">USD</span>
+                            </div>
+                        </div>
+                        <div class="target-calc-row">
+                            <label for="dTargetPct">目標%</label>
+                            <div class="target-calc-field">
+                                <input type="number" id="dTargetPct" inputmode="decimal" step="any" placeholder="0" oninput="onTargetPctInput()">
+                                <span class="target-calc-unit">%</span>
+                            </div>
+                        </div>
+                        <div class="target-calc-row">
+                            <label for="dTargetProfit">目標獲利</label>
+                            <div class="target-calc-field">
+                                <input type="number" id="dTargetProfit" inputmode="decimal" step="any" placeholder="0" oninput="onTargetProfitInput()">
+                                <span class="target-calc-unit" id="dTargetProfitUnit">TWD</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="target-calc-actions">
+                        <button type="button" class="btn-set-target" onclick="saveAssetPriceTarget()">設定目標</button>
+                        <button type="button" class="btn-clear-target" id="dTargetClearBtn" onclick="clearAssetPriceTarget()">清除目標</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 
@@ -4924,15 +5207,14 @@
 
     // App 版本與 Release Notes（升版後只自動跳出一次）
     const APP_RELEASE = {
-        version: '1.7.0',
-        title: '主題、動效與記帳體驗',
+        version: '1.8.0',
+        title: '目標試算與體驗優化',
         notes: [
-            '首頁改為同步圖示「立即更新」，移除功能表「重新整理」；自動更新不再讓圖示空轉。',
-            '淨值與金額數字改為流暢跳動；主題切換有過渡，色票改為純圖示、每列三個。',
-            'Liquid Glass 統一套用至 FAB、幣別、Toast、圖表控制等；資產空狀態畫面更清楚。',
-            '台股除權息改為精緻標記；記帳儲存後有勾勾確認動畫，停留時間加長。',
-            '新增支出／收入／轉帳表單會隨主題變色，不再鎖死深色介面。',
-            '功能表開啟時隱藏幣別切換；登出與版本號同一列，點版本可再看更新說明。'
+            '持股詳情新增「持股／試算」分頁：可用目標價、目標％、目標獲利互相換算。',
+            '試算可「設定目標」到主頁列表，顯示目標價、％數與金額；也可清除。',
+            '固定支出／收入／轉帳與類別選擇、資產詳情、AI 教學改跟主題，淺色不再破版。',
+            '報價／匯率與 Logo 更新改只改金額或換圖，減少整表重建卡頓。',
+            '快速切換分頁時金額動畫不再串頁；記帳鍵盤與瀏海 safe-area 更好用。'
         ]
     };
     const RELEASE_SEEN_KEY = 'monee_release_seen_version';
@@ -7836,6 +8118,7 @@
                     } else {
                         document.getElementById('dCostPnl').style.display = 'none';
                     }
+                    if (typeof setupDetailTargetCalc === 'function') setupDetailTargetCalc(currentDetailAcc);
                     
                     // 更新交易清單
                     const txList = document.getElementById('detailTxList');
@@ -11631,6 +11914,7 @@
                 dDivBlock.style.display = 'none';
             }
         }
+        if (typeof setupDetailTargetCalc === 'function') setupDetailTargetCalc(currentDetailAcc);
         const txList = document.getElementById('detailTxList'); txList.innerHTML = '';
         if (currentDetailAcc.transactions && currentDetailAcc.transactions.length > 0) {
             currentDetailAcc.transactions.forEach((tx, index) => {
@@ -11682,6 +11966,257 @@
         }
         initDetailViewSwipe();
     }
+    let _targetCalcSyncing = false;
+
+    function getDetailTargetCalcContext(acc) {
+        const a = acc || currentDetailAcc;
+        if (!a || !a.isAuto) return null;
+        if (!(a.type === 'stock' || a.type === 'twstock' || a.type === 'crypto')) return null;
+        const cost = Number(a.cost) || 0;
+        const price = Number(a.currentPrice) || 0;
+        const shares = Number(a.balance) || 0;
+        const unit = a.type === 'twstock' ? 'TWD' : 'USD';
+        return { acc: a, cost, price, shares, unit };
+    }
+
+    function convertAssetCurrencyProfitToDisplay(profitNative, acc) {
+        const usdRate = (settings && settings.usdRate) ? settings.usdRate : 1;
+        if (acc.type === 'twstock') {
+            return currentDisplayCurrency === 'USD' ? (usdRate > 0 ? profitNative / usdRate : profitNative) : profitNative;
+        }
+        // 美股／加密：原生多為 USD（crypto 現價也以 USD 計）
+        return currentDisplayCurrency === 'USD' ? profitNative : profitNative * usdRate;
+    }
+
+    function convertDisplayProfitToAssetCurrency(profitDisplay, acc) {
+        const usdRate = (settings && settings.usdRate) ? settings.usdRate : 1;
+        if (acc.type === 'twstock') {
+            return currentDisplayCurrency === 'USD' ? profitDisplay * usdRate : profitDisplay;
+        }
+        return currentDisplayCurrency === 'USD' ? profitDisplay : (usdRate > 0 ? profitDisplay / usdRate : profitDisplay);
+    }
+
+    function formatTargetPriceNumber(n) {
+        if (!isFinite(n)) return '';
+        const abs = Math.abs(n);
+        if (abs >= 1000) return n.toFixed(2);
+        if (abs >= 1) return n.toFixed(2);
+        return n.toFixed(4);
+    }
+
+    function formatTargetProfitNumber(n) {
+        if (!isFinite(n)) return '';
+        return currentDisplayCurrency === 'USD' ? n.toFixed(2) : Math.round(n).toString();
+    }
+
+    function syncTargetCalcFieldsFromPrice(ctx, targetPrice, opts) {
+        const options = opts || {};
+        const priceInp = document.getElementById('dTargetPrice');
+        const pctInp = document.getElementById('dTargetPct');
+        const profitInp = document.getElementById('dTargetProfit');
+        _targetCalcSyncing = true;
+        if (priceInp && options.fillPrice !== false) {
+            priceInp.value = isFinite(targetPrice) ? formatTargetPriceNumber(targetPrice) : '';
+        }
+        if (pctInp && options.fillPct !== false) {
+            if (ctx.cost > 0 && isFinite(targetPrice)) {
+                pctInp.value = (((targetPrice - ctx.cost) / ctx.cost) * 100).toFixed(2);
+            } else {
+                pctInp.value = '';
+            }
+        }
+        if (profitInp && options.fillProfit !== false) {
+            if (ctx.cost > 0 && ctx.shares > 0 && isFinite(targetPrice)) {
+                const profitDisplay = convertAssetCurrencyProfitToDisplay((targetPrice - ctx.cost) * ctx.shares, ctx.acc);
+                profitInp.value = formatTargetProfitNumber(profitDisplay);
+            } else {
+                profitInp.value = '';
+            }
+        }
+        _targetCalcSyncing = false;
+        updateDetailTargetCalcResult(ctx, targetPrice);
+    }
+
+    function updateDetailTargetCalcResult(ctx, targetPrice) {
+        const box = document.getElementById('dTargetCalcResult');
+        const pctEl = document.getElementById('dTargetCalcPct');
+        const moneyEl = document.getElementById('dTargetCalcMoney');
+        const sub = document.getElementById('dTargetCalcSub');
+        if (!box || !pctEl || !moneyEl || !sub || !ctx) return;
+        box.classList.remove('is-up', 'is-down', 'is-muted');
+        if (!(ctx.cost > 0)) {
+            box.classList.add('is-muted');
+            pctEl.textContent = '無法試算';
+            moneyEl.textContent = '';
+            sub.textContent = '請先在編輯裡填入平均成本或匯入交易明細';
+            return;
+        }
+        if (!(targetPrice > 0) || !(ctx.shares > 0)) {
+            box.classList.add('is-muted');
+            pctEl.textContent = '等待輸入';
+            moneyEl.textContent = '';
+            sub.textContent = '輸入下方目標價、目標％或目標獲利，三者會即時互算';
+            return;
+        }
+        const pct = ((targetPrice - ctx.cost) / ctx.cost) * 100;
+        const profitNative = (targetPrice - ctx.cost) * ctx.shares;
+        const profitDisplay = convertAssetCurrencyProfitToDisplay(profitNative, ctx.acc);
+        const sign = pct >= 0 ? '+' : '';
+        const moneySign = profitDisplay >= 0 ? '+' : '';
+        box.classList.add(pct >= 0 ? 'is-up' : 'is-down');
+        pctEl.textContent = `${sign}${pct.toFixed(2)}%`;
+        moneyEl.textContent = `${moneySign}${formatAmount(profitDisplay)}`;
+        const vsNow = ctx.price > 0
+            ? `相對現價 ${targetPrice >= ctx.price ? '還要漲' : '可回落'} ${Math.abs(((targetPrice - ctx.price) / ctx.price) * 100).toFixed(2)}%`
+            : '尚未有現價可比較';
+        sub.textContent = `目標價 ${formatTargetPriceNumber(targetPrice)} ${ctx.unit} · ${vsNow}`;
+    }
+
+    let _detailActiveTab = 'holdings';
+
+    function switchDetailTab(tab) {
+        const next = tab === 'calc' ? 'calc' : 'holdings';
+        const calcBtn = document.getElementById('detailCalcTabBtn');
+        if (next === 'calc' && calcBtn && calcBtn.style.display === 'none') {
+            _detailActiveTab = 'holdings';
+        } else {
+            _detailActiveTab = next;
+        }
+        document.querySelectorAll('#detailSegTabs [data-detail-tab]').forEach((btn) => {
+            btn.classList.toggle('active', btn.getAttribute('data-detail-tab') === _detailActiveTab);
+        });
+        const holdings = document.getElementById('detailHoldingsPanel');
+        const calc = document.getElementById('detailCalcPanel');
+        if (holdings) holdings.classList.toggle('active', _detailActiveTab === 'holdings');
+        if (calc) calc.classList.toggle('active', _detailActiveTab === 'calc');
+    }
+
+    function setupDetailTargetCalc(acc) {
+        const wrap = document.getElementById('dTargetCalc');
+        const unitEl = document.getElementById('dTargetPriceUnit');
+        const profitUnitEl = document.getElementById('dTargetProfitUnit');
+        const costEl = document.getElementById('dTargetCalcCost');
+        const sharesEl = document.getElementById('dTargetCalcShares');
+        const calcBtn = document.getElementById('detailCalcTabBtn');
+        const segWrap = document.getElementById('detailSegWrap');
+        const ctx = getDetailTargetCalcContext(acc);
+        if (!wrap) return;
+        if (!ctx) {
+            wrap.classList.remove('is-visible');
+            if (calcBtn) calcBtn.style.display = 'none';
+            if (segWrap) segWrap.style.display = 'none';
+            switchDetailTab('holdings');
+            return;
+        }
+        wrap.classList.add('is-visible');
+        if (segWrap) segWrap.style.display = '';
+        if (calcBtn) calcBtn.style.display = '';
+        if (unitEl) unitEl.textContent = ctx.unit;
+        if (profitUnitEl) profitUnitEl.textContent = currentDisplayCurrency || 'TWD';
+        if (costEl) {
+            costEl.textContent = ctx.cost > 0
+                ? `${formatTargetPriceNumber(ctx.cost)} ${ctx.unit}`
+                : '未設定';
+        }
+        if (sharesEl) sharesEl.textContent = `${ctx.shares} 股`;
+        const savedTarget = Number(ctx.acc.targetPrice);
+        const startPrice = savedTarget > 0 ? savedTarget : (ctx.price > 0 ? ctx.price : NaN);
+        syncTargetCalcFieldsFromPrice(ctx, startPrice);
+        updateTargetClearButtonState(ctx.acc);
+        // 開啟詳情時預設持股分頁，避免試算把交易列表擠掉
+        switchDetailTab('holdings');
+    }
+
+    function updateTargetClearButtonState(acc) {
+        const btn = document.getElementById('dTargetClearBtn');
+        if (!btn) return;
+        const has = !!(acc && Number(acc.targetPrice) > 0);
+        btn.disabled = !has;
+    }
+
+    function buildAssetTargetRowHtml(acc) {
+        const targetPrice = Number(acc && acc.targetPrice);
+        const cost = Number(acc && acc.cost) || 0;
+        const shares = Number(acc && acc.balance) || 0;
+        if (!(targetPrice > 0) || !(cost > 0) || !(shares > 0)) return '';
+        const pct = ((targetPrice - cost) / cost) * 100;
+        const profitNative = (targetPrice - cost) * shares;
+        const profitDisplay = convertAssetCurrencyProfitToDisplay(profitNative, acc);
+        const pctSign = pct >= 0 ? '+' : '';
+        const moneySign = profitDisplay >= 0 ? '+' : '';
+        const pctClass = pct >= 0 ? 'sub-green' : 'sub-red';
+        return `<div class="item-row-compact target-row"><span class="price-label">目標</span><span>${formatTargetPriceNumber(targetPrice)}</span><span class="${pctClass}">${pctSign}${pct.toFixed(1)}%</span><span style="margin-left: auto;" class="${pctClass}">${moneySign}${formatAmount(profitDisplay)}</span></div>`;
+    }
+
+    function saveAssetPriceTarget() {
+        const ctx = getDetailTargetCalcContext();
+        const priceInp = document.getElementById('dTargetPrice');
+        if (!ctx || !ctx.acc || !priceInp) return;
+        const targetPrice = parseFloat(priceInp.value);
+        if (!(targetPrice > 0)) {
+            if (typeof showAppToast === 'function') showAppToast('請先輸入有效的目標價', { type: 'info' });
+            return;
+        }
+        if (!(ctx.cost > 0)) {
+            if (typeof showAppToast === 'function') showAppToast('尚未設定平均成本，無法設定目標', { type: 'info' });
+            return;
+        }
+        ctx.acc.targetPrice = targetPrice;
+        try { saveData(); } catch (e) {}
+        updateTargetClearButtonState(ctx.acc);
+        if (typeof renderAssets === 'function') renderAssets();
+        if (typeof showAppToast === 'function') {
+            showAppToast('已設定目標，主頁持股會顯示目標價／％／金額', { type: 'success' });
+        }
+    }
+
+    function clearAssetPriceTarget() {
+        const ctx = getDetailTargetCalcContext();
+        if (!ctx || !ctx.acc) return;
+        if (!(Number(ctx.acc.targetPrice) > 0)) return;
+        delete ctx.acc.targetPrice;
+        try { saveData(); } catch (e) {}
+        updateTargetClearButtonState(ctx.acc);
+        if (typeof renderAssets === 'function') renderAssets();
+        if (typeof showAppToast === 'function') showAppToast('已清除目標', { type: 'info' });
+    }
+
+    function onTargetPriceInput() {
+        if (_targetCalcSyncing) return;
+        const ctx = getDetailTargetCalcContext();
+        const priceInp = document.getElementById('dTargetPrice');
+        if (!ctx || !priceInp) return;
+        const targetPrice = parseFloat(priceInp.value);
+        syncTargetCalcFieldsFromPrice(ctx, targetPrice, { fillPrice: false });
+    }
+
+    function onTargetPctInput() {
+        if (_targetCalcSyncing) return;
+        const ctx = getDetailTargetCalcContext();
+        const pctInp = document.getElementById('dTargetPct');
+        if (!ctx || !pctInp) return;
+        const pct = parseFloat(pctInp.value);
+        let targetPrice = NaN;
+        if (ctx.cost > 0 && isFinite(pct)) {
+            targetPrice = ctx.cost * (1 + pct / 100);
+        }
+        syncTargetCalcFieldsFromPrice(ctx, targetPrice, { fillPct: false });
+    }
+
+    function onTargetProfitInput() {
+        if (_targetCalcSyncing) return;
+        const ctx = getDetailTargetCalcContext();
+        const profitInp = document.getElementById('dTargetProfit');
+        if (!ctx || !profitInp) return;
+        const profitDisplay = parseFloat(profitInp.value);
+        let targetPrice = NaN;
+        if (ctx.cost > 0 && ctx.shares > 0 && isFinite(profitDisplay)) {
+            const profitNative = convertDisplayProfitToAssetCurrency(profitDisplay, ctx.acc);
+            targetPrice = ctx.cost + (profitNative / ctx.shares);
+        }
+        syncTargetCalcFieldsFromPrice(ctx, targetPrice, { fillProfit: false });
+    }
+
     function closeDetailView() { 
         const detailView = document.getElementById('detailView');
         const slideEl = getDetailViewSlideEl();
@@ -13197,6 +13732,7 @@
                     // USDT/USDC 特別處理：不顯示當日和成本行
                     let line1 = '';
                     let line2 = '';
+                    let lineTarget = '';
                     if(sym !== 'USDT' && sym !== 'USDC') {
                         line1 = chg ? `<div class="item-row-compact"><span class="price-label">當日</span><span>${price}</span>${chg}${dailyPnLHtml}</div>` : `<div class="item-row-compact"><span class="price-label">當日</span><span>${price}</span>${dailyPnLHtml}</div>`;
                         // 第二行：成本標籤 + 成本 + 成本百分比 + 成本盈虧（美股、台股；加密貨幣不顯示成本）
@@ -13218,6 +13754,9 @@
                             // 沒有成本時，顯示 N/A（加密貨幣不顯示）
                             line2 = `<div class="item-row-compact"><span class="price-label">成本</span><span>N/A</span></div>`;
                         }
+                        if (typeof buildAssetTargetRowHtml === 'function') {
+                            lineTarget = buildAssetTargetRowHtml(acc);
+                        }
                     }
                     // 美股、台股、加密貨幣：分開顯示公司名稱和代號
                     let displayName = acc.type === 'stock' ? cleanCompanyName(acc.name) : acc.name;
@@ -13238,10 +13777,12 @@
                             let spacerHtml = '';
                             let displayLine1 = '';
                             let displayLine2 = '';
+                            let displayLineTarget = lineTarget || '';
                             if(isStableCoin) {
                                 spacerHtml = '';
                                 displayLine1 = '';
                                 displayLine2 = '';
+                                displayLineTarget = '';
                             } else if(acc.type === 'crypto') {
                                 spacerHtml = '<div class="symbol-spacer"></div><div class="symbol-spacer"></div>'; // 加密貨幣需要兩個 spacer，讓 line1 顯示在 line2 的位置
                                 displayLine1 = ''; // 第一個 spacer 位置留空
@@ -13252,10 +13793,10 @@
                                 displayLine2 = line2;
                             }
                             if(sym) {
-                                symbolRow = `<div class="item-symbol-row"><div class="symbol-text-row"><span class="symbol-text">${sym || 'N/A'}</span><span class="symbol-balance">${acc.balance || 'N/A'}${balanceUnit}</span></div>${spacerHtml}${displayLine1}${displayLine2}</div>`;
+                                symbolRow = `<div class="item-symbol-row"><div class="symbol-text-row"><span class="symbol-text">${sym || 'N/A'}</span><span class="symbol-balance">${acc.balance || 'N/A'}${balanceUnit}</span></div>${spacerHtml}${displayLine1}${displayLine2}${displayLineTarget}</div>`;
                             } else {
                                 // 沒有代碼時，也要保持排版結構，但代碼顯示 N/A
-                                symbolRow = `<div class="item-symbol-row"><div class="symbol-text-row"><span class="symbol-text">N/A</span><span class="symbol-balance">${acc.balance || 'N/A'}${balanceUnit}</span></div>${spacerHtml}${displayLine1}${displayLine2}</div>`;
+                                symbolRow = `<div class="item-symbol-row"><div class="symbol-text-row"><span class="symbol-text">N/A</span><span class="symbol-balance">${acc.balance || 'N/A'}${balanceUnit}</span></div>${spacerHtml}${displayLine1}${displayLine2}${displayLineTarget}</div>`;
                             }
                         } else if(sym && displayName !== sym) {
                             // 其他類型：只有當 displayName !== sym 時才顯示代碼行
@@ -13308,9 +13849,11 @@
                         } else if(acc.type === 'crypto') {
                             // 加密貨幣只有一行（當日顯示在 line2 位置），所以只需要一個 spacer（對應第二個 symbol-spacer）
                             pnlHtml = `<div class="amount-spacer"></div>`;
+                            if (acc.targetPrice > 0) pnlHtml += `<div class="amount-spacer"></div>`;
                         } else {
-                            // 美股、台股有 line1 和 line2，所以需要兩個 spacer
+                            // 美股、台股有 line1 和 line2，所以需要兩個 spacer；有目標時再補一格
                             pnlHtml = `<div class="amount-spacer"></div><div class="amount-spacer"></div>`;
+                            if (acc.targetPrice > 0) pnlHtml += `<div class="amount-spacer"></div>`;
                         }
                     } else {
                         // 其他類型：保持原樣，在右側顯示盈虧
