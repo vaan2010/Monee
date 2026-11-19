@@ -2415,7 +2415,7 @@
         .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 6px; }
         .calendar-weekday { text-align: center; font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 3px 0; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 15px; cursor: pointer; transition: all 0.2s; color: var(--text-primary); background: transparent; border: none; }
+        .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 15px; cursor: pointer; transition: all 0.2s; color: var(--text-primary); background: transparent; border: none; position: relative; }
         .switch { position: relative; display: inline-block; width: 44px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: 0.3s; border-radius: 26px; }
@@ -2798,25 +2798,39 @@
         .modal-tab.active { background: var(--card-bg); color: var(--text-primary); }
         .tab-content { display: none; padding-bottom: 40px; flex: 1; overflow-y: auto; } .tab-content.active { display: block; }
         
-        /* 載入遮罩 */
+        /* 載入遮罩：品牌＋進度條＋短提示（符合 splash 建議：簡潔、可感知進度） */
         .loading-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-color);
+            inset: 0;
             z-index: 99999;
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 1;
-            transition: opacity 0.3s ease-out;
+            transition: opacity 0.35s ease-out;
             pointer-events: all;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 28%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+                var(--bg-color);
+            overflow: hidden;
         }
         .loading-overlay.hidden {
             opacity: 0;
             pointer-events: none;
+        }
+        .loading-overlay::before {
+            content: '';
+            position: absolute;
+            inset: -20%;
+            background:
+                radial-gradient(circle at 20% 80%, color-mix(in srgb, var(--accent-2, var(--accent)) 12%, transparent), transparent 42%),
+                radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 40%);
+            pointer-events: none;
+            animation: loadingAura 4.5s ease-in-out infinite alternate;
+        }
+        @keyframes loadingAura {
+            from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
+            to { transform: translate3d(0, -12px, 0) scale(1.04); opacity: 1; }
         }
         /* AI 辨識中：鎖住全畫面，避免點到其他地方中斷 */
         #aiBusyOverlay {
@@ -2865,85 +2879,199 @@
             line-height: 1.45;
         }
         .loading-content {
+            position: relative;
+            z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 18px;
+            width: min(300px, calc(100vw - 48px));
+            text-align: center;
         }
-        .loading-header {
+        .loading-mark {
+            width: 88px;
+            height: 88px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            background: color-mix(in srgb, var(--card-bg) 82%, var(--accent));
+            border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-color));
+            box-shadow:
+                0 10px 28px color-mix(in srgb, var(--accent) 22%, transparent),
+                inset 0 1px 0 rgba(255,255,255,0.35);
+            opacity: 0;
+            animation: loadingMarkIn 0.9s ease-out forwards;
         }
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid var(--border-color);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .loading-image {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            animation: loadingMarkPulse 2.6s ease-in-out 0.9s infinite;
+        }
+        .loading-title {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: var(--text-primary);
+            opacity: 0;
+            animation: loadingTitleIn 0.9s ease-out 0.2s forwards;
+        }
+        .loading-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-height: 1.4em;
+            line-height: 1.4;
+        }
+        .loading-progress-track {
+            width: 100%;
+            height: 6px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--border-color) 80%, transparent);
+            overflow: hidden;
+        }
+        .loading-progress-bar {
+            height: 100%;
+            width: 8%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2, var(--accent)));
+            transition: width 0.7s ease;
+        }
+        .loading-tip {
+            font-size: 12px;
+            color: var(--text-third);
+            line-height: 1.45;
+            min-height: 2.9em;
+            opacity: 0.95;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .loading-image {
-            width: 80px;
-            height: 80px;
-            opacity: 0;
-            animation: fadeInUpImage 1s ease-out 0s forwards, pulse 2s ease-in-out 1s infinite;
-            object-fit: contain;
+        @keyframes loadingMarkIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.92); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .loading-title {
-            font-size: 32px;
+        @keyframes loadingTitleIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes loadingMarkPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .loading-overlay::before,
+            .loading-mark,
+            .loading-image,
+            .loading-title { animation: none !important; opacity: 1 !important; transform: none !important; }
+            .loading-progress-bar { transition: none; }
+        }
+
+        /* 日曆當日記事摘要 */
+        .calendar-note-summary {
+            margin: 0 0 14px;
+            padding: 14px 14px 12px;
+            border-radius: 14px;
+            background: var(--card-bg);
+            border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-color));
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--text-primary) 6%, transparent);
+        }
+        .calendar-note-summary.is-empty {
+            border-style: dashed;
+            border-color: var(--border-color);
+            background: color-mix(in srgb, var(--card-bg) 70%, transparent);
+            box-shadow: none;
+        }
+        .calendar-note-summary-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .calendar-note-summary-label {
+            font-size: 12px;
             font-weight: 700;
-            color: var(--text-primary);
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 0s forwards;
+            letter-spacing: 0.04em;
+            color: var(--accent);
         }
-        @keyframes fadeInUpImage {
-            0% {
-                opacity: 0;
-                transform: translateY(10px) scale(1);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        .calendar-note-summary-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
         }
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.1);
-                opacity: 0.8;
-            }
-        }
-        @keyframes fadeInUp {
-            0% {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .loading-text {
-            font-size: 16px;
+        .calendar-note-summary-actions button {
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
             color: var(--text-secondary);
-            font-weight: 500;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .calendar-note-summary-actions button.primary {
+            background: var(--accent-soft);
+            border-color: var(--accent-border);
+            color: var(--accent);
+        }
+        .calendar-note-summary-mood {
+            font-size: 22px;
+            line-height: 1;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .calendar-note-summary-text {
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+        .calendar-note-summary-text.is-placeholder {
+            color: var(--text-secondary);
+        }
+        .calendar-note-summary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .calendar-note-summary-tags span {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-border);
+            border-radius: 999px;
+            padding: 3px 8px;
+        }
+        .calendar-day.has-note {
+            box-shadow: inset 0 0 0 2px #ffd700;
+        }
+        .calendar-day.has-note::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #ffd700;
+        }
+        .ai-retry-btn {
+            margin-left: 8px;
+            border: 1px solid var(--accent-border);
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            vertical-align: middle;
         }
         .form-group { background: var(--card-bg); margin-top: 20px; border-radius: 12px; overflow: hidden; margin-left: 16px; margin-right: 16px; }
         .form-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
@@ -3580,14 +3708,17 @@
             <div class="ai-busy-sub" id="aiBusySub">請稍候，辨識完成前無法操作其他功能</div>
         </div>
     </div>
-    <div id="loadingOverlay" class="loading-overlay">
+    <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true">
         <div class="loading-content">
-            <div class="loading-header">
-                <img src="./favico.png" alt="Loading" class="loading-image">
-                <div class="loading-title">Monee</div>
+            <div class="loading-mark" aria-hidden="true">
+                <img src="./favico.png" alt="" class="loading-image">
             </div>
-            <div class="loading-spinner"></div>
-            <div class="loading-text">讀取中...</div>
+            <div class="loading-title">Monee</div>
+            <div class="loading-text" id="loadingStatusText">正在準備你的財務畫面</div>
+            <div class="loading-progress-track" aria-hidden="true">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
+            </div>
+            <div class="loading-tip" id="loadingTipText">點日曆有記事的日子，下方可直接看摘要</div>
         </div>
     </div>
 
@@ -4123,6 +4254,7 @@
                     <div id="journalMonthlyLineChart" style="width: 100%; height: 280px; box-sizing: border-box; overflow: visible;"></div>
                 </div>
                 <div id="calendarTransferDetails" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; display: none; width: 100%; box-sizing: border-box; overflow: visible;">
+                    <div id="calendarNoteSummary" class="calendar-note-summary is-empty" style="display:none;"></div>
                     <div class="journal-seg-tabs" id="journalDetailSegTabs" role="tablist" aria-label="記帳類型">
                         <button type="button" class="active" data-journal-tab="0" onclick="switchJournalPage(0)">支出</button>
                         <button type="button" data-journal-tab="1" onclick="switchJournalPage(1)">收入</button>
@@ -13026,13 +13158,14 @@
         e.preventDefault();
         e.stopPropagation();
     }
-    function setAiBusyLock(on, message) {
+    function setAiBusyLock(on, message, subMessage) {
         const overlay = document.getElementById('aiBusyOverlay');
         const titleEl = document.getElementById('aiBusyTitle');
+        const subEl = document.getElementById('aiBusySub');
         if (on) {
             _aiBusyDepth++;
-            if (titleEl && message) titleEl.textContent = message;
-            else if (titleEl) titleEl.textContent = 'AI 辨識中';
+            if (titleEl) titleEl.textContent = message || 'AI 辨識中';
+            if (subEl) subEl.textContent = subMessage || '請稍候，辨識完成前無法操作其他功能';
             if (overlay) overlay.classList.add('is-visible');
             document.body.classList.add('ai-busy');
             if (_aiBusyDepth === 1) {
@@ -13051,8 +13184,86 @@
             }
         }
     }
+    function updateAiBusyProgress(message, subMessage) {
+        const titleEl = document.getElementById('aiBusyTitle');
+        const subEl = document.getElementById('aiBusySub');
+        if (message && titleEl) titleEl.textContent = message;
+        if (subMessage && subEl) subEl.textContent = subMessage;
+    }
     function isAiBusyLocked() {
         return _aiBusyDepth > 0;
+    }
+
+    let _aiRetryState = null; // { kind: 'stock'|'expense'|'income', files: File[] }
+
+    function friendlyAiErrorMessage(err) {
+        const raw = (err && err.message) ? String(err.message) : String(err || '');
+        const m = raw.toLowerCase();
+        if (m.includes('high demand') || m.includes('unavailable') || m.includes('503') || m.includes('overloaded')) {
+            return '目前 AI 服務較忙碌，請稍後再試';
+        }
+        if (m.includes('resource_exhausted') || m.includes('quota') || m.includes('rate limit') || m.includes('429')) {
+            return '用量暫時達上限，請稍後再試';
+        }
+        if (m.includes('api key') || (m.includes('invalid') && m.includes('key')) || m.includes('permission_denied') || m.includes('401') || m.includes('403')) {
+            return 'API Key 無效或權限不足，請到選單「API 設定」檢查';
+        }
+        if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('network')) {
+            return '網路連線失敗，請檢查網路後重試';
+        }
+        if (m.includes('json') || m.includes('parse') || m.includes('回應格式')) {
+            return '辨識結果讀取失敗，請換更清楚的截圖再試';
+        }
+        if (m.includes('未辨識') || m.includes('未找到')) {
+            return '看不清楚圖片內容，請換截圖或裁切重點後再試';
+        }
+        if (/[\u4e00-\u9fff]/.test(raw)) return raw;
+        return '辨識失敗，請稍後再試';
+    }
+
+    function setAiStatusWithRetry(statusEl, message, kind) {
+        if (!statusEl) return;
+        const canRetry = !!( _aiRetryState && _aiRetryState.kind === kind && _aiRetryState.files && _aiRetryState.files.length );
+        statusEl.style.color = '#ff453a';
+        statusEl.innerHTML = '';
+        statusEl.appendChild(document.createTextNode(message));
+        if (canRetry) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ai-retry-btn';
+            btn.textContent = '重試';
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                retryLastAiRecognition(kind);
+            };
+            statusEl.appendChild(btn);
+        }
+    }
+
+    async function readFilesAsImageParts(files, onProgress) {
+        const list = Array.from(files || []);
+        const parts = [];
+        for (let i = 0; i < list.length; i++) {
+            if (typeof onProgress === 'function') onProgress(i + 1, list.length, 'read');
+            const file = list[i];
+            const part = await new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = e => res({ inlineData: { mimeType: file.type || 'image/jpeg', data: String(e.target.result).split(',')[1] } });
+                r.onerror = rej;
+                r.readAsDataURL(file);
+            });
+            parts.push(part);
+        }
+        return parts;
+    }
+
+    function retryLastAiRecognition(kind) {
+        if (!_aiRetryState || _aiRetryState.kind !== kind || !_aiRetryState.files || !_aiRetryState.files.length) return;
+        const files = _aiRetryState.files;
+        if (kind === 'stock') runStockAiRecognition(files);
+        else if (kind === 'expense') runExpenseAiRecognition(files);
+        else if (kind === 'income') runIncomeAiRecognition(files);
     }
 
     async function triggerImageUpload() {
@@ -13065,156 +13276,129 @@
     }
     async function handleImageUpload(input) {
         if(!input.files || input.files.length === 0) return;
-        const status = document.getElementById('aiStatus'); 
+        const files = Array.from(input.files);
+        input.value = '';
+        await runStockAiRecognition(files);
+    }
+
+    async function runStockAiRecognition(files) {
+        if (!files || !files.length) return;
+        _aiRetryState = { kind: 'stock', files: Array.from(files) };
+        const status = document.getElementById('aiStatus');
         const progressContainer = document.getElementById('aiProgress');
         const progressBar = document.getElementById('aiProgressBar');
-        setAiBusyLock(true, 'AI 辨識中');
-        status.innerText = `讀取圖片中...`; status.style.color = "#aaa";
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '10%';
+        const total = files.length;
+        setAiBusyLock(true, 'AI 辨識中', total > 1 ? `讀取圖片 0/${total}` : '讀取圖片中...');
+        if (status) { status.textContent = total > 1 ? `讀取圖片 0/${total}...` : '讀取圖片中...'; status.style.color = 'var(--text-secondary)'; }
+        if (progressContainer) progressContainer.style.display = 'block';
+        if (progressBar) progressBar.style.width = '8%';
         try {
-            const files = Array.from(input.files);
-            const promises = files.map((f, idx) => new Promise((res,rej)=>{
-                const r=new FileReader();
-                r.onload=e=>{
-                    progressBar.style.width = `${20 + (idx + 1) * 30 / files.length}%`;
-                    res({inlineData:{mimeType:f.type,data:e.target.result.split(',')[1]}});
-                };
-                r.onerror=rej;
-                r.readAsDataURL(f);
-            }));
-            const images = await Promise.all(promises);
-            progressBar.style.width = '60%';
-            status.innerText = `AI 分析中...`; status.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
+            const images = await readFilesAsImageParts(files, (cur, all) => {
+                const pct = Math.round(8 + (cur / all) * 42);
+                if (progressBar) progressBar.style.width = pct + '%';
+                const msg = all > 1 ? `讀取圖片 ${cur}/${all}` : '讀取圖片中...';
+                if (status) status.textContent = msg;
+                updateAiBusyProgress('AI 辨識中', msg);
+            });
+            if (progressBar) progressBar.style.width = '55%';
+            const analyzing = total > 1 ? `AI 分析中（${total} 張）...` : 'AI 分析中...';
+            if (status) { status.textContent = analyzing; status.style.color = (typeof getAccentColor === 'function' ? getAccentColor() : '#0a84ff'); }
+            updateAiBusyProgress('AI 辨識中', analyzing);
             const broker = document.getElementById('brokerSelect').value;
             const accountType = document.getElementById('inpType').value;
             const isTWStock = accountType === 'twstock';
             const isUSStock = accountType === 'stock';
             const isCrypto = accountType === 'crypto';
-            const isFixedFee = isTWStock && broker === 'cathay_fixed'; // 台股國泰定期定額固定1元
-            let fee = isCrypto ? 0 : 0.1; // 加密貨幣預設手續費為0 
-            if (isTWStock && broker === 'cathay') {
-                fee = 1.425; // 台股國泰一般交易1.425%
-            } else if (isTWStock && broker === 'cathay_fixed') {
-                fee = 0; // 台股國泰定期定額固定1元，fee設為0（會在計算時直接加1元）
-            } else if (isUSStock && broker === 'cathay') {
-                fee = 0.1; // 美股國泰0.1%
-            } else if (broker === 'fubon') {
-                fee = 0.25;
-            } else if (broker === 'custom') {
-                fee = settings.feeRate || 0.1;
-            }
+            const isFixedFee = isTWStock && broker === 'cathay_fixed';
+            let fee = isCrypto ? 0 : 0.1;
+            if (isTWStock && broker === 'cathay') fee = 1.425;
+            else if (isTWStock && broker === 'cathay_fixed') fee = 0;
+            else if (isUSStock && broker === 'cathay') fee = 0.1;
+            else if (broker === 'fubon') fee = 0.25;
+            else if (broker === 'custom') fee = settings.feeRate || 0.1;
             let prompt = '';
-            if(accountType === 'crypto') {
-                // 加密貨幣：看圖左邊的代碼/名字和圖左邊下面的數量
+            if (accountType === 'crypto') {
                 prompt = `Analyze cryptocurrency wallet/exchange screenshots. 1. Extract cryptocurrency symbol/name from the LEFT side of the image (look for crypto symbols like BTC, ETH, SOL, etc. or names like Bitcoin, Ethereum, etc.). 2. Extract the QUANTITY/AMOUNT from BELOW the symbol/name on the LEFT side. Return JSON: {"symbol": "crypto symbol/name if found", "quantity": number}`;
             } else {
-                // 美股、台股：原有邏輯
                 prompt = `Analyze brokerage screenshots. 1. Extract stock symbol/code if visible (look for stock ticker symbols like NVDA, TSLA, 2330, etc.). 2. Extract transaction list: [{"date": "MM/DD", "shares": number, "price": number (raw price without fee)}] 3. Calculate TOTAL shares. 4. Calculate Weighted Average Cost PER SHARE. IMPORTANT: For each transaction, Cost = Price${isFixedFee ? ' + 1' : ` * (1 + ${fee}/100)`}. Final Avg Cost = (Sum of (Shares * Cost)) / Total Shares. Return JSON: {"symbol": "stock symbol if found", "transactions": [...], "totalShares": number, "avgCost": number}`;
             }
-            progressBar.style.width = '80%';
+            if (progressBar) progressBar.style.width = '78%';
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${settings.geminiKey}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...images] }] }) });
-            progressBar.style.width = '90%';
-            status.innerText = `處理結果中...`; status.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
-            const data = await resp.json(); if(data.error) throw new Error(data.error.message);
-            if(!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0] || !data.candidates[0].content.parts[0].text) {
-                throw new Error("AI 回應格式錯誤，請重試");
-            }
-            const txt = data.candidates[0].content.parts[0].text; 
-            // 嘗試提取 JSON，使用更寬鬆的匹配
+            if (progressBar) progressBar.style.width = '90%';
+            if (status) status.textContent = '處理結果中...';
+            updateAiBusyProgress('AI 辨識中', '處理結果中...');
+            const data = await resp.json();
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤，請重試');
+            const txt = data.candidates[0].content.parts[0].text;
             let match = txt.match(/\{[\s\S]*\}/);
-            if(!match) {
-                // 如果沒有找到 JSON，嘗試尋找 JSON 陣列
-                match = txt.match(/\[[\s\S]*\]/);
+            if (!match) match = txt.match(/\[[\s\S]*\]/);
+            if (!match) throw new Error('AI 回應中未找到有效資料，請重試');
+            let res;
+            try {
+                res = JSON.parse(match[0]);
+            } catch (parseError) {
+                let cleanedJson = match[0].replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                cleanedJson = cleanedJson.replace(/\}[^}]*$/, '}');
+                try { res = JSON.parse(cleanedJson); }
+                catch (e) { throw new Error('無法解析 AI 回應，請重試或檢查圖片內容'); }
             }
-            if(match) {
-                let res;
-                try {
-                    res = JSON.parse(match[0]);
-                } catch(parseError) {
-                    // 如果解析失敗，嘗試清理文字後再解析
-                    let cleanedJson = match[0].replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                    // 移除 JSON 後面的非 JSON 字符
-                    cleanedJson = cleanedJson.replace(/\}[^}]*$/, '}');
-                    try {
-                        res = JSON.parse(cleanedJson);
-                    } catch(e) {
-                        throw new Error("無法解析 AI 回應的 JSON 格式，請重試或檢查圖片內容");
+            if (accountType === 'crypto') {
+                if (res.symbol && res.symbol.trim()) {
+                    const symbolInput = document.getElementById('inpSymbol');
+                    if (symbolInput && !symbolInput.value.trim()) {
+                        symbolInput.value = res.symbol.trim().toUpperCase();
+                        syncNameFromSymbol();
                     }
                 }
-                if(accountType === 'crypto') {
-                    // 加密貨幣：處理 symbol 和 quantity
-                    if(res.symbol && res.symbol.trim()) {
-                        const symbolInput = document.getElementById('inpSymbol');
-                        if(symbolInput && !symbolInput.value.trim()) {
-                            symbolInput.value = res.symbol.trim().toUpperCase();
-                            syncNameFromSymbol();
-                        }
-                    }
-                    if(res.quantity !== undefined && res.quantity !== null) {
-                        document.getElementById('inpBalance').value = parseFloat(res.quantity) || 0;
-                    }
-                    progressBar.style.width = '100%';
-                    status.innerText = `成功! 已辨識代碼: ${res.symbol || '未找到'}，數量: ${res.quantity || 0}`; status.style.color = "#30d158"; 
-                    setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
-                } else if(res.transactions && res.transactions.length > 0) {
-                    // 美股、台股：處理交易明細
-                    // 如果有提取到股票代碼，自動填入
-                    if(res.symbol && res.symbol.trim()) {
-                        const symbolInput = document.getElementById('inpSymbol');
-                        if(symbolInput && !symbolInput.value.trim()) {
-                            symbolInput.value = res.symbol.trim().toUpperCase();
-                            syncNameFromSymbol();
-                        }
-                    }
-                    // 累積到現有交易明細
-                    const existingTx = window.tempTransactions || [];
-                    const newTx = res.transactions || [];
-                    const allTx = [...existingTx, ...newTx];
-                    
-                    // 重新計算總股數和加權平均成本
-                    let totalShares = 0;
-                    let totalCost = 0;
-                    allTx.forEach(tx => {
-                        const shares = parseFloat(tx.shares) || 0;
-                        const price = parseFloat(tx.price) || 0;
-                        let costPerShare;
-                        if (isFixedFee) {
-                            costPerShare = price + 1; // 台股定期定額固定加1元
-                        } else {
-                            costPerShare = price * (1 + fee / 100);
-                        }
-                        totalShares += shares;
-                        totalCost += shares * costPerShare;
-                    });
-                    const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
-                    
-                    // 更新顯示
-                    window.tempTransactions = allTx;
-                    document.getElementById('inpBalance').value = totalShares;
-                    document.getElementById('inpCost').value = avgCost.toFixed(4);
-                    renderTransactions(window.tempTransactions);
-                    progressBar.style.width = '100%';
-                    const feeText = isFixedFee ? '固定1元' : `${fee}%`;
-                    status.innerText = `成功! 已累積 ${allTx.length} 筆交易，總股數: ${totalShares}，已含 ${feeText} 手續費`; status.style.color = "#30d158"; 
-                    setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.width = '0%'; }, 1000);
-                    switchTab('detail');
-                } else { 
-                    throw new Error("AI 未辨識到資料，請確認圖片內容");
+                if (res.quantity !== undefined && res.quantity !== null) {
+                    document.getElementById('inpBalance').value = parseFloat(res.quantity) || 0;
                 }
+                if (progressBar) progressBar.style.width = '100%';
+                if (status) { status.textContent = `成功! 已辨識代碼: ${res.symbol || '未找到'}，數量: ${res.quantity || 0}`; status.style.color = '#30d158'; }
+                setTimeout(() => { if (progressContainer) progressContainer.style.display = 'none'; if (progressBar) progressBar.style.width = '0%'; }, 1000);
+            } else if (res.transactions && res.transactions.length > 0) {
+                if (res.symbol && res.symbol.trim()) {
+                    const symbolInput = document.getElementById('inpSymbol');
+                    if (symbolInput && !symbolInput.value.trim()) {
+                        symbolInput.value = res.symbol.trim().toUpperCase();
+                        syncNameFromSymbol();
+                    }
+                }
+                const existingTx = window.tempTransactions || [];
+                const newTx = res.transactions || [];
+                const allTx = [...existingTx, ...newTx];
+                let totalShares = 0;
+                let totalCost = 0;
+                allTx.forEach(tx => {
+                    const shares = parseFloat(tx.shares) || 0;
+                    const price = parseFloat(tx.price) || 0;
+                    const costPerShare = isFixedFee ? (price + 1) : (price * (1 + fee / 100));
+                    totalShares += shares;
+                    totalCost += shares * costPerShare;
+                });
+                const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
+                window.tempTransactions = allTx;
+                document.getElementById('inpBalance').value = totalShares;
+                document.getElementById('inpCost').value = avgCost.toFixed(4);
+                renderTransactions(window.tempTransactions);
+                if (progressBar) progressBar.style.width = '100%';
+                const feeText = isFixedFee ? '固定1元' : `${fee}%`;
+                if (status) { status.textContent = `成功! 已累積 ${allTx.length} 筆交易，總股數: ${totalShares}，已含 ${feeText} 手續費`; status.style.color = '#30d158'; }
+                setTimeout(() => { if (progressContainer) progressContainer.style.display = 'none'; if (progressBar) progressBar.style.width = '0%'; }, 1000);
+                switchTab('detail');
             } else {
-                throw new Error("AI 回應中未找到有效的 JSON 資料，請重試");
+                throw new Error('AI 未辨識到資料，請確認圖片內容');
             }
-        } catch(e) { 
-            console.error(e); 
-            status.innerText = "失敗: " + e.message; 
-            status.style.color = "red"; 
-            progressContainer.style.display = 'none'; 
-            progressBar.style.width = '0%'; 
+            _aiRetryState = null;
+        } catch (e) {
+            console.error(e);
+            if (progressContainer) progressContainer.style.display = 'none';
+            if (progressBar) progressBar.style.width = '0%';
+            setAiStatusWithRetry(status, friendlyAiErrorMessage(e), 'stock');
         } finally {
             setAiBusyLock(false);
         }
-        input.value = '';
     }
     function renderTransactions(list) { 
         const c = document.getElementById('txListContainer'); 
@@ -14607,6 +14791,45 @@
         requestAnimationFrame(() => applyChartTextColorToDom(textColor));
     }
     
+    const LOADING_TIPS = [
+        '點日曆有記事的日子，下方可直接看摘要',
+        '側邊選單可切換主題，找到最適合你的配色',
+        '記帳可用 AI 截圖辨識，多張會顯示進度',
+        '持股詳情可試算目標價與目標獲利',
+        '長按或右滑紀錄，可快速編輯與刪除'
+    ];
+    let _loadingTipTimer = null;
+    let _loadingProgress = 8;
+    let _loadingStartedAt = 0;
+    const LOADING_MIN_MS = 2400;
+
+    function setLoadingProgress(pct, statusText) {
+        _loadingProgress = Math.max(_loadingProgress, Math.min(100, pct));
+        const bar = document.getElementById('loadingProgressBar');
+        const status = document.getElementById('loadingStatusText');
+        if (bar) bar.style.width = _loadingProgress + '%';
+        if (status && statusText) status.textContent = statusText;
+    }
+
+    function startLoadingTips() {
+        const tipEl = document.getElementById('loadingTipText');
+        if (!tipEl || !LOADING_TIPS.length) return;
+        let i = Math.floor(Math.random() * LOADING_TIPS.length);
+        tipEl.textContent = LOADING_TIPS[i];
+        if (_loadingTipTimer) clearInterval(_loadingTipTimer);
+        _loadingTipTimer = setInterval(() => {
+            i = (i + 1) % LOADING_TIPS.length;
+            tipEl.textContent = LOADING_TIPS[i];
+        }, 2800);
+    }
+
+    function stopLoadingTips() {
+        if (_loadingTipTimer) {
+            clearInterval(_loadingTipTimer);
+            _loadingTipTimer = null;
+        }
+    }
+
     // 4. Start the app only after everything is defined
     async function init() {
         // 獲取載入遮罩元素（在整個函數中都可使用）
@@ -14617,20 +14840,27 @@
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.style.display = 'flex';
         }
+        _loadingProgress = 8;
+        _loadingStartedAt = Date.now();
+        setLoadingProgress(12, '正在準備你的財務畫面');
+        startLoadingTips();
         
         initSidebarState();
+        setLoadingProgress(26, '載入介面元件');
         initNumbersState();
         initSwiper();
         initJournalSwipe(); // 初始化記帳詳情的滑動手勢
         initLiquidTabBar();
         initLiquidPageIndicator();
         initSelectionAndSidebarGuards();
+        setLoadingProgress(44, '套用主題與偏好');
         applyTheme();
         updateThemeButton();
         updateCurrencyButton();
         syncSidebarAppVersionLabel();
         chartLevel = 'root';
         currentPage = 0;
+        setLoadingProgress(62, '整理資產與記帳資料');
         renderAssets();
         // 背景把已有 logo 寫入本機快取（data URL + Cache API）
         setTimeout(() => { try { warmAllAccountLogoCaches(); } catch (e) {} }, 400);
@@ -14893,24 +15123,31 @@
             updateActivePageClass();
         }
         
-        // 載入完成，等待 Monee 字樣動畫完成後再隱藏載入遮罩
+        // 載入完成：至少停留約 2.4 秒，避免一閃而過
         if(loadingOverlay) {
-            // Monee 字樣動畫：1s 動畫時間
+            setLoadingProgress(86, '即將完成');
+            const elapsed = Date.now() - (_loadingStartedAt || Date.now());
+            const waitMs = Math.max(900, LOADING_MIN_MS - elapsed);
             setTimeout(() => {
-                loadingOverlay.classList.add('hidden');
-                // 完全隱藏後移除元素（可選，如果想保留 DOM 可以註解掉）
+                setLoadingProgress(100, '完成');
                 setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                    // 更新後先顯示 Release Notes（每版只自動一次）；關閉後再接教學
-                    if (typeof maybeShowReleaseNotesOnUpdate === 'function') {
-                        maybeShowReleaseNotesOnUpdate();
-                    } else if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
-                        openTutorialAssets();
-                    }
-                    if (typeof recordDailyAssetSnapshot === 'function') recordDailyAssetSnapshot();
-                    loadTwDividendData().then(() => { if(typeof renderAssets === 'function') renderAssets(); });
-                }, 300); // 等待淡出動畫完成
-            }, 1000); // 等待 Monee 字樣動畫完成（1s 動畫）
+                    stopLoadingTips();
+                    loadingOverlay.classList.add('hidden');
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        // 更新後先顯示 Release Notes（每版只自動一次）；關閉後再接教學
+                        if (typeof maybeShowReleaseNotesOnUpdate === 'function') {
+                            maybeShowReleaseNotesOnUpdate();
+                        } else if(!localStorage.getItem('monee_tutorial_seen') && typeof openTutorialAssets === 'function') {
+                            openTutorialAssets();
+                        }
+                        if (typeof recordDailyAssetSnapshot === 'function') recordDailyAssetSnapshot();
+                        loadTwDividendData().then(() => { if(typeof renderAssets === 'function') renderAssets(); });
+                    }, 380);
+                }, 420);
+            }, waitMs);
+        } else {
+            stopLoadingTips();
         }
     }
 
@@ -16049,6 +16286,9 @@
             tags: currentNoteTags.slice()
         });
         renderCalendar();
+        if (selectedDate && formatDateKey(selectedDate) === formatDateKey(currentNoteDate)) {
+            renderCalendarNoteSummary(currentNoteDate);
+        }
         closeDateNoteEditor();
     }
     
@@ -16340,33 +16580,15 @@
                 // 如果兩者都有，保持固定轉帳的顏色標記
             }
             
-            // 檢查是否有記事，如果有則顯示星號框住日期
-            if(hasDateNote(date)) {
-                dayBtn.style.border = '2px solid #ffd700';
-                dayBtn.style.borderRadius = '8px';
-                dayBtn.style.boxSizing = 'border-box';
+            // 有記事：金點＋內框提示（點一下即可在下方看摘要）
+            if (hasDateNote(date)) {
+                dayBtn.classList.add('has-note');
             }
             
-            // 使用計時器區分單擊和雙擊（縮短延遲以提升點擊反應）
-            let clickTimer = null;
-            let clickCount = 0;
-            dayBtn.addEventListener('click', (e) => {
-                clickCount++;
-                if(clickCount === 1) {
-                    // 立即視覺回饋：先標示選中狀態
-                    grid.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
-                    dayBtn.classList.add('selected');
-                    clickTimer = setTimeout(() => {
-                        selectDate(date);
-                        clickCount = 0;
-                    }, 180);
-                } else if(clickCount === 2) {
-                    clearTimeout(clickTimer);
-                    e.stopPropagation();
-                    selectDate(date);
-                    setTimeout(() => openDateNoteEditor(date), 50);
-                    clickCount = 0;
-                }
+            dayBtn.addEventListener('click', () => {
+                grid.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
+                dayBtn.classList.add('selected');
+                selectDate(date);
             });
             grid.appendChild(dayBtn);
         }
@@ -16376,9 +16598,49 @@
         selectedDate.setHours(0, 0, 0, 0); // 確保時間部分為 00:00:00
         renderCalendar();
         updateCalendarStickyBar();
-        console.log('Selected date:', selectedDate.toLocaleDateString('zh-TW'));
-        // 下一幀再更新詳情區，讓日曆先完成繪製，操作更順暢
+        // 下一幀再更新詳情區（含記事摘要），讓日曆先完成繪製
         requestAnimationFrame(() => { showFixedTransferDetailsForDate(date); });
+    }
+
+    function escapeHtmlText(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function renderCalendarNoteSummary(date) {
+        const box = document.getElementById('calendarNoteSummary');
+        if (!box) return;
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        const entry = getDateNoteEntry(d);
+        const hasContent = !!(entry.text || entry.mood || (entry.tags && entry.tags.length));
+        box.style.display = 'block';
+        box.classList.toggle('is-empty', !hasContent);
+        const moodMeta = DATE_NOTE_MOODS.find(m => m.id === entry.mood);
+        const moodHtml = moodMeta ? `<span class="calendar-note-summary-mood" title="${escapeHtmlText(moodMeta.label)}">${moodMeta.emoji}</span>` : '';
+        const text = (entry.text || '').trim();
+        const textHtml = text
+            ? `<p class="calendar-note-summary-text">${moodHtml}${escapeHtmlText(text)}</p>`
+            : (moodMeta
+                ? `<p class="calendar-note-summary-text">${moodHtml}<span class="is-placeholder">心情：${escapeHtmlText(moodMeta.label)}</span></p>`
+                : `<p class="calendar-note-summary-text is-placeholder">這天還沒有記事，可快速記下花費心情或提醒。</p>`);
+        const tagsHtml = (entry.tags && entry.tags.length)
+            ? `<div class="calendar-note-summary-tags">${entry.tags.map(t => `<span>${escapeHtmlText(t)}</span>`).join('')}</div>`
+            : '';
+        const actionLabel = hasContent ? '編輯' : '新增記事';
+        box.innerHTML = `
+            <div class="calendar-note-summary-top">
+                <div class="calendar-note-summary-label">${hasContent ? '當日記事' : '記事'}</div>
+                <div class="calendar-note-summary-actions">
+                    <button type="button" class="primary" onclick="openDateNoteEditor(selectedDate || new Date())">${actionLabel}</button>
+                </div>
+            </div>
+            ${textHtml}
+            ${tagsHtml}
+        `;
     }
     
     // 當前記帳詳情的分頁索引（0: 支出, 1: 收入, 2: 轉帳）
@@ -17733,14 +17995,15 @@
         if(!detailsContainer) return;
         
         const dateStr = formatLocalDate(date);
-        console.log('顯示日期詳情:', dateStr);
+        
+        // 記事摘要（有無內容都顯示，方便新增／查看）
+        renderCalendarNoteSummary(date);
         
         // 獲取該日期的所有固定轉帳
         const transfers = getFixedTransfersForDate(date);
         
         // 獲取該日期的所有記帳記錄
         const journalRecords = getJournalRecordsForDate(dateStr);
-        console.log('該日期的記帳記錄數:', journalRecords.length);
         
         // 分類記錄
         const expenseRecords = journalRecords.filter(r => r.type === 'expense');
@@ -19389,61 +19652,66 @@
     
     async function handleExpenseImageUpload(input) {
         if(!input.files || input.files.length === 0) return;
-        const statusEl = document.getElementById('expenseAiStatus');
         const files = Array.from(input.files);
-        setAiBusyLock(true, 'AI 辨識中');
-        statusEl.textContent = `讀取 ${files.length} 張圖片中...`;
-        statusEl.style.color = 'var(--text-secondary)';
+        input.value = '';
+        await runExpenseAiRecognition(files);
+    }
+
+    async function runExpenseAiRecognition(files) {
+        if (!files || !files.length) return;
+        _aiRetryState = { kind: 'expense', files: Array.from(files) };
+        const statusEl = document.getElementById('expenseAiStatus');
+        const total = files.length;
+        setAiBusyLock(true, 'AI 辨識中', total > 1 ? `讀取圖片 0/${total}` : '讀取圖片中...');
+        if (statusEl) { statusEl.textContent = total > 1 ? `讀取圖片 0/${total}...` : '讀取圖片中...'; statusEl.style.color = 'var(--text-secondary)'; }
         try {
-            statusEl.textContent = `讀取圖片中...`;
-            const imageParts = await Promise.all(files.map((file) => new Promise((res, rej) => {
-                const r = new FileReader();
-                r.onload = e => res({ inlineData: { mimeType: file.type, data: e.target.result.split(',')[1] } });
-                r.onerror = rej;
-                r.readAsDataURL(file);
-            })));
+            const imageParts = await readFilesAsImageParts(files, (cur, all) => {
+                const msg = all > 1 ? `讀取圖片 ${cur}/${all}` : '讀取圖片中...';
+                if (statusEl) statusEl.textContent = msg;
+                updateAiBusyProgress('AI 辨識中', msg);
+            });
             const prompt = `分析以下多張支出/消費紀錄截圖。每張圖片可能包含多筆交易，每筆通常有：日期(如 2026/02/10)、類別(如 消費店家、交通/運輸)、標題/店家名稱、金額(TWD)。請提取「所有圖片」中的每筆紀錄，合併成一個清單。類別請對應到以下其一：飲食、交通、購物、娛樂、醫療、教育、房租、水電、其他支出。（消費店家→購物，交通/運輸→交通）回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或店家名","amount":數字}, ...]}。若只有一筆也請用 records 陣列。`;
-            statusEl.textContent = `AI 分析中 (${files.length} 張)...`;
-            statusEl.style.color = (typeof getAccentColor==='function'?getAccentColor():'#0a84ff');
+            const analyzing = total > 1 ? `AI 分析中（${total} 張）...` : 'AI 分析中...';
+            if (statusEl) { statusEl.textContent = analyzing; statusEl.style.color = (typeof getAccentColor === 'function' ? getAccentColor() : '#0a84ff'); }
+            updateAiBusyProgress('AI 辨識中', analyzing);
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${settings.geminiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }, ...imageParts] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...imageParts] }] })
             });
             const data = await resp.json();
-            if(data.error) throw new Error(data.error.message);
-            if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
             const txt = data.candidates[0].content.parts[0].text;
             const match = txt.match(/\{[\s\S]*\}/);
-            if(!match) throw new Error('AI 未辨識到有效資料');
+            if (!match) throw new Error('AI 未辨識到有效資料');
             let parsed;
             try {
                 parsed = JSON.parse(match[0]);
-            } catch(e) {
+            } catch (e) {
                 const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
                 parsed = JSON.parse(cleaned);
             }
             const allRecords = parsed.records || (parsed.record ? [parsed.record] : []);
-            if(allRecords.length === 0) throw new Error('未辨識到支出紀錄');
+            if (allRecords.length === 0) throw new Error('未辨識到支出紀錄');
             batchExpenseRecords = allRecords;
             batchExpenseAccountId = null;
             const label = document.getElementById('batchExpenseAccountLabel');
-            if(label) { label.textContent = '選擇帳戶'; label.style.color = 'var(--text-secondary)'; }
+            if (label) { label.textContent = '選擇帳戶'; label.style.color = 'var(--text-secondary)'; }
             renderBatchExpenseList();
             const modal = document.getElementById('batchExpenseModal');
-            if(modal) modal.style.display = 'block';
-            statusEl.textContent = `已辨識 ${files.length} 張圖片、共 ${allRecords.length} 筆，請選擇帳戶後全部加入`;
-            statusEl.style.color = '#30d158';
-        } catch(e) {
+            if (modal) modal.style.display = 'block';
+            if (statusEl) {
+                statusEl.textContent = `已辨識 ${total} 張圖片、共 ${allRecords.length} 筆，請選擇帳戶後全部加入`;
+                statusEl.style.color = '#30d158';
+            }
+            _aiRetryState = null;
+        } catch (e) {
             console.error(e);
-            statusEl.textContent = '失敗：' + (e.message || '請重試');
-            statusEl.style.color = '#ff453a';
+            setAiStatusWithRetry(statusEl, friendlyAiErrorMessage(e), 'expense');
         } finally {
             setAiBusyLock(false);
         }
-        input.value = '';
     }
     
     function openBatchAccountSelector() {
@@ -19573,61 +19841,66 @@
     
     async function handleIncomeImageUpload(input) {
         if(!input.files || input.files.length === 0) return;
-        const statusEl = document.getElementById('incomeAiStatus');
         const files = Array.from(input.files);
-        setAiBusyLock(true, 'AI 辨識中');
-        statusEl.textContent = `讀取 ${files.length} 張圖片中...`;
-        statusEl.style.color = 'var(--text-secondary)';
+        input.value = '';
+        await runIncomeAiRecognition(files);
+    }
+
+    async function runIncomeAiRecognition(files) {
+        if (!files || !files.length) return;
+        _aiRetryState = { kind: 'income', files: Array.from(files) };
+        const statusEl = document.getElementById('incomeAiStatus');
+        const total = files.length;
+        setAiBusyLock(true, 'AI 辨識中', total > 1 ? `讀取圖片 0/${total}` : '讀取圖片中...');
+        if (statusEl) { statusEl.textContent = total > 1 ? `讀取圖片 0/${total}...` : '讀取圖片中...'; statusEl.style.color = 'var(--text-secondary)'; }
         try {
-            statusEl.textContent = `讀取圖片中...`;
-            const imageParts = await Promise.all(files.map((file) => new Promise((res, rej) => {
-                const r = new FileReader();
-                r.onload = e => res({ inlineData: { mimeType: file.type, data: e.target.result.split(',')[1] } });
-                r.onerror = rej;
-                r.readAsDataURL(file);
-            })));
+            const imageParts = await readFilesAsImageParts(files, (cur, all) => {
+                const msg = all > 1 ? `讀取圖片 ${cur}/${all}` : '讀取圖片中...';
+                if (statusEl) statusEl.textContent = msg;
+                updateAiBusyProgress('AI 辨識中', msg);
+            });
             const prompt = `分析以下多張收入紀錄截圖。每張圖片可能包含多筆收入，每筆通常有：日期(如 2026/02/10)、類別(如 工資、獎金、投資收益)、標題/來源、金額(TWD)。請提取「所有圖片」中的每筆紀錄，合併成一個清單。類別請對應到以下其一：工資、獎金、投資收益、其他收入。回傳 JSON 格式：{"records":[{"date":"YYYY-MM-DD","category":"類別","title":"標題或來源","amount":數字}, ...]}。若只有一筆也請用 records 陣列。`;
-            statusEl.textContent = `AI 分析中 (${files.length} 張)...`;
-            statusEl.style.color = '#30d158';
+            const analyzing = total > 1 ? `AI 分析中（${total} 張）...` : 'AI 分析中...';
+            if (statusEl) { statusEl.textContent = analyzing; statusEl.style.color = (typeof getAccentColor === 'function' ? getAccentColor() : '#0a84ff'); }
+            updateAiBusyProgress('AI 辨識中', analyzing);
             const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${settings.geminiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }, ...imageParts] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, ...imageParts] }] })
             });
             const data = await resp.json();
-            if(data.error) throw new Error(data.error.message);
-            if(!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error('AI 回應格式錯誤');
             const txt = data.candidates[0].content.parts[0].text;
             const match = txt.match(/\{[\s\S]*\}/);
-            if(!match) throw new Error('AI 未辨識到有效資料');
+            if (!match) throw new Error('AI 未辨識到有效資料');
             let parsed;
             try {
                 parsed = JSON.parse(match[0]);
-            } catch(e) {
+            } catch (e) {
                 const cleaned = match[0].replace(/```json\s*/g, '').replace(/```/g, '').trim();
                 parsed = JSON.parse(cleaned);
             }
             const allRecords = parsed.records || (parsed.record ? [parsed.record] : []);
-            if(allRecords.length === 0) throw new Error('未辨識到收入紀錄');
+            if (allRecords.length === 0) throw new Error('未辨識到收入紀錄');
             batchIncomeRecords = allRecords;
             batchIncomeAccountId = null;
             const label = document.getElementById('batchIncomeAccountLabel');
-            if(label) { label.textContent = '選擇帳戶'; label.style.color = 'var(--text-secondary)'; }
+            if (label) { label.textContent = '選擇帳戶'; label.style.color = 'var(--text-secondary)'; }
             renderBatchIncomeList();
             const modal = document.getElementById('batchIncomeModal');
-            if(modal) modal.style.display = 'block';
-            statusEl.textContent = `已辨識 ${files.length} 張圖片、共 ${allRecords.length} 筆，請選擇帳戶後全部加入`;
-            statusEl.style.color = '#30d158';
-        } catch(e) {
+            if (modal) modal.style.display = 'block';
+            if (statusEl) {
+                statusEl.textContent = `已辨識 ${total} 張圖片、共 ${allRecords.length} 筆，請選擇帳戶後全部加入`;
+                statusEl.style.color = '#30d158';
+            }
+            _aiRetryState = null;
+        } catch (e) {
             console.error(e);
-            statusEl.textContent = '失敗：' + (e.message || '請重試');
-            statusEl.style.color = '#ff453a';
+            setAiStatusWithRetry(statusEl, friendlyAiErrorMessage(e), 'income');
         } finally {
             setAiBusyLock(false);
         }
-        input.value = '';
     }
     
     function openBatchIncomeAccountSelector() {
