@@ -462,6 +462,15 @@
         .sidebar-overlay.active { touch-action: none; }
         .menu-item { padding: 12px 25px; display: flex; align-items: center; font-size: 16px; color: var(--text-primary); cursor: pointer; transition: background 0.2s; }
         .menu-item:hover { background: var(--border-color); }
+        .menu-item.is-disabled,
+        .menu-item.is-disabled:hover {
+            opacity: 0.42;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: transparent;
+            color: var(--text-secondary);
+        }
+        .menu-item.is-disabled i { color: var(--text-secondary); }
         .menu-item i { margin-right: 15px; width: 24px; text-align: center; color: var(--accent); font-size: 18px; }
         .menu-text { flex: 1; }
         .theme-picker {
@@ -3073,6 +3082,234 @@
             cursor: pointer;
             vertical-align: middle;
         }
+
+        /* 本週關注：單列通知欄 */
+        .market-watch-card {
+            margin: 6px 16px 2px;
+            padding: 0 12px 0 10px;
+            height: 36px;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--card-bg) 88%, var(--accent));
+            border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-color));
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-align: left;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+        .market-watch-label {
+            flex-shrink: 0;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+        .market-watch-body {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        .market-watch-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            min-width: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .market-watch-item.is-out {
+            opacity: 0;
+            transform: translateY(-6px);
+            position: absolute;
+            left: 0; right: 0;
+            pointer-events: none;
+        }
+        .market-watch-item.is-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .market-watch-date {
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+        .market-watch-title {
+            flex: 1;
+            min-width: 0;
+            font-size: 13px;
+            font-weight: 650;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .market-watch-stars {
+            flex-shrink: 0;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+            color: #f5c518;
+        }
+        .market-watch-empty {
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .calendar-day.has-market-event .cal-market-tag {
+            position: absolute;
+            left: 50%;
+            bottom: 2px;
+            transform: translateX(-50%);
+            font-size: 8px;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border-radius: 3px;
+            padding: 1px 3px;
+            max-width: 92%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        /* 今日未選取：實心 accent 底，標籤用 contrast */
+        .calendar-day.today.has-market-event .cal-market-tag {
+            color: var(--accent-contrast);
+            background: color-mix(in srgb, var(--accent-contrast) 28%, transparent);
+        }
+        /* 今日又被選取：selected 會蓋成 accent-soft 淺底，改回 accent 字以免白字糊掉 */
+        .calendar-day.today.selected.has-market-event .cal-market-tag {
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+        .calendar-day.has-market-event.has-event::after {
+            bottom: 12px;
+        }
+        #calendarHeaderDate {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .calendar-market-reminder {
+            margin: 0 0 14px;
+            padding: 14px;
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--accent) 8%, var(--card-bg));
+            border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-color));
+        }
+        .calendar-market-reminder-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .calendar-market-reminder-item {
+            padding: 8px 0;
+            border-top: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+        }
+        .calendar-market-reminder-item:first-of-type { border-top: none; padding-top: 0; }
+        .calendar-market-reminder-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .calendar-market-reminder-title .stars { color: #f5c518; font-size: 11px; letter-spacing: 0.5px; }
+        .calendar-market-reminder-summary {
+            margin-top: 4px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+        }
+        #marketEventDetailModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 5200;
+            align-items: flex-end;
+            justify-content: center;
+            background: rgba(0,0,0,0.5);
+            padding: 0;
+            box-sizing: border-box;
+        }
+        #marketEventDetailModal.open { display: flex; }
+        .market-event-detail-sheet {
+            width: min(440px, 100%);
+            max-height: min(78vh, 640px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 20px 20px 0 0;
+            padding: 12px 18px max(18px, env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+        }
+        .market-event-detail-handle {
+            width: 40px; height: 4px; border-radius: 999px;
+            background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+            margin: 2px auto 12px;
+        }
+        .market-event-detail-head {
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px;
+        }
+        .market-event-detail-kicker { font-size: 12px; font-weight: 700; color: var(--accent); }
+        .market-event-detail-tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 0 10px;
+            margin: 0 0 4px;
+            scrollbar-width: none;
+        }
+        .market-event-detail-tabs::-webkit-scrollbar { display: none; }
+        .market-event-detail-tab {
+            flex-shrink: 0;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-secondary);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .market-event-detail-tab.active {
+            background: var(--accent-soft);
+            border-color: var(--accent-border);
+            color: var(--accent);
+        }
+        .market-event-detail-list { display: flex; flex-direction: column; gap: 10px; }
+        .market-event-detail-card {
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+        }
+        .market-event-detail-card .d-title { font-size: 15px; font-weight: 700; margin: 4px 0; }
+        .market-event-detail-card .d-meta { font-size: 12px; color: var(--text-secondary); }
+        .market-event-detail-card .d-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-top: 6px; }
+        .market-event-detail-foot {
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-third);
+            line-height: 1.4;
+        }
         .form-group { background: var(--card-bg); margin-top: 20px; border-radius: 12px; overflow: hidden; margin-left: 16px; margin-right: 16px; }
         .form-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--border-color); }
         .form-row:last-child { border-bottom: none; }
@@ -3854,6 +4091,7 @@
                         <div class="menu-item" onclick="restoreAssetHistory(); toggleSidebar();"><i class="fas fa-undo"></i><span class="menu-text">復原折線圖</span></div>
                     </div>
                     <div class="menu-item" onclick="openDividendModal(); toggleSidebar();"><i class="fas fa-coins"></i><span class="menu-text">除權息歷史</span></div>
+                    <div class="menu-item is-disabled" id="menuMarketEventsRefresh" title="功能暫時停用" aria-disabled="true"><i class="fas fa-bullhorn"></i><span class="menu-text">更新市場大事</span></div>
                 </div>
 
                 <div class="menu-group-label collapsed" onclick="toggleMenuSection('data-settings')">
@@ -3996,6 +4234,13 @@
                         <div class="rate-info">
                             <div class="rate-badge numbers-content"><i class="fas fa-coins"></i><span id="rateUsdt">USDT ...</span></div>
                             <div class="rate-badge numbers-content"><i class="fas fa-exchange-alt"></i><span id="rateUsd">USD ...</span></div>
+                        </div>
+                    </div>
+
+                    <div class="market-watch-card" id="marketWatchCard" onclick="openMarketEventDetail()" role="button" tabindex="0" aria-label="本週關注市場大事">
+                        <div class="market-watch-label">本週關注</div>
+                        <div class="market-watch-body" id="marketWatchBody">
+                            <div class="market-watch-empty">尚無資料，可至功能表更新</div>
                         </div>
                     </div>
 
@@ -4254,6 +4499,7 @@
                     <div id="journalMonthlyLineChart" style="width: 100%; height: 280px; box-sizing: border-box; overflow: visible;"></div>
                 </div>
                 <div id="calendarTransferDetails" style="margin-top: 20px; max-width: 600px; margin-left: auto; margin-right: auto; display: none; width: 100%; box-sizing: border-box; overflow: visible;">
+                    <div id="calendarMarketReminder" class="calendar-market-reminder" style="display:none;" aria-label="市場提醒"></div>
                     <div id="calendarNoteSummary" class="calendar-note-summary is-empty" style="display:none;"></div>
                     <div class="journal-seg-tabs" id="journalDetailSegTabs" role="tablist" aria-label="記帳類型">
                         <button type="button" class="active" data-journal-tab="0" onclick="switchJournalPage(0)">支出</button>
@@ -4717,6 +4963,23 @@
         </div>
     </div>
     
+    <!-- 市場大事詳情 -->
+    <div id="marketEventDetailModal" onclick="if(event.target===this)closeMarketEventDetail()">
+        <div class="market-event-detail-sheet" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="marketEventDetailTitle">
+            <div class="market-event-detail-handle" aria-hidden="true"></div>
+            <div class="market-event-detail-head">
+                <div>
+                    <div class="market-event-detail-kicker" id="marketEventDetailTitle">市場大事</div>
+                    <div style="font-size:18px;font-weight:750;margin-top:2px;">近期關注</div>
+                </div>
+                <button type="button" class="date-note-close" onclick="closeMarketEventDetail()" aria-label="關閉"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="market-event-detail-tabs" id="marketEventDetailTabs" role="tablist" aria-label="依日期檢視"></div>
+            <div class="market-event-detail-list" id="marketEventDetailList"></div>
+            <div class="market-event-detail-foot">資料為整理後的市場日程參考，非投資建議。請以官方公告為準。</div>
+        </div>
+    </div>
+
     <!-- 日期記事編輯模態框 -->
     <div id="dateNoteModal" class="modal date-note-modal" style="z-index: 2011;" onclick="event.target.id === 'dateNoteModal' && closeDateNoteEditor()">
         <div class="modal-content-wrapper date-note-sheet" onclick="event.stopPropagation()">
@@ -5495,6 +5758,7 @@
     const STORAGE_KEY_FIXED_INCOMES = 'my_assets_fixed_incomes';
     const STORAGE_KEY_JOURNAL = 'my_assets_journal'; // 收入、支出、轉帳記錄
     const STORAGE_KEY_DATE_NOTES = 'my_assets_date_notes'; // 日期記事
+    const STORAGE_KEY_MARKET_EVENTS = 'my_assets_market_events'; // 美股／市場大事曆
     const STORAGE_KEY_ASSET_HISTORY = 'my_assets_history'; // 資產每日歷史快照
     const STORAGE_KEY_DIVIDEND_RECORDS = 'my_assets_dividend_records'; // 除權息：持股股數、手動輸入金額
     const STORAGE_KEY_TWSTOCK_DAILY = 'my_assets_twstock_daily'; // 台股每日持股快照（用於除權息歷史自動帶入股數）
@@ -5803,6 +6067,9 @@
                 }
                 if (userData.twstockDaily !== undefined) {
                     localStorage.setItem(`${STORAGE_KEY_TWSTOCK_DAILY}_${userId}`, JSON.stringify(userData.twstockDaily || {}));
+                }
+                if (userData.marketEvents !== undefined) {
+                    localStorage.setItem(`${STORAGE_KEY_MARKET_EVENTS}_${userId}`, JSON.stringify(userData.marketEvents || { updatedAt: '', events: [] }));
                 }
             });
         } else if (d.data && d.settings) {
@@ -10793,6 +11060,7 @@
             const userAssetHistoryKey = `${STORAGE_KEY_ASSET_HISTORY}_${user.id}`;
             const userDividendRecordsKey = `${STORAGE_KEY_DIVIDEND_RECORDS}_${user.id}`;
             const userTwstockDailyKey = `${STORAGE_KEY_TWSTOCK_DAILY}_${user.id}`;
+            const userMarketEventsKey = `${STORAGE_KEY_MARKET_EVENTS}_${user.id}`;
             const userAccounts = JSON.parse(localStorage.getItem(userDataKey)) || [];
             const userSettings = JSON.parse(localStorage.getItem(userSettingsKey)) || {};
             const userJournal = JSON.parse(localStorage.getItem(userJournalKey)) || [];
@@ -10801,6 +11069,7 @@
             const userAssetHistory = JSON.parse(localStorage.getItem(userAssetHistoryKey) || '{}');
             const userDividendRecords = JSON.parse(localStorage.getItem(userDividendRecordsKey) || '{}');
             const userTwstockDaily = JSON.parse(localStorage.getItem(userTwstockDailyKey) || '{}');
+            const userMarketEvents = JSON.parse(localStorage.getItem(userMarketEventsKey) || '{"updatedAt":"","events":[]}');
             allUsersData[user.id] = {
                 user: user,
                 data: userAccounts,
@@ -10810,7 +11079,8 @@
                 dateNotes: userDateNotes,
                 assetHistory: userAssetHistory,
                 dividendRecords: userDividendRecords,
-                twstockDaily: userTwstockDaily
+                twstockDaily: userTwstockDaily,
+                marketEvents: userMarketEvents
             };
         });
         const base = {
@@ -11543,6 +11813,7 @@
         updateUserAvatar();
         renderAssets();
         updateChartData();
+        if (typeof startMarketWatchTicker === 'function') startMarketWatchTicker();
         if (typeof renderCalendar === 'function') renderCalendar();
         // 重新顯示今天(或預設日期)的記帳詳情，確保列表也是新的
         if (typeof showFixedTransferDetailsForDate === 'function') {
@@ -13194,6 +13465,49 @@
         return _aiBusyDepth > 0;
     }
 
+    function forceReleaseAiBusyLock() {
+        _aiBusyDepth = 0;
+        const overlay = document.getElementById('aiBusyOverlay');
+        if (overlay) overlay.classList.remove('is-visible');
+        document.body.classList.remove('ai-busy');
+        try {
+            document.removeEventListener('touchmove', _aiBusyBlockEvent, true);
+            document.removeEventListener('wheel', _aiBusyBlockEvent, true);
+            document.removeEventListener('keydown', _aiBusyBlockEvent, true);
+        } catch (e) {}
+    }
+
+    // 全 App AI 共用配額冷卻（避免觸頂後反覆重打／感覺卡住）
+    let _geminiQuotaUntil = 0;
+    const GEMINI_QUOTA_COOLDOWN_MS = 15 * 60 * 1000;
+
+    function markGeminiQuotaLimited() {
+        _geminiQuotaUntil = Date.now() + GEMINI_QUOTA_COOLDOWN_MS;
+    }
+
+    function isGeminiQuotaLimited() {
+        return Date.now() < _geminiQuotaUntil;
+    }
+
+    function geminiQuotaWaitMinutes() {
+        return Math.max(1, Math.ceil((_geminiQuotaUntil - Date.now()) / 60000));
+    }
+
+    function isGeminiQuotaError(err) {
+        const msg = String((err && err.message) || err || '');
+        return /quota|rate limit|429|resource_exhausted|billing/i.test(msg);
+    }
+
+    async function guardGeminiQuotaOrAlert(featureLabel) {
+        if (!isGeminiQuotaLimited()) return true;
+        const mins = geminiQuotaWaitMinutes();
+        await moneeAlert(
+            `Gemini 配額稍早已達上限，請約 ${mins} 分鐘後再試${featureLabel ? `（${featureLabel}）` : ''}。其他功能仍可正常使用。`,
+            '暫時無法使用 AI'
+        );
+        return false;
+    }
+
     let _aiRetryState = null; // { kind: 'stock'|'expense'|'income', files: File[] }
 
     function friendlyAiErrorMessage(err) {
@@ -13202,8 +13516,8 @@
         if (m.includes('high demand') || m.includes('unavailable') || m.includes('503') || m.includes('overloaded')) {
             return '目前 AI 服務較忙碌，請稍後再試';
         }
-        if (m.includes('resource_exhausted') || m.includes('quota') || m.includes('rate limit') || m.includes('429')) {
-            return '用量暫時達上限，請稍後再試';
+        if (m.includes('resource_exhausted') || m.includes('quota') || m.includes('rate limit') || m.includes('429') || m.includes('billing')) {
+            return 'Gemini 用量／配額已達上限。請稍後再試，或到 Google AI Studio 檢查方案與額度。';
         }
         if (m.includes('api key') || (m.includes('invalid') && m.includes('key')) || m.includes('permission_denied') || m.includes('401') || m.includes('403')) {
             return 'API Key 無效或權限不足，請到選單「API 設定」檢查';
@@ -13224,10 +13538,13 @@
     function setAiStatusWithRetry(statusEl, message, kind) {
         if (!statusEl) return;
         const canRetry = !!( _aiRetryState && _aiRetryState.kind === kind && _aiRetryState.files && _aiRetryState.files.length );
+        const quotaBlocked = isGeminiQuotaLimited();
         statusEl.style.color = '#ff453a';
         statusEl.innerHTML = '';
-        statusEl.appendChild(document.createTextNode(message));
-        if (canRetry) {
+        let text = message;
+        if (quotaBlocked) text += `（約 ${geminiQuotaWaitMinutes()} 分鐘後可再試）`;
+        statusEl.appendChild(document.createTextNode(text));
+        if (canRetry && !quotaBlocked) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'ai-retry-btn';
@@ -13260,6 +13577,10 @@
 
     function retryLastAiRecognition(kind) {
         if (!_aiRetryState || _aiRetryState.kind !== kind || !_aiRetryState.files || !_aiRetryState.files.length) return;
+        if (isGeminiQuotaLimited()) {
+            guardGeminiQuotaOrAlert('AI 辨識');
+            return;
+        }
         const files = _aiRetryState.files;
         if (kind === 'stock') runStockAiRecognition(files);
         else if (kind === 'expense') runExpenseAiRecognition(files);
@@ -13268,6 +13589,7 @@
 
     async function triggerImageUpload() {
         if (isAiBusyLocked()) return;
+        if (!(await guardGeminiQuotaOrAlert('持股辨識'))) return;
         if(!settings.geminiKey) {
             await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
             return;
@@ -13393,11 +13715,13 @@
             _aiRetryState = null;
         } catch (e) {
             console.error(e);
+            if (isGeminiQuotaError(e)) markGeminiQuotaLimited();
             if (progressContainer) progressContainer.style.display = 'none';
             if (progressBar) progressBar.style.width = '0%';
+            forceReleaseAiBusyLock();
             setAiStatusWithRetry(status, friendlyAiErrorMessage(e), 'stock');
         } finally {
-            setAiBusyLock(false);
+            forceReleaseAiBusyLock();
         }
     }
     function renderTransactions(list) { 
@@ -14861,7 +15185,10 @@
         chartLevel = 'root';
         currentPage = 0;
         setLoadingProgress(62, '整理資產與記帳資料');
+        // 重開 App：日曆預設回到今天（切換資產／記帳不會重設）
+        try { resetJournalCalendarToToday(); } catch (e) {}
         renderAssets();
+        try { startMarketWatchTicker(); } catch (e) {}
         // 背景把已有 logo 寫入本機快取（data URL + Cache API）
         setTimeout(() => { try { warmAllAccountLogoCaches(); } catch (e) {} }, 400);
 
@@ -15217,6 +15544,7 @@
         try {
             const state = {
                 calendarDate: currentCalendarDate.getTime(),
+                selectedDate: selectedDate ? selectedDate.getTime() : null,
                 journalPageIndex: currentJournalPageIndex || 0,
                 journalViewMode: journalViewMode || 'calendar'  // 記住是日曆還是圖表模式
             };
@@ -15226,7 +15554,7 @@
         }
     }
     
-    // 恢復記帳頁面狀態的函數
+    // 恢復記帳頁面狀態的函數（同一次開啟期間切換資產／記帳會用到）
     function restoreJournalPageState() {
         try {
             const savedState = localStorage.getItem(`journalPageState_${currentUserId}`);
@@ -15234,6 +15562,10 @@
                 const state = JSON.parse(savedState);
                 if(state.calendarDate) {
                     currentCalendarDate = new Date(state.calendarDate);
+                }
+                if(state.selectedDate) {
+                    selectedDate = new Date(state.selectedDate);
+                    selectedDate.setHours(0, 0, 0, 0);
                 }
                 if(state.journalPageIndex !== undefined) {
                     currentJournalPageIndex = state.journalPageIndex;
@@ -15245,6 +15577,15 @@
         } catch(e) {
             console.error('恢復記帳頁面狀態失敗:', e);
         }
+    }
+
+    // 僅「重開 App」時呼叫：把日曆月份與選取日重設為今天
+    function resetJournalCalendarToToday() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        currentCalendarDate = new Date(today);
+        selectedDate = new Date(today);
+        try { saveJournalPageState(); } catch (e) {}
     }
     // 底部「資產／記帳」iOS Liquid Glass：僅左右滑動、1:1 同框尺寸
     let _liquidTabState = null;
@@ -15719,10 +16060,15 @@
         const pageIndicator = document.querySelector('.page-indicator');
         const navbarTitle = document.querySelector('.navbar h1');
         if(showCalendar) {
-            // 恢復記帳頁面狀態（日期、支出／收入分頁等）
+            // 恢復記帳頁面狀態（月份／選取日／支出收入分頁）；重開才回今天，切換分頁不重置
             restoreJournalPageState();
-            // 從資產切回記帳時，一律預設回到日曆頁
             journalViewMode = 'calendar';
+            if (!selectedDate) {
+                const todayFallback = new Date();
+                todayFallback.setHours(0, 0, 0, 0);
+                selectedDate = new Date(todayFallback);
+                currentCalendarDate = new Date(todayFallback);
+            }
             saveJournalPageState();
             calendarPage.style.display = 'block';
             if(contentGrid) contentGrid.style.display = 'none';
@@ -15830,18 +16176,7 @@
             
             // 只有在日曆模式下才顯示詳情
             if(journalViewMode === 'calendar') {
-                // 自動選中今天並顯示詳情（如果沒有選中其他日期）
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                if(!selectedDate) {
-                    // 如果沒有選中日期，自動選中今天並顯示詳情
-                    selectedDate = new Date(today);
-                    renderCalendar();
-                    showFixedTransferDetailsForDate(today);
-                } else {
-                    // 如果有選中日期，顯示該日期的詳情
-                    showFixedTransferDetailsForDate(selectedDate);
-                }
+                showFixedTransferDetailsForDate(selectedDate);
                 requestAnimationFrame(() => initCalendarStickyBar());
             } else {
                 // 圖表模式下隱藏詳情
@@ -16112,6 +16447,455 @@
         closeCalendarMonthYearDropdown();
     }
     
+    // ========== 市場大事曆（手動更新；總覽小卡＋記帳日曆共用）==========
+    const MARKET_EVENT_CATEGORIES = {
+        fed: 'Fed',
+        inflation: 'CPI',
+        jobs: 'Jobs',
+        earnings: '財報',
+        geo: '地緣',
+        holiday: '休市',
+        other: '大事'
+    };
+    const MARKET_EVENTS_SEED_VERSION = 2;
+    const MARKET_EVENTS_SEED = [
+        // —— 2026/11/19 ——
+        { id: '2026-11-19-walmart', date: '2026-11-19', timeEt: '08:00', title: 'Walmart 財報', summary: '消費與景氣溫度計，影響零售股與大盤風險偏好。', impact: 'medium', category: 'earnings', tickers: ['WMT'] },
+        { id: '2026-11-19-claims-philly', date: '2026-11-19', timeEt: '08:30', title: '初請失業金／Philly Fed', summary: '勞動與景氣短期數據，常帶動盤中波動。', impact: 'medium', category: 'jobs', tickers: [] },
+        { id: '2026-11-19-anthropic', date: '2026-11-19', timeEt: '', title: 'Anthropic 上市 ANT', summary: 'AI 估值情緒指標，可能牽動科技股波動。', impact: 'high', category: 'earnings', tickers: ['ANT'] },
+        { id: '2026-11-19-geo', date: '2026-11-19', timeEt: '', title: '美中／美俄會談消息', summary: '關稅、稀土與地緣說法，易影響風險資產。', impact: 'medium', category: 'geo', tickers: [] },
+        { id: '2026-11-19-fed-speak', date: '2026-11-19', timeEt: '', title: 'Fed 官員談話', summary: 'Jefferson、Goolsbee、Barkin、Barr 等發言，影響利率路徑預期。', impact: 'low', category: 'fed', tickers: [] },
+        // —— 2026/11/20 ——
+        { id: '2026-11-20-umich', date: '2026-11-20', timeEt: '10:00', title: '密西根消費者信心', summary: '含通膨預期，影響利率預期與消費股。', impact: 'medium', category: 'inflation', tickers: [] },
+        { id: '2026-11-20-state-jobs', date: '2026-11-20', timeEt: '10:00', title: '各州就業失業月報', summary: '波動通常小於非農，但仍看勞動細節。', impact: 'low', category: 'jobs', tickers: [] },
+        { id: '2026-11-20-fed-speak', date: '2026-11-20', timeEt: '', title: 'Fed 官員談話', summary: 'Waller、Cook 等發言，延續政策路徑討論。', impact: 'low', category: 'fed', tickers: [] },
+        // —— 感恩節周 ——
+        { id: '2026-11-25-gdp', date: '2026-11-25', timeEt: '08:30', title: 'GDP Q3 第二次估計', summary: '美國經濟增速確認，含企業獲利相關數據。', impact: 'high', category: 'other', tickers: [] },
+        { id: '2026-11-25-pce', date: '2026-11-25', timeEt: '08:30', title: 'PCE 通膨（10 月）', summary: 'Fed 最看重的通膨指標之一，年底利率預期關鍵。', impact: 'high', category: 'inflation', tickers: [] },
+        { id: '2026-11-25-beige', date: '2026-11-25', timeEt: '14:00', title: 'Fed Beige Book', summary: '12 家聯儲區景氣調查，為 12 月 FOMC 暖身。', impact: 'medium', category: 'fed', tickers: [] },
+        { id: '2026-11-26-thanksgiving', date: '2026-11-26', timeEt: '', title: '感恩節休市', summary: '美股全天休市。', impact: 'medium', category: 'holiday', tickers: [] },
+        { id: '2026-11-27-early-close', date: '2026-11-27', timeEt: '13:00', title: '美股提早收盤', summary: '成交量少，小消息也可能造成較大波動。', impact: 'low', category: 'holiday', tickers: [] },
+        // —— 2026/12 月 ——
+        { id: '2026-12-01-ism', date: '2026-12-01', timeEt: '', title: 'ISM 製造業 PMI', summary: '景氣擴張／收縮溫度計。', impact: 'medium', category: 'other', tickers: [] },
+        { id: '2026-12-01-jolts', date: '2026-12-01', timeEt: '10:00', title: 'JOLTS 職缺', summary: '勞動市場熱度，影響降息／升息預期。', impact: 'medium', category: 'jobs', tickers: [] },
+        { id: '2026-12-04-nfp', date: '2026-12-04', timeEt: '08:30', title: '非農就業報告 NFP', summary: '就業、失業率與薪資；常造成股匯債同日大幅波動。', impact: 'high', category: 'jobs', tickers: [] },
+        { id: '2026-12-08-fomc-start', date: '2026-12-08', timeEt: '', title: 'FOMC 會議開始', summary: '兩日會議第一天，市場進入決策前靜默觀察。', impact: 'medium', category: 'fed', tickers: [] },
+        { id: '2026-12-09-fomc', date: '2026-12-09', timeEt: '14:00', title: 'Fed 利率決議', summary: '年底最關鍵政策日：利率決議、點陣圖與經濟預測。', impact: 'high', category: 'fed', tickers: [] },
+        { id: '2026-12-09-powell', date: '2026-12-09', timeEt: '14:30', title: 'Fed 主席記者會', summary: '政策措辭與路徑指引，常主導盤後與隔日走勢。', impact: 'high', category: 'fed', tickers: [] },
+        { id: '2026-12-10-cpi', date: '2026-12-10', timeEt: '08:30', title: 'CPI 通膨（11 月）', summary: '常緊接 Fed 後再攪動利率預期與成長股。', impact: 'high', category: 'inflation', tickers: [] },
+        { id: '2026-12-15-ppi', date: '2026-12-15', timeEt: '08:30', title: 'PPI 生產者物價', summary: '企業成本與後續 CPI 預期。', impact: 'medium', category: 'inflation', tickers: [] },
+        { id: '2026-12-16-ip', date: '2026-12-16', timeEt: '09:15', title: '工業生產／產能利用率', summary: '製造業實質活動指標。', impact: 'low', category: 'other', tickers: [] },
+        { id: '2026-12-17-boe-ecb', date: '2026-12-17', timeEt: '', title: 'BoE／ECB 利率決議', summary: '全球利率與美元走勢，間接影響美股風險偏好。', impact: 'medium', category: 'fed', tickers: [] },
+        { id: '2026-12-17-trade-prices', date: '2026-12-17', timeEt: '08:30', title: '進口／出口物價', summary: '通膨傳導與貿易價格壓力參考。', impact: 'low', category: 'inflation', tickers: [] },
+        { id: '2026-12-18-boj', date: '2026-12-18', timeEt: '', title: '日本央行 BoJ 決策', summary: '日圓與全球資金流向，常牽動美股開盤情緒。', impact: 'medium', category: 'fed', tickers: [] },
+        { id: '2026-12-23-gdp', date: '2026-12-23', timeEt: '08:30', title: 'GDP Q3 第三次估計', summary: '年底前成長數據再確認。', impact: 'medium', category: 'other', tickers: [] },
+        { id: '2026-12-23-pce', date: '2026-12-23', timeEt: '08:30', title: 'PCE 通膨（11 月）', summary: '年底前最後一輪重要通膨／消費數據。', impact: 'high', category: 'inflation', tickers: [] },
+        { id: '2026-12-24-early-close', date: '2026-12-24', timeEt: '13:00', title: '耶誕前夕早收', summary: '美股提早收盤，流動性偏薄。', impact: 'low', category: 'holiday', tickers: [] },
+        { id: '2026-12-25-christmas', date: '2026-12-25', timeEt: '', title: '耶誕節休市', summary: '美股全天休市。', impact: 'medium', category: 'holiday', tickers: [] },
+        { id: '2026-12-30-fomc-minutes', date: '2026-12-30', timeEt: '14:00', title: 'FOMC 會議紀要', summary: '回看 12/9 決策內部分歧與政策討論。', impact: 'medium', category: 'fed', tickers: [] }
+    ];
+
+    let _marketWatchTimer = null;
+    let _marketWatchIndex = 0;
+    let _marketEventsRefreshing = false;
+
+    function marketEventsStorageKey() {
+        return `${STORAGE_KEY_MARKET_EVENTS}_${currentUserId || 'default'}`;
+    }
+
+    function todayYmdLocal() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function impactToStars(impact) {
+        if (impact === 'high') return '★★★';
+        if (impact === 'medium') return '★★';
+        return '★';
+    }
+
+    function marketCategoryLabel(cat) {
+        return MARKET_EVENT_CATEGORIES[cat] || MARKET_EVENT_CATEGORIES.other;
+    }
+
+    function normalizeMarketEvent(raw) {
+        if (!raw || typeof raw !== 'object') return null;
+        const date = String(raw.date || '').trim();
+        const title = String(raw.title || '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !title) return null;
+        const impact = ['high', 'medium', 'low'].includes(raw.impact) ? raw.impact : 'medium';
+        let category = String(raw.category || 'other').toLowerCase();
+        if (!MARKET_EVENT_CATEGORIES[category]) category = 'other';
+        const id = String(raw.id || `${date}-${title}`).trim().slice(0, 120);
+        const tickers = Array.isArray(raw.tickers)
+            ? raw.tickers.map(t => String(t || '').trim().toUpperCase()).filter(Boolean).slice(0, 8)
+            : [];
+        return {
+            id,
+            date,
+            timeEt: String(raw.timeEt || '').trim().slice(0, 16),
+            title: title.slice(0, 80),
+            summary: String(raw.summary || '').trim().slice(0, 280),
+            impact,
+            category,
+            tickers
+        };
+    }
+
+    function buildSeededMarketEventsStore() {
+        return {
+            updatedAt: '',
+            seedVersion: MARKET_EVENTS_SEED_VERSION,
+            events: MARKET_EVENTS_SEED.map(normalizeMarketEvent).filter(Boolean)
+        };
+    }
+
+    function loadMarketEventsStore() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(marketEventsStorageKey()) || 'null');
+            if (raw && Array.isArray(raw.events)) {
+                const ver = Number(raw.seedVersion) || 0;
+                // 尚未手動 AI 更新、且內建清單有升級 → 換成新 seed
+                if (!raw.updatedAt && ver < MARKET_EVENTS_SEED_VERSION) {
+                    const seeded = buildSeededMarketEventsStore();
+                    try { localStorage.setItem(marketEventsStorageKey(), JSON.stringify(seeded)); } catch (e) {}
+                    return seeded;
+                }
+                return {
+                    updatedAt: raw.updatedAt || '',
+                    seedVersion: ver || MARKET_EVENTS_SEED_VERSION,
+                    events: raw.events.map(normalizeMarketEvent).filter(Boolean)
+                };
+            }
+        } catch (e) {}
+        const seeded = buildSeededMarketEventsStore();
+        try { localStorage.setItem(marketEventsStorageKey(), JSON.stringify(seeded)); } catch (e) {}
+        return seeded;
+    }
+
+    function saveMarketEventsStore(store) {
+        if (isUserSwitching) return;
+        const payload = {
+            updatedAt: store.updatedAt || '',
+            seedVersion: store.seedVersion || MARKET_EVENTS_SEED_VERSION,
+            events: (store.events || []).map(normalizeMarketEvent).filter(Boolean)
+        };
+        localStorage.setItem(marketEventsStorageKey(), JSON.stringify(payload));
+        try { scheduleMoneeRtdbBackupPush(); } catch (e) {}
+    }
+
+    function getUpcomingMarketEvents(limit) {
+        const today = todayYmdLocal();
+        const store = loadMarketEventsStore();
+        const list = store.events
+            .filter(e => e.date >= today)
+            .sort((a, b) => (a.date + a.title).localeCompare(b.date + b.title));
+        return typeof limit === 'number' ? list.slice(0, limit) : list;
+    }
+
+    function getMarketEventsForDate(date) {
+        const key = formatDateKey(date);
+        return loadMarketEventsStore().events
+            .filter(e => e.date === key)
+            .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    }
+
+    function formatMarketEventDateShort(ymd) {
+        const m = String(ymd || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return ymd || '';
+        return `${parseInt(m[2], 10)}/${parseInt(m[3], 10)}`;
+    }
+
+    function renderMarketWatchCard() {
+        const body = document.getElementById('marketWatchBody');
+        if (!body) return;
+        const list = getUpcomingMarketEvents(16);
+        if (!list.length) {
+            body.innerHTML = '<div class="market-watch-empty">尚無資料，可至功能表更新</div>';
+            return;
+        }
+        if (_marketWatchIndex >= list.length) _marketWatchIndex = 0;
+        const ev = list[_marketWatchIndex];
+        body.innerHTML = `
+            <div class="market-watch-item is-in" id="marketWatchItem">
+                <span class="market-watch-date">${formatMarketEventDateShort(ev.date)}</span>
+                <span class="market-watch-title">${escapeHtmlText(ev.title)}</span>
+                <span class="market-watch-stars" aria-label="重要程度">${impactToStars(ev.impact)}</span>
+            </div>
+        `;
+    }
+
+    function tickMarketWatchCard() {
+        const list = getUpcomingMarketEvents(16);
+        if (list.length <= 1) return;
+        const body = document.getElementById('marketWatchBody');
+        const item = document.getElementById('marketWatchItem');
+        if (!body || !item) {
+            renderMarketWatchCard();
+            return;
+        }
+        item.classList.remove('is-in');
+        item.classList.add('is-out');
+        setTimeout(() => {
+            _marketWatchIndex = (_marketWatchIndex + 1) % list.length;
+            renderMarketWatchCard();
+        }, 320);
+    }
+
+    function startMarketWatchTicker() {
+        stopMarketWatchTicker();
+        renderMarketWatchCard();
+        _marketWatchTimer = setInterval(tickMarketWatchCard, 4200);
+    }
+
+    function stopMarketWatchTicker() {
+        if (_marketWatchTimer) {
+            clearInterval(_marketWatchTimer);
+            _marketWatchTimer = null;
+        }
+    }
+
+    let _marketDetailEvents = [];
+    let _marketDetailActiveDate = '';
+
+    function renderMarketEventDetailList(dateYmd) {
+        const listEl = document.getElementById('marketEventDetailList');
+        if (!listEl) return;
+        const dayEvents = _marketDetailEvents.filter(e => e.date === dateYmd);
+        if (!dayEvents.length) {
+            listEl.innerHTML = '<div class="market-event-detail-card"><div class="d-summary">這天目前沒有輪播中的大事。</div></div>';
+            return;
+        }
+        listEl.innerHTML = dayEvents.map(ev => `
+            <div class="market-event-detail-card">
+                <div class="d-meta">${escapeHtmlText(ev.date)}${ev.timeEt ? ' · ' + escapeHtmlText(ev.timeEt) + ' ET' : ''} · ${escapeHtmlText(marketCategoryLabel(ev.category))} · <span style="color:#f5c518">${impactToStars(ev.impact)}</span></div>
+                <div class="d-title">${escapeHtmlText(ev.title)}</div>
+                <div class="d-summary">${escapeHtmlText(ev.summary || '（無詳細說明）')}</div>
+                ${ev.tickers && ev.tickers.length ? `<div class="d-meta" style="margin-top:6px;">相關：${escapeHtmlText(ev.tickers.join(', '))}</div>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function selectMarketEventDetailDate(dateYmd) {
+        _marketDetailActiveDate = dateYmd;
+        const tabs = document.getElementById('marketEventDetailTabs');
+        if (tabs) {
+            tabs.querySelectorAll('.market-event-detail-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.date === dateYmd);
+            });
+        }
+        renderMarketEventDetailList(dateYmd);
+    }
+
+    function openMarketEventDetail() {
+        const modal = document.getElementById('marketEventDetailModal');
+        const listEl = document.getElementById('marketEventDetailList');
+        const tabsEl = document.getElementById('marketEventDetailTabs');
+        if (!modal || !listEl || !tabsEl) return;
+
+        // 與頂部輪播同一批內容
+        _marketDetailEvents = getUpcomingMarketEvents(16);
+        const dates = [];
+        _marketDetailEvents.forEach(ev => {
+            if (ev.date && !dates.includes(ev.date)) dates.push(ev.date);
+        });
+
+        if (!dates.length) {
+            tabsEl.innerHTML = '';
+            listEl.innerHTML = '<div class="market-event-detail-card"><div class="d-summary">尚無近期大事。</div></div>';
+            modal.classList.add('open');
+            return;
+        }
+
+        // 預設對準目前輪播那一筆的日期
+        const carouselEv = _marketDetailEvents[_marketWatchIndex] || _marketDetailEvents[0];
+        const activeDate = (carouselEv && dates.includes(carouselEv.date)) ? carouselEv.date : dates[0];
+
+        tabsEl.innerHTML = dates.map(d => `
+            <button type="button" class="market-event-detail-tab${d === activeDate ? ' active' : ''}" data-date="${escapeHtmlText(d)}" role="tab" aria-selected="${d === activeDate ? 'true' : 'false'}">${escapeHtmlText(formatMarketEventDateShort(d))}</button>
+        `).join('');
+        tabsEl.querySelectorAll('.market-event-detail-tab').forEach(btn => {
+            btn.addEventListener('click', () => selectMarketEventDetailDate(btn.dataset.date));
+        });
+        selectMarketEventDetailDate(activeDate);
+        modal.classList.add('open');
+    }
+
+    function closeMarketEventDetail() {
+        const modal = document.getElementById('marketEventDetailModal');
+        if (modal) modal.classList.remove('open');
+    }
+
+    function renderCalendarMarketReminder(date) {
+        const box = document.getElementById('calendarMarketReminder');
+        if (!box) return;
+        const events = getMarketEventsForDate(date);
+        if (!events.length) {
+            box.style.display = 'none';
+            box.innerHTML = '';
+            return;
+        }
+        box.style.display = 'block';
+        box.innerHTML = `
+            <div class="calendar-market-reminder-label">市場提醒</div>
+            ${events.map(ev => `
+                <div class="calendar-market-reminder-item">
+                    <div class="calendar-market-reminder-title">
+                        <span>${escapeHtmlText(ev.title)}</span>
+                        <span class="stars">${impactToStars(ev.impact)}</span>
+                        <span style="font-size:11px;font-weight:600;color:var(--text-secondary);">${escapeHtmlText(marketCategoryLabel(ev.category))}</span>
+                    </div>
+                    <div class="calendar-market-reminder-summary">${escapeHtmlText(ev.summary || '')}</div>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    function setMarketRefreshButtonsBusy(busy) {
+        _marketEventsRefreshing = !!busy;
+        const item = document.getElementById('menuMarketEventsRefresh');
+        if (!item) return;
+        // 功能暫時停用：保持反灰，不改成可點
+        if (item.classList.contains('is-disabled')) return;
+        item.style.pointerEvents = busy ? 'none' : '';
+        item.style.opacity = busy ? '0.55' : '';
+        item.innerHTML = busy
+            ? '<i class="fas fa-spinner fa-spin"></i><span class="menu-text">更新市場大事中…</span>'
+            : '<i class="fas fa-bullhorn"></i><span class="menu-text">更新市場大事</span>';
+    }
+
+    function releaseMarketEventsBusy() {
+        try { setAiBusyLock(false); } catch (e) {}
+        try { setMarketRefreshButtonsBusy(false); } catch (e) {}
+    }
+
+    async function refreshMarketEventsManual() {
+        if (_marketEventsRefreshing) return;
+        if (!(await guardGeminiQuotaOrAlert('更新大事'))) return;
+        if (!settings.geminiKey) {
+            await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
+            return;
+        }
+        setMarketRefreshButtonsBusy(true);
+        setAiBusyLock(true, '更新市場大事', '搜尋未來高影響事件中…');
+        try {
+            const start = todayYmdLocal();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 45);
+            const end = formatDateKey(endDate);
+            const prompt = `你是美股／全球市場行事曆助理。請用 Google 搜尋查詢 ${start} 到 ${end}（含）之間，對美國股市有高影響的「已排程」事件。
+只收：Fed/FOMC、非農NFP、CPI、PCE、PPI、GDP、美股休市／早收、大型科技財報、重要 IPO、重大地緣／峰會（僅在確實會影響市場風險偏好時）。
+排除：個股八卦、小公司、重複新聞、沒有明確日期的傳聞。
+impact 只能是 high|medium|low；category 只能是 fed|inflation|jobs|earnings|geo|holiday|other。
+每筆要有 date(YYYY-MM-DD)、title(短)、summary(一句中文)、impact、category；timeEt、tickers、id 可選。
+只回傳 JSON 物件：{"events":[...]}，不要 Markdown。`;
+
+            const genConfig = {
+                temperature: 0.2,
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: 'object',
+                    properties: {
+                        events: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    id: { type: 'string' },
+                                    date: { type: 'string' },
+                                    timeEt: { type: 'string' },
+                                    title: { type: 'string' },
+                                    summary: { type: 'string' },
+                                    impact: { type: 'string' },
+                                    category: { type: 'string' },
+                                    tickers: { type: 'array', items: { type: 'string' } }
+                                },
+                                required: ['date', 'title', 'summary', 'impact', 'category']
+                            }
+                        }
+                    },
+                    required: ['events']
+                }
+            };
+
+            // 與辨識功能同用 lite，較不易撞到較貴模型配額；僅手動更新時呼叫
+            const modelId = 'gemini-3.5-flash-lite';
+            async function requestMarketEvents(useGrounding) {
+                const payload = {
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: genConfig
+                };
+                if (useGrounding) payload.tools = [{ google_search: {} }];
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${settings.geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || '更新失敗');
+                let text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+                if (!text) throw new Error('AI 未回傳內容');
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    const m = text.match(/\{[\s\S]*\}/);
+                    if (!m) throw new Error('無法解析大事曆 JSON');
+                    return JSON.parse(m[0]);
+                }
+            }
+
+            let parsed;
+            try {
+                parsed = await requestMarketEvents(true);
+            } catch (e1) {
+                const msg = String(e1 && e1.message || e1);
+                if (/quota|rate limit|429|resource_exhausted|billing/i.test(msg)) throw e1;
+                parsed = await requestMarketEvents(false);
+            }
+            const today = todayYmdLocal();
+            const events = (parsed.events || [])
+                .map(normalizeMarketEvent)
+                .filter(Boolean)
+                .filter(e => e.date >= today && e.date <= end);
+            if (!events.length) throw new Error('未取得有效事件，請稍後再試');
+
+            // 去重：同日同標題
+            const seen = new Set();
+            const unique = [];
+            events.sort((a, b) => (a.date + a.title).localeCompare(b.date + b.title));
+            events.forEach(e => {
+                const k = e.date + '|' + e.title;
+                if (seen.has(k)) return;
+                seen.add(k);
+                unique.push(e);
+            });
+
+            saveMarketEventsStore({ updatedAt: new Date().toISOString(), events: unique });
+            _marketWatchIndex = 0;
+            renderMarketWatchCard();
+            if (typeof renderCalendar === 'function') renderCalendar();
+            if (selectedDate) {
+                renderCalendarMarketReminder(selectedDate);
+            }
+            if (typeof moneeNotice === 'function') {
+                moneeNotice(`已更新 ${unique.length} 筆市場大事`, { icon: 'fa-check' });
+            }
+        } catch (e) {
+            console.error(e);
+            if (isGeminiQuotaError(e)) markGeminiQuotaLimited();
+            // 先解除全螢幕鎖，否則會擋到錯誤提示與後續操作
+            releaseMarketEventsBusy();
+            forceReleaseAiBusyLock();
+            await moneeAlert(friendlyAiErrorMessage(e), '更新失敗');
+        } finally {
+            releaseMarketEventsBusy();
+            forceReleaseAiBusyLock();
+        }
+    }
+
     // ========== 日期記事功能（必須在 renderCalendar 之前定義）==========
     const DATE_NOTE_MOODS = [
         { id: 'great', emoji: '😄', label: '很好' },
@@ -16584,6 +17368,20 @@
             if (hasDateNote(date)) {
                 dayBtn.classList.add('has-note');
             }
+
+            // 市場大事標記（與個人記事分開）
+            const marketEvts = (typeof getMarketEventsForDate === 'function') ? getMarketEventsForDate(date) : [];
+            if (marketEvts.length) {
+                dayBtn.classList.add('has-market-event');
+                const tag = document.createElement('span');
+                tag.className = 'cal-market-tag';
+                const top = marketEvts.slice().sort((a, b) => {
+                    const rank = { high: 0, medium: 1, low: 2 };
+                    return (rank[a.impact] ?? 3) - (rank[b.impact] ?? 3);
+                })[0];
+                tag.textContent = marketCategoryLabel(top.category);
+                dayBtn.appendChild(tag);
+            }
             
             dayBtn.addEventListener('click', () => {
                 grid.querySelectorAll('.calendar-day.selected').forEach(el => el.classList.remove('selected'));
@@ -16596,6 +17394,7 @@
     function selectDate(date) {
         selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0); // 確保時間部分為 00:00:00
+        saveJournalPageState();
         renderCalendar();
         updateCalendarStickyBar();
         // 下一幀再更新詳情區（含記事摘要），讓日曆先完成繪製
@@ -17996,6 +18795,8 @@
         
         const dateStr = formatLocalDate(date);
         
+        // 市場提醒（外部事件，與個人記事分開）
+        renderCalendarMarketReminder(date);
         // 記事摘要（有無內容都顯示，方便新增／查看）
         renderCalendarNoteSummary(date);
         
@@ -19643,6 +20444,7 @@
     // 支出 AI 匯入截圖
     async function triggerExpenseImageUpload() {
         if (isAiBusyLocked()) return;
+        if (!(await guardGeminiQuotaOrAlert('支出辨識'))) return;
         if(!settings.geminiKey) {
             await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
             return;
@@ -19708,9 +20510,11 @@
             _aiRetryState = null;
         } catch (e) {
             console.error(e);
+            if (isGeminiQuotaError(e)) markGeminiQuotaLimited();
+            forceReleaseAiBusyLock();
             setAiStatusWithRetry(statusEl, friendlyAiErrorMessage(e), 'expense');
         } finally {
-            setAiBusyLock(false);
+            forceReleaseAiBusyLock();
         }
     }
     
@@ -19832,6 +20636,7 @@
     // 收入 AI 批量匯入
     async function triggerIncomeImageUpload() {
         if (isAiBusyLocked()) return;
+        if (!(await guardGeminiQuotaOrAlert('收入辨識'))) return;
         if(!settings.geminiKey) {
             await moneeAlert('請先到選單「API 設定」填入 Gemini Key', '需要 API Key');
             return;
@@ -19897,9 +20702,11 @@
             _aiRetryState = null;
         } catch (e) {
             console.error(e);
+            if (isGeminiQuotaError(e)) markGeminiQuotaLimited();
+            forceReleaseAiBusyLock();
             setAiStatusWithRetry(statusEl, friendlyAiErrorMessage(e), 'income');
         } finally {
-            setAiBusyLock(false);
+            forceReleaseAiBusyLock();
         }
     }
     
